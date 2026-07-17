@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { FormSubmitButton } from "@/components/form-submit-button"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { crearEjercicioSchema } from "@/lib/validations"
+import { ImageUpload } from "@/components/image-upload"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
@@ -16,11 +17,31 @@ async function crearEjercicio(formData: FormData) {
 
   const supabase = await createClient()
 
+  let imagenUrl: string | null = null
+
+  // Subir imagen si se adjunta
+  const imagenFile = formData.get("imagen") as File | null
+  if (imagenFile && imagenFile.size > 0) {
+    const ext = imagenFile.name.split(".").pop() || "jpg"
+    const filePath = `ejercicios/${crypto.randomUUID()}.${ext}`
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("fotos-ejercicios")
+      .upload(filePath, imagenFile)
+
+    if (!uploadError && uploadData) {
+      const { data: urlData } = supabase.storage
+        .from("fotos-ejercicios")
+        .getPublicUrl(uploadData.path)
+      imagenUrl = urlData.publicUrl
+    }
+  }
+
   const { error } = await supabase.from("ejercicios").insert({
     categoria: validation.data.categoria,
     titulo: validation.data.titulo,
     descripcion: validation.data.descripcion || null,
-    imagen_url: null,
+    imagen_url: imagenUrl,
     objetivo_principal: validation.data.objetivo_principal || null,
     objetivo_secundario_1: validation.data.objetivo_secundario_1 || null,
     objetivo_secundario_2: validation.data.objetivo_secundario_2 || null,
@@ -84,6 +105,8 @@ export default async function NuevoEjercicioPage() {
             className="w-full rounded-md border border-border bg-background p-2 text-sm"
           />
         </div>
+
+        <ImageUpload name="imagen" />
 
         <div>
           <label className="mb-1 block text-sm font-medium">Descripción</label>

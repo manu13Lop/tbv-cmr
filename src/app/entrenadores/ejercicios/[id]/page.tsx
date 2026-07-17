@@ -4,6 +4,7 @@ import Link from "next/link"
 import { FormSubmitButton } from "@/components/form-submit-button"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { actualizarEjercicioSchema } from "@/lib/validations"
+import { ImageUpload } from "@/components/image-upload"
 import { ArrowLeft } from "lucide-react"
 import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
 
@@ -17,16 +18,36 @@ async function actualizarEjercicio(id: string, formData: FormData) {
 
   const supabase = await createClient()
 
+  const updateData: Record<string, any> = {
+    categoria: validation.data.categoria,
+    titulo: validation.data.titulo,
+    descripcion: validation.data.descripcion || null,
+    objetivo_principal: validation.data.objetivo_principal || null,
+    objetivo_secundario_1: validation.data.objetivo_secundario_1 || null,
+    objetivo_secundario_2: validation.data.objetivo_secundario_2 || null,
+  }
+
+  // Subir nueva imagen si se adjunta
+  const imagenFile = formData.get("imagen") as File | null
+  if (imagenFile && imagenFile.size > 0) {
+    const ext = imagenFile.name.split(".").pop() || "jpg"
+    const filePath = `ejercicios/${crypto.randomUUID()}.${ext}`
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("fotos-ejercicios")
+      .upload(filePath, imagenFile)
+
+    if (!uploadError && uploadData) {
+      const { data: urlData } = supabase.storage
+        .from("fotos-ejercicios")
+        .getPublicUrl(uploadData.path)
+      updateData.imagen_url = urlData.publicUrl
+    }
+  }
+
   await supabase
     .from("ejercicios")
-    .update({
-      categoria: validation.data.categoria,
-      titulo: validation.data.titulo,
-      descripcion: validation.data.descripcion || null,
-      objetivo_principal: validation.data.objetivo_principal || null,
-      objetivo_secundario_1: validation.data.objetivo_secundario_1 || null,
-      objetivo_secundario_2: validation.data.objetivo_secundario_2 || null,
-    })
+    .update(updateData)
     .eq("id", id)
 
   redirect(`/entrenadores/ejercicios/${id}`)
@@ -74,19 +95,14 @@ export default async function EjercicioDetallePage({
         </div>
       </div>
 
-      {/* Imagen del ejercicio */}
-      {ejercicio.imagen_url && (
-        <div className="mb-6">
-          <img
-            src={ejercicio.imagen_url}
-            alt={ejercicio.titulo}
-            className="max-h-96 rounded-lg border border-border object-cover"
-          />
-        </div>
-      )}
-
       {/* Formulario de edición */}
       <form action={updateAction} className="max-w-2xl space-y-4">
+        <ImageUpload
+          name="imagen"
+          currentImageUrl={ejercicio.imagen_url}
+          disabled={!puedeEditar}
+        />
+
         <div>
           <label className="mb-1 block text-sm font-medium">Categoría</label>
           <select
