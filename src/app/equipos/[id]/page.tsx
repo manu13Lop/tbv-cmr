@@ -61,6 +61,12 @@ export default async function EquipoDetallePage({
 
   if (!equipo) notFound()
 
+  // Entrenadores del equipo
+  const { data: entrenadoresEquipo } = await supabase
+    .from("entrenador_equipo")
+    .select("id, rol, entrenadores ( id, nombre, apellidos )")
+    .eq("equipo_id", id)
+
   // Historial de entrenamientos del equipo
   const { data: entrenamientosEquipo } = await supabase
     .from("eventos")
@@ -159,6 +165,39 @@ export default async function EquipoDetallePage({
 
         {puedeEditar && <FormSubmitButton>Guardar cambios</FormSubmitButton>}
       </form>
+
+      {/* Cuerpo técnico */}
+      <div className="mt-8 rounded-lg border border-border bg-card p-4">
+        <h2 className="mb-3 text-sm font-medium text-primary">Cuerpo técnico</h2>
+
+        {!entrenadoresEquipo || entrenadoresEquipo.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No hay entrenadores asignados a este equipo.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {entrenadoresEquipo.map((ae: any) => {
+              const ent = ae.entrenadores as any
+              const rolLabel = ae.rol === "entrenador" ? "Entrenador" : ae.rol === "segundo_entrenador" ? "2do Entrenador" : ae.rol === "auxiliar" ? "Auxiliar" : ae.rol
+              return (
+                <div key={ae.id} className="flex items-center justify-between rounded-md border border-border p-3">
+                  <div>
+                    <Link
+                      href={`/entrenadores/${ent?.id}`}
+                      className="text-sm font-medium hover:underline"
+                    >
+                      {ent?.nombre} {ent?.apellidos}
+                    </Link>
+                    <span className="ml-2 text-xs capitalize text-muted-foreground">
+                      {rolLabel}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Historial de entrenamientos */}
       <div className="mt-8 rounded-lg border border-border bg-card p-4">

@@ -5,6 +5,7 @@ import { FormSubmitButton } from "@/components/form-submit-button"
 import { ArrowLeft } from "lucide-react"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { crearEquipoSchema } from "@/lib/validations"
+import { AsignarEntrenadorEquipo } from "@/components/asignar-entrenador-equipo"
 
 async function crearEquipo(formData: FormData) {
   "use server"
@@ -17,22 +18,45 @@ async function crearEquipo(formData: FormData) {
 
   const supabase = await createClient()
 
-  const { error } = await supabase.from("equipos").insert({
+  const { data: equipo, error } = await supabase.from("equipos").insert({
     nombre,
     categoria,
     temporada,
     federada: federada ?? false,
-  })
+  }).select("id").single()
 
-  if (error) {
+  if (error || !equipo) {
     console.error(error)
-    return
+    return redirect(`/equipos/nuevo?error=${encodeURIComponent("Error al crear el equipo")}`)
+  }
+
+  // Asignar entrenadores si se seleccionaron
+  const entrenadorIds = formData.getAll("entrenador_id") as string[]
+  const roles = formData.getAll("entrenador_rol") as string[]
+
+  for (let i = 0; i < entrenadorIds.length; i++) {
+    if (entrenadorIds[i]) {
+      await supabase.from("entrenador_equipo").insert({
+        entrenador_id: entrenadorIds[i],
+        equipo_id: equipo.id,
+        temporada,
+        rol: roles[i] || "entrenador",
+      })
+    }
   }
 
   redirect("/equipos")
 }
 
-export default function NuevoEquipoPage() {
+export default async function NuevoEquipoPage() {
+  const supabase = await createClient()
+
+  const { data: entrenadores } = await supabase
+    .from("entrenadores")
+    .select("id, nombre, apellidos")
+    .eq("activo", true)
+    .order("apellidos", { ascending: true })
+
   return (
     <div className="p-6">
       <Link
@@ -98,6 +122,9 @@ export default function NuevoEquipoPage() {
             Equipo federado
           </label>
         </div>
+
+        {/* Asignación de entrenadores */}
+        <AsignarEntrenadorEquipo entrenadores={entrenadores ?? []} />
 
         <FormSubmitButton>Guardar equipo</FormSubmitButton>
       </form>

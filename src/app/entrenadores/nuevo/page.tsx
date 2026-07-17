@@ -4,7 +4,8 @@ import { FormSubmitButton } from "@/components/form-submit-button"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { crearEntrenadorSchema } from "@/lib/validations"
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Plus, Trash2 } from "lucide-react"
+import { AsignarEquipoEntrenador } from "@/components/asignar-equipo-entrenador"
 
 async function crearEntrenador(formData: FormData) {
   "use server"
@@ -16,24 +17,47 @@ async function crearEntrenador(formData: FormData) {
 
   const supabase = await createClient()
 
-  const { error } = await supabase.from("entrenadores").insert({
+  const { data: entrenador, error } = await supabase.from("entrenadores").insert({
     nombre: validation.data.nombre,
     apellidos: validation.data.apellidos,
     email: validation.data.email || null,
     telefono: validation.data.telefono || null,
     titulacion: validation.data.titulacion || null,
     especialidad: validation.data.especialidad || null,
-  })
+  }).select("id").single()
 
-  if (error) {
+  if (error || !entrenador) {
     console.error(error)
     return redirect(`/entrenadores/nuevo?error=${encodeURIComponent("Error al crear el entrenador")}`)
+  }
+
+  // Asignar equipos si se seleccionaron
+  const equipos = formData.getAll("equipo_id") as string[]
+  const roles = formData.getAll("equipo_rol") as string[]
+
+  for (let i = 0; i < equipos.length; i++) {
+    if (equipos[i]) {
+      await supabase.from("entrenador_equipo").insert({
+        entrenador_id: entrenador.id,
+        equipo_id: equipos[i],
+        temporada: new Date().getFullYear().toString(),
+        rol: roles[i] || "entrenador",
+      })
+    }
   }
 
   redirect("/entrenadores")
 }
 
 export default async function NuevoEntrenadorPage() {
+  const supabase = await createClient()
+
+  const { data: equipos } = await supabase
+    .from("equipos")
+    .select("id, nombre, categoria, temporada")
+    .order("temporada", { ascending: false })
+    .order("nombre")
+
   return (
     <div className="p-6">
       <Link
@@ -107,6 +131,9 @@ export default async function NuevoEntrenadorPage() {
             <option value="otro">Otro</option>
           </select>
         </div>
+
+        {/* Asignación de equipos */}
+        <AsignarEquipoEntrenador equipos={equipos ?? []} />
 
         <FormSubmitButton>Crear entrenador</FormSubmitButton>
       </form>

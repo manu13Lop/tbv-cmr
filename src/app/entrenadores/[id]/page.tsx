@@ -42,11 +42,13 @@ async function asignarEquipo(entrenadorId: string, formData: FormData) {
   }
 
   const supabase = await createClient()
+  const rol = (formData.get("rol") as string) || "entrenador"
 
   await supabase.from("entrenador_equipo").insert({
     entrenador_id: entrenadorId,
     equipo_id: validation.data.equipo_id,
     temporada: validation.data.temporada,
+    rol,
   })
 
   redirect(`/entrenadores/${entrenadorId}`)
@@ -81,7 +83,7 @@ export default async function EntrenadorDetallePage({
 
   const { data: asignaciones } = await supabase
     .from("entrenador_equipo")
-    .select("id, temporada, equipos ( id, nombre, categoria, temporada )")
+    .select("id, temporada, rol, equipos ( id, nombre, categoria, temporada )")
     .eq("entrenador_id", id)
 
   const { data: equipos } = await supabase
@@ -217,8 +219,11 @@ export default async function EntrenadorDetallePage({
                   href={`/equipos/${a.equipos?.id}`}
                   className="text-sm font-medium hover:underline"
                 >
-                  {a.equipos?.nombre} ({a.equipos?.categoria}) — {a.temporada}
+                  {a.equipos?.nombre} ({a.equipos?.categoria})
                 </Link>
+                <span className="text-xs capitalize text-muted-foreground">
+                  {a.rol === "entrenador" ? "Entrenador" : a.rol === "segundo_entrenador" ? "2do Entrenador" : a.rol === "auxiliar" ? "Auxiliar" : a.rol} — {a.temporada}
+                </span>
                 {puedeEditar && (
                   <form action={desasignarEquipo.bind(null, a.id, id)}>
                     <button
@@ -251,6 +256,18 @@ export default async function EntrenadorDetallePage({
                     {eq.nombre} ({eq.categoria}) - {eq.temporada}
                   </option>
                 ))}
+              </select>
+            </div>
+            <div className="w-40">
+              <label className="mb-1 block text-sm font-medium">Rol</label>
+              <select
+                name="rol"
+                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              >
+                <option value="entrenador">Entrenador</option>
+                <option value="segundo_entrenador">2do Entrenador</option>
+                <option value="auxiliar">Auxiliar</option>
+                <option value="otro">Otro</option>
               </select>
             </div>
             <div className="w-32">
