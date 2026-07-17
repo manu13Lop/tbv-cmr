@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { FormSubmitButton } from "@/components/form-submit-button"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { crearEntrenadorSchema } from "@/lib/validations"
+import { logCambio } from "@/lib/audit"
 import Link from "next/link"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react"
 import { AsignarEquipoEntrenador } from "@/components/asignar-equipo-entrenador"
@@ -30,6 +31,13 @@ async function crearEntrenador(formData: FormData) {
     console.error(error)
     return redirect(`/entrenadores/nuevo?error=${encodeURIComponent("Error al crear el entrenador")}`)
   }
+
+  await logCambio("entrenadores", entrenador.id, "crear", null, {
+    nombre: validation.data.nombre,
+    apellidos: validation.data.apellidos,
+    email: validation.data.email,
+    especialidad: validation.data.especialidad,
+  })
 
   // Asignar equipos si se seleccionaron
   const equipos = formData.getAll("equipo_id") as string[]

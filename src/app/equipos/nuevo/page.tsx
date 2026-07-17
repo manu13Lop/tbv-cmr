@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { crearEquipoSchema } from "@/lib/validations"
 import { AsignarEntrenadorEquipo } from "@/components/asignar-entrenador-equipo"
+import { logCambio } from "@/lib/audit"
 
 async function crearEquipo(formData: FormData) {
   "use server"
@@ -29,6 +30,8 @@ async function crearEquipo(formData: FormData) {
     console.error(error)
     return redirect(`/equipos/nuevo?error=${encodeURIComponent("Error al crear el equipo")}`)
   }
+
+  await logCambio("equipos", equipo.id, "crear", null, { nombre, categoria, temporada, federada })
 
   // Asignar entrenadores si se seleccionaron
   const entrenadorIds = formData.getAll("entrenador_id") as string[]

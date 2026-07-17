@@ -5,11 +5,13 @@ import Link from "next/link"
 import { Button } from "@/components/button"
 import { Plus, ArrowLeft } from "lucide-react"
 import { PaginationWrapper as Pagination } from "@/components/pagination-wrapper"
+import { FilterBar, FilterOption } from "@/components/filter-bar"
+import { Suspense } from "react"
 
 export default async function EquiposPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ page?: string }>
+  searchParams?: Promise<{ page?: string; categoria?: string; temporada?: string }>
 }) {
   const usuario = await getUsuarioActual()
 
@@ -20,19 +22,38 @@ export default async function EquiposPage({
   const puedeEditar = tienePermiso(usuario.permisos, "equipos.editar")
 
   const supabase = await createClient()
+  const params = (await searchParams) ?? {}
 
-  const { data: equipos } = await supabase
+  let query = supabase
     .from("equipos")
     .select("*")
     .order("temporada", { ascending: false })
     .order("nombre", { ascending: true })
 
-  const params = (await searchParams) ?? {}
-  const allEquipos = equipos ?? []
+  if (params.categoria) {
+    query = query.eq("categoria", params.categoria)
+  }
+  if (params.temporada) {
+    query = query.eq("temporada", params.temporada)
+  }
+
+  const { data: equipos } = await query
+
+  // Obtener categorías y temporadas únicas para los filtros
+  const { data: allEquipos } = await supabase.from("equipos").select("categoria, temporada")
+  const categorias = [...new Set((allEquipos ?? []).map((e) => e.categoria))].sort()
+  const temporadas = [...new Set((allEquipos ?? []).map((e) => e.temporada))].sort().reverse()
+
+  const filters: FilterOption[] = [
+    { key: "categoria", label: "Categoría", options: categorias.map((c) => ({ value: c, label: c })) },
+    { key: "temporada", label: "Temporada", options: temporadas.map((t) => ({ value: t, label: t })) },
+  ]
+
+  const allEquiposList = equipos ?? []
   const itemsPerPage = 15
-  const totalPages = Math.ceil(allEquipos.length / itemsPerPage)
+  const totalPages = Math.ceil(allEquiposList.length / itemsPerPage)
   const currentPage = Math.max(1, Math.min(Number(params.page) || 1, totalPages || 1))
-  const paginatedEquipos = allEquipos.slice(
+  const paginatedEquipos = allEquiposList.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
@@ -51,7 +72,7 @@ export default async function EquiposPage({
         <div>
           <h1 className="text-2xl font-bold text-primary">Equipos</h1>
           <p className="text-sm text-muted-foreground">
-            {equipos?.length ?? 0} equipos registrados
+            {allEquiposList.length} equipos registrados
           </p>
         </div>
         {puedeEditar && (
@@ -64,9 +85,15 @@ export default async function EquiposPage({
         )}
       </div>
 
-      {!equipos || equipos.length === 0 ? (
+      <Suspense>
+        <FilterBar filters={filters} />
+      </Suspense>
+
+      {!allEquiposList || allEquiposList.length === 0 ? (
         <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground">
-          Todavía no hay equipos registrados.
+          {params.categoria || params.temporada
+            ? "No hay equipos con estos filtros."
+            : "Todavía no hay equipos registrados."}
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-border">

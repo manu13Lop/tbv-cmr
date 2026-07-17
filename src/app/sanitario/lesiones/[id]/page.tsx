@@ -6,6 +6,8 @@ import { FormSubmitButton } from "@/components/form-submit-button"
 import { ArrowLeft } from "lucide-react"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { seguimientoLesionSchema } from "@/lib/validations"
+import { TimelineLesion } from "@/components/sanitario/timeline-lesion"
+import { GraficaEvolucion } from "@/components/sanitario/grafica-evolucion"
 
 async function añadirSeguimiento(lesionId: string, formData: FormData) {
   "use server"
@@ -161,50 +163,7 @@ export default async function LesionDetallePage({
         Seguimiento y evolución
       </h2>
 
-      {!seguimientos || seguimientos.length === 0 ? (
-        <p className="mb-6 text-sm text-muted-foreground">
-          Todavía no hay entradas de seguimiento.
-        </p>
-      ) : (
-        <div className="mb-6 space-y-3">
-          {seguimientos.map((s) => (
-            <div key={s.id} className="rounded-lg border border-border bg-card p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-medium capitalize">
-                  {s.tipo_entrada}
-                  {s.es_alta && (
-                    <span className="ml-2 rounded-md bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                      Alta médica
-                    </span>
-                  )}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(s.fecha_hora).toLocaleString("es-ES", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </div>
-              {s.tratamiento_aplicado && (
-                <p className="mb-1 text-sm">
-                  <strong>Tratamiento:</strong> {s.tratamiento_aplicado}
-                </p>
-              )}
-              {s.evolucion && (
-                <p className="mb-1 text-sm">
-                  <strong>Evolución:</strong> {s.evolucion}
-                </p>
-              )}
-              <p className="mt-2 text-xs text-muted-foreground">
-                {s.autor_nombre_snapshot} ({s.autor_puesto_snapshot})
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
+      <TimelineLesion seguimientos={seguimientos ?? []} />
 
       {puedeEditar && (
         <form

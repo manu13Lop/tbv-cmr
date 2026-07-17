@@ -5,6 +5,7 @@ import { SidebarNav } from "@/components/sidebar-nav"
 import { SidebarWrapper } from "@/components/sidebar-wrapper"
 import { LogoutButton } from "@/components/logout-button"
 import { NotificationBell } from "@/components/notification-bell"
+import { SearchGlobal } from "@/components/search-global"
 import {
   getNotificacionesUsuario,
   getNotificacionesNoLeidas,
@@ -59,6 +60,10 @@ export async function Sidebar() {
         </div>
 
         <SidebarNav permisos={permisos} />
+
+        <div className="px-3 pb-2">
+          <SearchGlobal />
+        </div>
 
         <div className="mt-auto border-t border-border p-3">
           <div className="mb-3 rounded-lg border border-border bg-background p-3">

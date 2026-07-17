@@ -6,6 +6,7 @@ import { FormSubmitButton } from "@/components/form-submit-button"
 import { ArrowLeft, CalendarDays } from "lucide-react"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { actualizarEquipoSchema } from "@/lib/validations"
+import { logCambio } from "@/lib/audit"
 
 async function actualizarEquipo(id: string, formData: FormData) {
   "use server"
@@ -19,6 +20,9 @@ async function actualizarEquipo(id: string, formData: FormData) {
   const { nombre, categoria, temporada, federada } = validation.data
 
   const supabase = await createClient()
+
+  // Obtener datos anteriores para audit
+  const { data: anterior } = await supabase.from("equipos").select("*").eq("id", id).single()
 
   const { error } = await supabase
     .from("equipos")
@@ -34,6 +38,8 @@ async function actualizarEquipo(id: string, formData: FormData) {
     console.error(error)
     return
   }
+
+  await logCambio("equipos", id, "actualizar", anterior, { nombre, categoria, temporada, federada })
 
   redirect("/equipos")
 }

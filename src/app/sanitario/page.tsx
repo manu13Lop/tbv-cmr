@@ -2,6 +2,8 @@ import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { HeartPulse, Brain, ArrowLeft } from "lucide-react"
+import { createClient } from "@/lib/supabase-server"
+import { GraficaEvolucion } from "@/components/sanitario/grafica-evolucion"
 
 export default async function SanitarioPage() {
   const usuario = await getUsuarioActual()
@@ -9,6 +11,13 @@ export default async function SanitarioPage() {
   if (!usuario || !tienePermiso(usuario.permisos, "sanitario.leer")) {
     redirect("/")
   }
+
+  const supabase = await createClient()
+
+  const { data: lesiones } = await supabase
+    .from("lesiones")
+    .select("id, fecha_lesion, fecha_alta, gravedad, tipo, estado")
+    .order("fecha_lesion", { ascending: false })
 
   return (
     <div className="p-6">
@@ -61,6 +70,12 @@ export default async function SanitarioPage() {
             Sesiones individuales y grupales, objetivos, desarrollo y acuerdos.
           </p>
         </Link>
+      </div>
+
+      {/* Gráfica de evolución de lesiones */}
+      <div className="mt-8 rounded-xl border border-border bg-card p-5">
+        <h2 className="mb-4 text-lg font-semibold text-primary">Evolución de lesiones</h2>
+        <GraficaEvolucion lesiones={lesiones ?? []} />
       </div>
     </div>
   )

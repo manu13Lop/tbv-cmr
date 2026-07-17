@@ -4,6 +4,7 @@ import { FormSubmitButton } from "@/components/form-submit-button"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { crearEjercicioSchema } from "@/lib/validations"
 import { ImageUpload } from "@/components/image-upload"
+import { optimizeImage, getImageExtension } from "@/lib/image-utils"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
@@ -22,12 +23,13 @@ async function crearEjercicio(formData: FormData) {
   // Subir imagen si se adjunta
   const imagenFile = formData.get("imagen") as File | null
   if (imagenFile && imagenFile.size > 0) {
-    const ext = imagenFile.name.split(".").pop() || "jpg"
+    const optimized = await optimizeImage(imagenFile)
+    const ext = getImageExtension(imagenFile)
     const filePath = `ejercicios/${crypto.randomUUID()}.${ext}`
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("fotos-ejercicios")
-      .upload(filePath, imagenFile)
+      .upload(filePath, optimized, { contentType: `image/${ext}` })
 
     if (!uploadError && uploadData) {
       const { data: urlData } = supabase.storage

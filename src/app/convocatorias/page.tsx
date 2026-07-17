@@ -4,6 +4,8 @@ import { redirect } from "next/navigation"
 import { Button } from "@/components/button"
 import { Plus, Copy } from "lucide-react"
 import { ConvocatoriasView } from "@/components/convocatorias-view"
+import { FilterBar, FilterOption } from "@/components/filter-bar"
+import { Suspense } from "react"
 
 async function duplicarEventos(formData: FormData) {
   "use server"
@@ -76,17 +78,47 @@ async function duplicarEventos(formData: FormData) {
 export default async function ConvocatoriasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ duplicado?: string; n?: string }>
+  searchParams: Promise<{ duplicado?: string; n?: string; tipo?: string; equipo?: string }>
 }) {
-  const { duplicado, n } = await searchParams
+  const { duplicado, n, tipo, equipo } = await searchParams
   const supabase = await createClient()
 
-  const { data: eventos } = await supabase
+  let query = supabase
     .from("eventos")
     .select(
-      "id, tipo, fecha_hora, lugar, rival, temporada, equipos ( nombre, categoria )"
+      "id, tipo, fecha_hora, lugar, rival, temporada, equipo_id, equipos ( nombre, categoria )"
     )
     .order("fecha_hora", { ascending: false })
+
+  if (tipo) {
+    query = query.eq("tipo", tipo)
+  }
+  if (equipo) {
+    query = query.eq("equipo_id", equipo)
+  }
+
+  const { data: eventos } = await query
+
+  // Equipos para filtro
+  const { data: equipos } = await supabase.from("equipos").select("id, nombre, categoria").order("nombre")
+
+  const filters: FilterOption[] = [
+    {
+      key: "tipo",
+      label: "Tipo",
+      options: [
+        { value: "entrenamiento", label: "Entrenamiento" },
+        { value: "partido", label: "Partido" },
+        { value: "concentracion", label: "Concentración" },
+        { value: "otro", label: "Otro" },
+      ],
+    },
+    {
+      key: "equipo",
+      label: "Equipo",
+      options: (equipos ?? []).map((e) => ({ value: e.id, label: `${e.nombre} (${e.categoria})` })),
+    },
+  ]
 
   return (
     <div className="p-6">
@@ -104,6 +136,10 @@ export default async function ConvocatoriasPage({
           </Button>
         </Link>
       </div>
+
+      <Suspense>
+        <FilterBar filters={filters} />
+      </Suspense>
 
       {duplicado === "ok" && (
         <div className="mb-4 rounded-md border border-primary bg-primary/10 p-3 text-sm text-primary">
