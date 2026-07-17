@@ -1,0 +1,596 @@
+import { createClient } from "@/lib/supabase-server"
+import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
+import { redirect, notFound } from "next/navigation"
+import Link from "next/link"
+import { FormSubmitButton } from "@/components/form-submit-button"
+import { ArrowLeft } from "lucide-react"
+import { validateFormData, getFirstError } from "@/lib/validate"
+import { actualizarJugadoraSchema, asignarEquipoSchema, crearTutorSchema } from "@/lib/validations"
+
+async function actualizarJugadora(id: string, formData: FormData) {
+  "use server"
+  const usuario = await getUsuarioActual()
+  if (!usuario || !tienePermiso(usuario.permisos, "jugadoras.editar")) return
+
+  const validation = validateFormData(actualizarJugadoraSchema, formData)
+  if (!validation.success) {
+    return redirect(`/jugadoras/${id}?error=${encodeURIComponent(getFirstError(validation.errors))}`)
+  }
+
+  const { nombre, apellidos, fecha_nacimiento, codigo_interno, email, talla_camiseta_entreno, talla_camiseta_partido, talla_calzona, talla_chandal, talla_chaqueton, reconocimiento_medico_estado, activa } = validation.data
+
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from("jugadoras")
+    .update({
+      nombre,
+      apellidos,
+      fecha_nacimiento,
+      codigo_interno,
+      email,
+      talla_camiseta_entreno,
+      talla_camiseta_partido,
+      talla_calzona,
+      talla_chandal,
+      talla_chaqueton,
+      reconocimiento_medico_estado,
+      activa,
+    })
+    .eq("id", id)
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  redirect(`/jugadoras/${id}?guardado=1`)
+}
+
+async function asignarEquipo(id: string, formData: FormData) {
+  "use server"
+  const usuario = await getUsuarioActual()
+  if (!usuario || !tienePermiso(usuario.permisos, "jugadoras.editar")) return
+
+  const validation = validateFormData(asignarEquipoSchema, formData)
+  if (!validation.success) {
+    return redirect(`/jugadoras/${id}?error=${encodeURIComponent(getFirstError(validation.errors))}`)
+  }
+
+  const { equipo_id, temporada, dorsal, posicion } = validation.data
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.from("jugadora_equipo_temporada").insert({
+    jugadora_id: id,
+    equipo_id,
+    temporada,
+    dorsal,
+    posicion,
+  })
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  redirect(`/jugadoras/${id}`)
+}
+
+async function quitarVinculo(id: string, vinculoId: string) {
+  "use server"
+  const usuario = await getUsuarioActual()
+  if (!usuario || !tienePermiso(usuario.permisos, "jugadoras.editar")) return
+
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from("jugadora_equipo_temporada")
+    .delete()
+    .eq("id", vinculoId)
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  redirect(`/jugadoras/${id}`)
+}
+
+async function crearTutor(id: string, formData: FormData) {
+  "use server"
+  const usuario = await getUsuarioActual()
+  if (!usuario || !tienePermiso(usuario.permisos, "jugadoras.editar")) return
+
+  const validation = validateFormData(crearTutorSchema, formData)
+  if (!validation.success) {
+    return redirect(`/jugadoras/${id}?error=${encodeURIComponent(getFirstError(validation.errors))}`)
+  }
+
+  const { nombre, email, telefono, parentesco } = validation.data
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.from("tutores").insert({
+    jugadora_id: id,
+    nombre,
+    email: email || null,
+    telefono: telefono || null,
+    parentesco: parentesco || null,
+  })
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  redirect(`/jugadoras/${id}`)
+}
+
+async function borrarTutor(id: string, tutorId: string) {
+  "use server"
+  const usuario = await getUsuarioActual()
+  if (!usuario || !tienePermiso(usuario.permisos, "jugadoras.editar")) return
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.from("tutores").delete().eq("id", tutorId)
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  redirect(`/jugadoras/${id}`)
+}
+
+const tallaOptions = ["", "XS", "S", "M", "L", "XL", "XXL"]
+
+function TallaSelect({
+  name,
+  label,
+  value,
+  disabled,
+}: {
+  name: string
+  label: string
+  value: string | null
+  disabled: boolean
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium">{label}</label>
+      <select
+        name={name}
+        defaultValue={value ?? ""}
+        disabled={disabled}
+        className="w-full rounded-md border border-border bg-background p-2 text-sm disabled:opacity-60"
+      >
+        {tallaOptions.map((t) => (
+          <option key={t} value={t}>
+            {t === "" ? "-" : t}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+export default async function JugadoraDetallePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ guardado?: string }>
+}) {
+  const { id } = await params
+  const { guardado } = await searchParams
+
+  const usuario = await getUsuarioActual()
+  if (!usuario || !tienePermiso(usuario.permisos, "jugadoras.leer")) {
+    redirect("/")
+  }
+  const puedeEditar = tienePermiso(usuario.permisos, "jugadoras.editar")
+
+  const supabase = await createClient()
+
+  const { data: jugadora } = await supabase
+    .from("jugadoras")
+    .select("*")
+    .eq("id", id)
+    .single()
+
+  if (!jugadora) notFound()
+
+  const { data: equipos } = await supabase
+    .from("equipos")
+    .select("id, nombre, categoria, temporada")
+    .order("temporada", { ascending: false })
+
+  const { data: vinculos } = await supabase
+    .from("jugadora_equipo_temporada")
+    .select("id, temporada, dorsal, posicion, equipos ( nombre, categoria )")
+    .eq("jugadora_id", id)
+
+  const { data: tutores } = await supabase
+    .from("tutores")
+    .select("id, nombre, email, telefono, parentesco")
+    .eq("jugadora_id", id)
+    .order("created_at")
+
+  const updateAction = actualizarJugadora.bind(null, id)
+  const asignarAction = asignarEquipo.bind(null, id)
+  const crearTutorAction = crearTutor.bind(null, id)
+
+  return (
+    <div className="p-6">
+      <Link
+        href="/jugadoras"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Volver a jugadoras
+      </Link>
+
+      <h1 className="mb-6 text-2xl font-bold text-primary">
+        {jugadora.nombre} {jugadora.apellidos}
+      </h1>
+
+      {guardado === "1" && (
+        <div className="mb-4 rounded-md border border-primary bg-primary/10 p-3 text-sm text-primary">
+          Cambios guardados correctamente.
+        </div>
+      )}
+
+      <form action={updateAction} className="max-w-lg space-y-4">
+        <div>
+          <label className="mb-1 block text-sm font-medium">Nombre</label>
+          <input
+            name="nombre"
+            defaultValue={jugadora.nombre}
+            required
+            disabled={!puedeEditar}
+            className="w-full rounded-md border border-border bg-background p-2 text-sm disabled:opacity-60"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Apellidos</label>
+          <input
+            name="apellidos"
+            defaultValue={jugadora.apellidos}
+            required
+            disabled={!puedeEditar}
+            className="w-full rounded-md border border-border bg-background p-2 text-sm disabled:opacity-60"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">
+            Fecha de nacimiento
+          </label>
+          <input
+            type="date"
+            name="fecha_nacimiento"
+            defaultValue={jugadora.fecha_nacimiento}
+            required
+            disabled={!puedeEditar}
+            className="w-full rounded-md border border-border bg-background p-2 text-sm disabled:opacity-60"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">
+            Código interno
+          </label>
+          <input
+            name="codigo_interno"
+            defaultValue={jugadora.codigo_interno ?? ""}
+            disabled={!puedeEditar}
+            className="w-full rounded-md border border-border bg-background p-2 text-sm disabled:opacity-60"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Email</label>
+          <input
+            type="email"
+            name="email"
+            defaultValue={jugadora.email ?? ""}
+            disabled={!puedeEditar}
+            className="w-full rounded-md border border-border bg-background p-2 text-sm disabled:opacity-60"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <TallaSelect
+            name="talla_camiseta_entreno"
+            label="Camiseta entreno"
+            value={jugadora.talla_camiseta_entreno}
+            disabled={!puedeEditar}
+          />
+          <TallaSelect
+            name="talla_camiseta_partido"
+            label="Camiseta partido"
+            value={jugadora.talla_camiseta_partido}
+            disabled={!puedeEditar}
+          />
+          <TallaSelect
+            name="talla_calzona"
+            label="Calzona"
+            value={jugadora.talla_calzona}
+            disabled={!puedeEditar}
+          />
+          <TallaSelect
+            name="talla_chandal"
+            label="Chándal"
+            value={jugadora.talla_chandal}
+            disabled={!puedeEditar}
+          />
+          <TallaSelect
+            name="talla_chaqueton"
+            label="Chaquetón"
+            value={jugadora.talla_chaqueton}
+            disabled={!puedeEditar}
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">
+            Reconocimiento médico
+          </label>
+          <select
+            name="reconocimiento_medico_estado"
+            defaultValue={jugadora.reconocimiento_medico_estado ?? "pendiente"}
+            disabled={!puedeEditar}
+            className="w-full rounded-md border border-border bg-background p-2 text-sm disabled:opacity-60"
+          >
+            <option value="pendiente">Pendiente</option>
+            <option value="apto">Apto</option>
+            <option value="no_apto">No apto</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="activa"
+            id="activa"
+            defaultChecked={jugadora.activa}
+            disabled={!puedeEditar}
+          />
+          <label htmlFor="activa" className="text-sm font-medium">
+            Jugadora activa
+          </label>
+        </div>
+
+        {puedeEditar && <FormSubmitButton>Guardar cambios</FormSubmitButton>}
+      </form>
+
+      <hr className="my-8 border-border" />
+
+      <h2 className="mb-4 text-lg font-bold text-primary">
+        Equipos asignados
+      </h2>
+
+      {!vinculos || vinculos.length === 0 ? (
+        <p className="mb-4 text-sm text-muted-foreground">
+          Esta jugadora no está asignada a ningún equipo todavía.
+        </p>
+      ) : (
+        <div className="mb-6 overflow-hidden rounded-lg border border-border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted text-muted-foreground">
+              <tr>
+                <th className="p-3 text-left font-medium">Equipo</th>
+                <th className="p-3 text-left font-medium">Temporada</th>
+                <th className="p-3 text-left font-medium">Dorsal</th>
+                <th className="p-3 text-left font-medium">Posición</th>
+                {puedeEditar && <th className="p-3 text-left font-medium"></th>}
+              </tr>
+            </thead>
+            <tbody>
+              {vinculos.map((v: any) => {
+                const quitarAction = quitarVinculo.bind(null, id, v.id)
+                return (
+                  <tr key={v.id} className="border-t border-border">
+                    <td className="p-3">
+                      {v.equipos?.nombre} ({v.equipos?.categoria})
+                    </td>
+                    <td className="p-3">{v.temporada}</td>
+                    <td className="p-3">{v.dorsal ?? "-"}</td>
+                    <td className="p-3">{v.posicion ?? "-"}</td>
+                    {puedeEditar && (
+                      <td className="p-3 text-right">
+                        <form action={quitarAction}>
+                          <button
+                            type="submit"
+                            className="text-xs text-destructive hover:underline"
+                          >
+                            Quitar
+                          </button>
+                        </form>
+                      </td>
+                    )}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {puedeEditar && (
+        <form
+          action={asignarAction}
+          className="max-w-lg space-y-4 rounded-lg border border-border bg-card p-4"
+        >
+          <p className="text-sm font-medium">Asignar a un equipo</p>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Equipo</label>
+            <select
+              name="equipo_id"
+              required
+              defaultValue=""
+              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+            >
+              <option value="" disabled>
+                Selecciona un equipo
+              </option>
+              {equipos?.map((eq) => (
+                <option key={eq.id} value={eq.id}>
+                  {eq.nombre} ({eq.categoria}) - {eq.temporada}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Temporada</label>
+            <input
+              name="temporada"
+              required
+              placeholder="Ej: 2025-2026"
+              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">Dorsal</label>
+              <input
+                type="number"
+                name="dorsal"
+                min="0"
+                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Posición</label>
+              <select
+                name="posicion"
+                defaultValue=""
+                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              >
+                <option value="">-</option>
+                <option value="Portera">Portera</option>
+                <option value="Lateral izquierdo">Lateral izquierdo</option>
+                <option value="Lateral derecho">Lateral derecho</option>
+                <option value="Central">Central</option>
+                <option value="Extremo izquierdo">Extremo izquierdo</option>
+                <option value="Extremo derecho">Extremo derecho</option>
+                <option value="Pivote">Pivote</option>
+              </select>
+            </div>
+          </div>
+
+          <FormSubmitButton>Asignar</FormSubmitButton>
+        </form>
+      )}
+
+      <hr className="my-8 border-border" />
+
+      <h2 className="mb-4 text-lg font-bold text-primary">
+        Tutores legales
+      </h2>
+
+      {!tutores || tutores.length === 0 ? (
+        <p className="mb-4 text-sm text-muted-foreground">
+          Esta jugadora no tiene tutores registrados.
+        </p>
+      ) : (
+        <div className="mb-6 overflow-hidden rounded-lg border border-border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted text-muted-foreground">
+              <tr>
+                <th className="p-3 text-left font-medium">Nombre</th>
+                <th className="p-3 text-left font-medium">Email</th>
+                <th className="p-3 text-left font-medium">Teléfono</th>
+                <th className="p-3 text-left font-medium">Parentesco</th>
+                {puedeEditar && <th className="p-3 text-left font-medium"></th>}
+              </tr>
+            </thead>
+            <tbody>
+              {tutores.map((t: any) => {
+                const borrarAction = borrarTutor.bind(null, id, t.id)
+                return (
+                  <tr key={t.id} className="border-t border-border">
+                    <td className="p-3">{t.nombre}</td>
+                    <td className="p-3">{t.email ?? "-"}</td>
+                    <td className="p-3">{t.telefono ?? "-"}</td>
+                    <td className="p-3">{t.parentesco ?? "-"}</td>
+                    {puedeEditar && (
+                      <td className="p-3 text-right">
+                        <form action={borrarAction}>
+                          <button
+                            type="submit"
+                            className="text-xs text-destructive hover:underline"
+                          >
+                            Quitar
+                          </button>
+                        </form>
+                      </td>
+                    )}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {puedeEditar && (
+        <form
+          action={crearTutorAction}
+          className="max-w-lg space-y-4 rounded-lg border border-border bg-card p-4"
+        >
+          <p className="text-sm font-medium">Añadir tutor legal</p>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Nombre</label>
+            <input
+              name="nombre"
+              required
+              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Email</label>
+            <input
+              type="email"
+              name="email"
+              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">Teléfono</label>
+              <input
+                name="telefono"
+                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Parentesco</label>
+              <select
+                name="parentesco"
+                defaultValue=""
+                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              >
+                <option value="">-</option>
+                <option value="Madre">Madre</option>
+                <option value="Padre">Padre</option>
+                <option value="Tutor legal">Tutor legal</option>
+              </select>
+            </div>
+          </div>
+
+          <FormSubmitButton>Añadir tutor</FormSubmitButton>
+        </form>
+      )}
+    </div>
+  )
+}

@@ -1,0 +1,58 @@
+@import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: hsl(40 33% 97%);
+  --foreground: hsl(0 0% 10%);
+  --card: hsl(40 33% 97%);
+  --card-foreground: hsl(0 0% 10%);
+  --primary: hsl(348 60% 39%);
+  --primary-foreground: hsl(40 33% 97%);
+  --secondary: hsl(43 79% 55%);
+  --secondary-foreground: hsl(0 0% 10%);
+  --accent: hsl(40 55% 85%);
+  --accent-foreground: hsl(0 0% 10%);
+  --muted: hsl(40 30% 92%);
+  --muted-foreground: hsl(0 0% 35%);
+  --border: hsl(40 20% 85%);
+  --ring: hsl(348 60% 39%);
+}
+
+.dark {
+  --background: hsl(0 0% 10%);
+  --foreground: hsl(40 33% 97%);
+  --card: hsl(0 0% 14%);
+  --card-foreground: hsl(40 33% 97%);
+  --primary: hsl(43 79% 55%);
+  --primary-foreground: hsl(0 0% 10%);
+  --secondary: hsl(348 60% 39%);
+  --secondary-foreground: hsl(40 33% 97%);
+  --accent: hsl(0 0% 20%);
+  --accent-foreground: hsl(40 33% 97%);
+  --muted: hsl(0 0% 18%);
+  --muted-foreground: hsl(40 15% 70%);
+  --border: hsl(0 0% 22%);
+  --ring: hsl(43 79% 55%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
