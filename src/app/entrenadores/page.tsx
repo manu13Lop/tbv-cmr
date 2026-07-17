@@ -91,7 +91,7 @@ export default async function EntrenadoresPage({
         </div>
       </div>
 
-      <Suspense>
+      <Suspense fallback={null}>
         <FilterBar filters={filters} />
       </Suspense>
 

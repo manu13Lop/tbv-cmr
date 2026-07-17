@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Search, X } from "lucide-react"
 import { createClient } from "@/lib/supabase-client"
@@ -19,6 +19,7 @@ export function SearchGlobal() {
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const supabase = useMemo(() => createClient(), [])
 
   const search = useCallback(async (q: string) => {
     if (q.length < 2) {
@@ -27,62 +28,66 @@ export function SearchGlobal() {
     }
 
     setLoading(true)
-    const supabase = createClient()
-    const pattern = `%${q}%`
+    try {
+      const pattern = `%${q}%`
 
-    const [jugadoras, equipos, entrenadores, convocatorias] = await Promise.all([
-      supabase.from("jugadoras").select("id, nombre, apellidos").or(`nombre.ilike.${pattern},apellidos.ilike.${pattern}`).limit(5),
-      supabase.from("equipos").select("id, nombre, categoria").or(`nombre.ilike.${pattern},categoria.ilike.${pattern}`).limit(5),
-      supabase.from("entrenadores").select("id, nombre, apellidos").or(`nombre.ilike.${pattern},apellidos.ilike.${pattern}`).limit(5),
-      supabase.from("eventos").select("id, tipo, equipos(nombre, categoria)").or(`tipo.ilike.${pattern},lugar.ilike.${pattern},rival.ilike.${pattern}`).limit(5),
-    ])
+      const [jugadoras, equipos, entrenadores, convocatorias] = await Promise.all([
+        supabase.from("jugadoras").select("id, nombre, apellidos").or(`nombre.ilike.${pattern},apellidos.ilike.${pattern}`).limit(5),
+        supabase.from("equipos").select("id, nombre, categoria").or(`nombre.ilike.${pattern},categoria.ilike.${pattern}`).limit(5),
+        supabase.from("entrenadores").select("id, nombre, apellidos").or(`nombre.ilike.${pattern},apellidos.ilike.${pattern}`).limit(5),
+        supabase.from("eventos").select("id, tipo, equipos(nombre, categoria)").or(`tipo.ilike.${pattern},lugar.ilike.${pattern},rival.ilike.${pattern}`).limit(5),
+      ])
 
-    const items: SearchResult[] = []
+      const items: SearchResult[] = []
 
-    for (const j of jugadoras.data ?? []) {
-      items.push({
-        tipo: "Jugadora",
-        id: j.id,
-        titulo: `${j.nombre} ${j.apellidos}`,
-        subtitulo: "",
-        href: `/jugadoras/${j.id}`,
-      })
+      for (const j of jugadoras.data ?? []) {
+        items.push({
+          tipo: "Jugadora",
+          id: j.id,
+          titulo: `${j.nombre} ${j.apellidos}`,
+          subtitulo: "",
+          href: `/jugadoras/${j.id}`,
+        })
+      }
+
+      for (const e of equipos.data ?? []) {
+        items.push({
+          tipo: "Equipo",
+          id: e.id,
+          titulo: e.nombre,
+          subtitulo: e.categoria,
+          href: `/equipos/${e.id}`,
+        })
+      }
+
+      for (const e of entrenadores.data ?? []) {
+        items.push({
+          tipo: "Entrenador",
+          id: e.id,
+          titulo: `${e.nombre} ${e.apellidos}`,
+          subtitulo: "",
+          href: `/entrenadores/${e.id}`,
+        })
+      }
+
+      for (const c of convocatorias.data ?? []) {
+        const eq = c.equipos as any
+        items.push({
+          tipo: "Convocatoria",
+          id: c.id,
+          titulo: `${c.tipo} ${eq?.nombre ?? ""}`,
+          subtitulo: eq?.categoria ?? "",
+          href: `/convocatorias/${c.id}`,
+        })
+      }
+
+      setResults(items)
+    } catch {
+      setResults([])
+    } finally {
+      setLoading(false)
     }
-
-    for (const e of equipos.data ?? []) {
-      items.push({
-        tipo: "Equipo",
-        id: e.id,
-        titulo: e.nombre,
-        subtitulo: e.categoria,
-        href: `/equipos/${e.id}`,
-      })
-    }
-
-    for (const e of entrenadores.data ?? []) {
-      items.push({
-        tipo: "Entrenador",
-        id: e.id,
-        titulo: `${e.nombre} ${e.apellidos}`,
-        subtitulo: "",
-        href: `/entrenadores/${e.id}`,
-      })
-    }
-
-    for (const c of convocatorias.data ?? []) {
-      const eq = c.equipos as any
-      items.push({
-        tipo: "Convocatoria",
-        id: c.id,
-        titulo: `${c.tipo} ${eq?.nombre ?? ""}`,
-        subtitulo: eq?.categoria ?? "",
-        href: `/convocatorias/${c.id}`,
-      })
-    }
-
-    setResults(items)
-    setLoading(false)
-  }, [])
+  }, [supabase])
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -92,7 +97,7 @@ export function SearchGlobal() {
   }, [query, search])
 
   useEffect(() => {
-    function handleKeyDown(e: KeyboardKey) {
+    function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault()
         setOpen((o) => !o)
@@ -166,5 +171,3 @@ export function SearchGlobal() {
     </div>
   )
 }
-
-type KeyboardKey = { key: string; metaKey?: boolean; ctrlKey?: boolean; preventDefault: () => void }

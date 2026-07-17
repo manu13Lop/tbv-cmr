@@ -85,7 +85,7 @@ export default async function EquiposPage({
         )}
       </div>
 
-      <Suspense>
+      <Suspense fallback={null}>
         <FilterBar filters={filters} />
       </Suspense>
 

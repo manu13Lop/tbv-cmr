@@ -137,7 +137,7 @@ export default async function ConvocatoriasPage({
         </Link>
       </div>
 
-      <Suspense>
+      <Suspense fallback={null}>
         <FilterBar filters={filters} />
       </Suspense>
 
