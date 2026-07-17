@@ -74,7 +74,7 @@ export default async function EquipoDetallePage({
   for (const ev of (entrenamientosEquipo ?? [])) {
     const { data: sesion } = await supabase
       .from("sesion_entrenamiento")
-      .select("id, objetivo_principal, objetivo_secundario_a, objetivo_secundario_b, observaciones_entrenador")
+      .select("id, objetivo_principal, objetivo_secundario_a, objetivo_secundario_b, observaciones_entrenador, valoracion_entrenamiento")
       .eq("evento_id", ev.id)
       .maybeSingle()
 
@@ -216,6 +216,11 @@ export default async function EquipoDetallePage({
                     {ev.sesion.observaciones_entrenador && (
                       <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                         {ev.sesion.observaciones_entrenador}
+                      </p>
+                    )}
+                    {ev.sesion.valoracion_entrenamiento && (
+                      <p className="mt-1 line-clamp-2 text-xs italic text-muted-foreground">
+                        Valoración: {ev.sesion.valoracion_entrenamiento}
                       </p>
                     )}
                   </div>

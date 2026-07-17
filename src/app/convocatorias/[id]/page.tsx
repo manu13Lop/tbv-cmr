@@ -225,6 +225,7 @@ async function guardarSesionEntrenamiento(eventoId: string, formData: FormData) 
   const objetivoSecundarioA = (formData.get("objetivo_secundario_a") as string) || ""
   const objetivoSecundarioB = (formData.get("objetivo_secundario_b") as string) || ""
   const observaciones = (formData.get("observaciones_entrenador") as string) || ""
+  const valoracion = (formData.get("valoracion_entrenamiento") as string) || ""
 
   const supabase = await createClient()
 
@@ -245,6 +246,7 @@ async function guardarSesionEntrenamiento(eventoId: string, formData: FormData) 
         objetivo_secundario_a: objetivoSecundarioA || null,
         objetivo_secundario_b: objetivoSecundarioB || null,
         observaciones_entrenador: observaciones || null,
+        valoracion_entrenamiento: valoracion || null,
       })
       .eq("id", sesionExistente.id)
     sesionId = sesionExistente.id
@@ -257,6 +259,7 @@ async function guardarSesionEntrenamiento(eventoId: string, formData: FormData) 
         objetivo_secundario_a: objetivoSecundarioA || null,
         objetivo_secundario_b: objetivoSecundarioB || null,
         observaciones_entrenador: observaciones || null,
+        valoracion_entrenamiento: valoracion || null,
       })
       .select("id")
       .single()
@@ -720,6 +723,20 @@ export default async function ConvocatoriaDetallePage({
                 rows={5}
                 defaultValue={sesionExistente?.observaciones_entrenador ?? ""}
                 placeholder="Desarrollo por escrito de la sesión: cómo se va a desarrollar el entrenamiento, aspectos a destacar, ritmo, intensidad, etc."
+                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              />
+            </div>
+
+            {/* Valoración del entrenamiento */}
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                Valoración del entrenamiento
+              </label>
+              <textarea
+                name="valoracion_entrenamiento"
+                rows={4}
+                defaultValue={sesionExistente?.valoracion_entrenamiento ?? ""}
+                placeholder="¿Cómo ha ido el entrenamiento? Ritmo, implicación de las jugadoras, incidencias, ejercicios que han conectado o no, aspectos a mejorar..."
                 className="w-full rounded-md border border-border bg-background p-2 text-sm"
               />
             </div>

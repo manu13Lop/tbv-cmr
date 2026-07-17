@@ -5,8 +5,15 @@ import { FormSubmitButton } from "@/components/form-submit-button"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { actualizarEjercicioSchema } from "@/lib/validations"
 import { ImageUpload } from "@/components/image-upload"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Trash2 } from "lucide-react"
 import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
+
+async function eliminarEjercicio(id: string) {
+  "use server"
+  const supabase = await createClient()
+  await supabase.from("ejercicios").delete().eq("id", id)
+  redirect("/entrenadores/ejercicios")
+}
 
 async function actualizarEjercicio(id: string, formData: FormData) {
   "use server"
@@ -74,6 +81,7 @@ export default async function EjercicioDetallePage({
 
   const autor = ejercicio.entrenadores as any
   const updateAction = actualizarEjercicio.bind(null, id)
+  const deleteAction = eliminarEjercicio.bind(null, id)
 
   return (
     <div className="p-6">
@@ -93,6 +101,20 @@ export default async function EjercicioDetallePage({
             {autor && ` — Creado por ${autor.nombre} ${autor.apellidos}`}
           </p>
         </div>
+        {puedeEditar && (
+          <form action={deleteAction}>
+            <button
+              type="submit"
+              onClick={(e) => {
+                if (!confirm("¿Eliminar este ejercicio?")) e.preventDefault()
+              }}
+              className="inline-flex items-center gap-1 rounded-md border border-destructive px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="size-3.5" />
+              Eliminar
+            </button>
+          </form>
+        )}
       </div>
 
       {/* Formulario de edición */}
