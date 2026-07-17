@@ -9,6 +9,7 @@ type Seguimiento = {
   tipo_baja: string | null
   es_alta: boolean
   autor_nombre_snapshot: string | null
+  autor_puesto_snapshot?: string | null
 }
 
 const tipoColor: Record<string, { bg: string; text: string; label: string }> = {
