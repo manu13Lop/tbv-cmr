@@ -6,6 +6,7 @@ import { FormSubmitButton } from "@/components/form-submit-button"
 import { ArrowLeft } from "lucide-react"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { actualizarJugadoraSchema, asignarEquipoSchema, crearTutorSchema } from "@/lib/validations"
+import { ConfirmActionButton } from "@/components/confirm-action-button"
 
 async function actualizarJugadora(id: string, formData: FormData) {
   "use server"
@@ -20,30 +21,16 @@ async function actualizarJugadora(id: string, formData: FormData) {
   const { nombre, apellidos, fecha_nacimiento, codigo_interno, email, talla_camiseta_entreno, talla_camiseta_partido, talla_calzona, talla_chandal, talla_chaqueton, reconocimiento_medico_estado, activa } = validation.data
 
   const supabase = await createClient()
-
   const { error } = await supabase
     .from("jugadoras")
     .update({
-      nombre,
-      apellidos,
-      fecha_nacimiento,
-      codigo_interno,
-      email,
-      talla_camiseta_entreno,
-      talla_camiseta_partido,
-      talla_calzona,
-      talla_chandal,
-      talla_chaqueton,
-      reconocimiento_medico_estado,
-      activa,
+      nombre, apellidos, fecha_nacimiento, codigo_interno, email,
+      talla_camiseta_entreno, talla_camiseta_partido, talla_calzona, talla_chandal, talla_chaqueton,
+      reconocimiento_medico_estado, activa,
     })
     .eq("id", id)
 
-  if (error) {
-    console.error(error)
-    return
-  }
-
+  if (error) redirect(`/jugadoras/${id}?error=Error+al+guardar`)
   redirect(`/jugadoras/${id}?guardado=1`)
 }
 
@@ -58,22 +45,12 @@ async function asignarEquipo(id: string, formData: FormData) {
   }
 
   const { equipo_id, temporada, dorsal, posicion } = validation.data
-
   const supabase = await createClient()
-
   const { error } = await supabase.from("jugadora_equipo_temporada").insert({
-    jugadora_id: id,
-    equipo_id,
-    temporada,
-    dorsal,
-    posicion,
+    jugadora_id: id, equipo_id, temporada, dorsal, posicion,
   })
 
-  if (error) {
-    console.error(error)
-    return
-  }
-
+  if (error) redirect(`/jugadoras/${id}?error=Error+al+asignar+equipo`)
   redirect(`/jugadoras/${id}`)
 }
 
@@ -83,17 +60,9 @@ async function quitarVinculo(id: string, vinculoId: string) {
   if (!usuario || !tienePermiso(usuario.permisos, "jugadoras.editar")) return
 
   const supabase = await createClient()
+  const { error } = await supabase.from("jugadora_equipo_temporada").delete().eq("id", vinculoId)
 
-  const { error } = await supabase
-    .from("jugadora_equipo_temporada")
-    .delete()
-    .eq("id", vinculoId)
-
-  if (error) {
-    console.error(error)
-    return
-  }
-
+  if (error) redirect(`/jugadoras/${id}?error=Error+al+quitar+v%C3%ADnculo`)
   redirect(`/jugadoras/${id}`)
 }
 
@@ -108,22 +77,12 @@ async function crearTutor(id: string, formData: FormData) {
   }
 
   const { nombre, email, telefono, parentesco } = validation.data
-
   const supabase = await createClient()
-
   const { error } = await supabase.from("tutores").insert({
-    jugadora_id: id,
-    nombre,
-    email: email || null,
-    telefono: telefono || null,
-    parentesco: parentesco || null,
+    jugadora_id: id, nombre, email: email || null, telefono: telefono || null, parentesco: parentesco || null,
   })
 
-  if (error) {
-    console.error(error)
-    return
-  }
-
+  if (error) redirect(`/jugadoras/${id}?error=Error+al+crear+tutor`)
   redirect(`/jugadoras/${id}`)
 }
 
@@ -133,14 +92,9 @@ async function borrarTutor(id: string, tutorId: string) {
   if (!usuario || !tienePermiso(usuario.permisos, "jugadoras.editar")) return
 
   const supabase = await createClient()
-
   const { error } = await supabase.from("tutores").delete().eq("id", tutorId)
 
-  if (error) {
-    console.error(error)
-    return
-  }
-
+  if (error) redirect(`/jugadoras/${id}?error=Error+al+borrar+tutor`)
   redirect(`/jugadoras/${id}`)
 }
 
@@ -402,14 +356,13 @@ export default async function JugadoraDetallePage({
                     <td className="p-3">{v.posicion ?? "-"}</td>
                     {puedeEditar && (
                       <td className="p-3 text-right">
-                        <form action={quitarAction}>
-                          <button
-                            type="submit"
-                            className="text-xs text-destructive hover:underline"
-                          >
-                            Quitar
-                          </button>
-                        </form>
+                        <ConfirmActionButton
+                          onConfirm={() => quitarVinculo(id, v.id)}
+                          label="Quitar"
+                          confirmTitle="Quitar vínculo de equipo"
+                          confirmDescription="¿Segura que quieres desasignar esta jugadora de este equipo?"
+                          className="text-xs text-destructive hover:underline"
+                        />
                       </td>
                     )}
                   </tr>
@@ -522,14 +475,13 @@ export default async function JugadoraDetallePage({
                     <td className="p-3">{t.parentesco ?? "-"}</td>
                     {puedeEditar && (
                       <td className="p-3 text-right">
-                        <form action={borrarAction}>
-                          <button
-                            type="submit"
-                            className="text-xs text-destructive hover:underline"
-                          >
-                            Quitar
-                          </button>
-                        </form>
+                        <ConfirmActionButton
+                          onConfirm={() => borrarTutor(id, t.id)}
+                          label="Quitar"
+                          confirmTitle="Eliminar tutor"
+                          confirmDescription="¿Segura que quieres eliminar este tutor legal?"
+                          className="text-xs text-destructive hover:underline"
+                        />
                       </td>
                     )}
                   </tr>

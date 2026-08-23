@@ -9,6 +9,8 @@ import { ExportPDFButton } from "@/components/export-pdf-button"
 import { formatDateForCSV } from "@/lib/export-csv"
 import { PaginationWrapper as Pagination } from "@/components/pagination-wrapper"
 
+const ITEMS_PER_PAGE = 15
+
 export default async function JugadorasPage({
   searchParams,
 }: {
@@ -31,45 +33,67 @@ export default async function JugadorasPage({
   const filtros = await searchParams
 
   const supabase = await createClient()
+  const currentPage = Math.max(1, Number(filtros.page) || 1)
+  const from = (currentPage - 1) * ITEMS_PER_PAGE
+  const to = from + ITEMS_PER_PAGE - 1
 
-  const { data: jugadoras } = await supabase
+  let query = supabase
     .from("jugadoras")
-    .select(`
-      id, nombre, apellidos, fecha_nacimiento, email, codigo_interno, activa, reconocimiento_medico_estado,
-      jugadora_equipo_temporada (
-        dorsal, posicion, temporada, equipo_id,
-        equipos ( nombre, categoria )
-      )
-    `)
+    .select(
+      `
+        id, nombre, apellidos, fecha_nacimiento, email, codigo_interno, activa, reconocimiento_medico_estado,
+        jugadora_equipo_temporada (
+          dorsal, posicion, temporada, equipo_id,
+          equipos ( nombre, categoria )
+        )
+      `,
+      { count: "exact" }
+    )
     .order("apellidos", { ascending: true })
+    .range(from, to)
+
+  if (filtros.nombre) {
+    query = query.ilike("nombre", `%${filtros.nombre}%`)
+    query = query.or(`nombre.ilike.%${filtros.nombre}%,apellidos.ilike.%${filtros.nombre}%`)
+  }
+
+  if (filtros.equipo) {
+    query = query.eq("jugadora_equipo_temporada.equipo_id", filtros.equipo)
+  }
+
+  if (filtros.categoria) {
+    query = query.eq("jugadora_equipo_temporada.equipos.categoria", filtros.categoria)
+  }
+
+  if (filtros.temporada) {
+    query = query.eq("jugadora_equipo_temporada.temporada", filtros.temporada)
+  }
+
+  if (filtros.posicion) {
+    query = query.eq("jugadora_equipo_temporada.posicion", filtros.posicion)
+  }
+
+  if (filtros.estado === "activa") {
+    query = query.eq("activa", true)
+  } else if (filtros.estado === "inactiva") {
+    query = query.eq("activa", false)
+  }
+
+  if (filtros.rec_medico) {
+    query = query.eq("reconocimiento_medico_estado", filtros.rec_medico)
+  }
+
+  const { data: jugadoras, count, error } = await query
+
+  if (error) {
+    console.error("Error fetching jugadoras:", error)
+  }
+
+  const totalPages = Math.ceil((count ?? 0) / ITEMS_PER_PAGE)
+  const jugadorasData = jugadoras ?? []
 
   const { data: equipos } = await supabase.from("equipos").select("id, nombre, categoria").order("nombre")
-
   const categorias = [...new Set((equipos ?? []).map((e) => e.categoria).filter(Boolean))]
-
-  const jugadorasFiltradas = (jugadoras ?? []).filter((j: any) => {
-    const vinculo = j.jugadora_equipo_temporada?.[0]
-    const nombreCompleto = `${j.nombre} ${j.apellidos}`.toLowerCase()
-
-    if (filtros.nombre && !nombreCompleto.includes(filtros.nombre.toLowerCase())) return false
-    if (filtros.equipo && vinculo?.equipo_id !== filtros.equipo) return false
-    if (filtros.categoria && vinculo?.equipos?.categoria !== filtros.categoria) return false
-    if (filtros.temporada && vinculo?.temporada !== filtros.temporada) return false
-    if (filtros.posicion && vinculo?.posicion !== filtros.posicion) return false
-    if (filtros.estado === "activa" && !j.activa) return false
-    if (filtros.estado === "inactiva" && j.activa) return false
-    if (filtros.rec_medico && j.reconocimiento_medico_estado !== filtros.rec_medico) return false
-
-    return true
-  })
-
-  const itemsPerPage = 15
-  const totalPages = Math.ceil(jugadorasFiltradas.length / itemsPerPage)
-  const currentPage = Math.max(1, Math.min(Number(filtros.page) || 1, totalPages || 1))
-  const paginatedJugadoras = jugadorasFiltradas.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
 
   return (
     <div className="p-6">
@@ -81,13 +105,13 @@ export default async function JugadorasPage({
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-primary">Jugadoras</h1>
-          <p className="text-sm text-muted-foreground">{jugadorasFiltradas.length} jugadora(s)</p>
+          <p className="text-sm text-muted-foreground">{(count ?? 0)} jugadora(s)</p>
         </div>
         <div className="flex gap-2">
           <ExportCSVButton
             filename="jugadoras"
             headers={["Nombre", "Apellidos", "Fecha Nacimiento", "Email", "Codigo Interno", "Equipo(s)", "Posicion", "Estado Medico", "Activa"]}
-            rows={jugadorasFiltradas.map((j: any) => {
+            rows={jugadorasData.map((j: any) => {
               const vinculo = j.jugadora_equipo_temporada?.[0]
               const equipo = vinculo?.equipos ? `${vinculo.equipos.nombre} (${vinculo.equipos.categoria})` : ""
               return [
@@ -116,7 +140,7 @@ export default async function JugadorasPage({
               { header: "Rec. Médico", key: "rec_medico" },
               { header: "Estado", key: "estado" },
             ]}
-            rows={jugadorasFiltradas.map((j: any) => {
+            rows={jugadorasData.map((j: any) => {
               const vinculo = j.jugadora_equipo_temporada?.[0]
               const equipo = vinculo?.equipos ? `${vinculo.equipos.nombre} (${vinculo.equipos.categoria})` : "-"
               return {
@@ -197,7 +221,7 @@ export default async function JugadorasPage({
         </div>
       </form>
 
-      {jugadorasFiltradas.length === 0 ? (
+      {jugadorasData.length === 0 ? (
         <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground">
           No hay jugadoras con esos filtros.
         </div>
@@ -215,7 +239,7 @@ export default async function JugadorasPage({
               </tr>
             </thead>
             <tbody>
-              {paginatedJugadoras.map((j: any) => {
+              {jugadorasData.map((j: any) => {
                 const vinculo = j.jugadora_equipo_temporada?.[0]
                 return (
                   <tr key={j.id} className="border-t border-border hover:bg-muted/50">

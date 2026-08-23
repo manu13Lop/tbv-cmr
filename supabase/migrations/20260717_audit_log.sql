@@ -21,6 +21,20 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
+  CREATE POLICY "Usuarios con permiso auditoria.leer pueden ver audit log"
+    ON audit_log FOR SELECT
+    USING (
+      EXISTS (
+        SELECT 1 FROM usuarios u
+        JOIN rol_permiso rp ON rp.rol_id = u.rol_id
+        JOIN permisos p ON p.id = rp.permiso_id
+        WHERE u.id = auth.uid() AND p.nombre = 'auditoria.leer'
+      )
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
   CREATE POLICY "Sistema puede insertar audit log"
     ON audit_log FOR INSERT
     WITH CHECK (auth.role() = 'authenticated');
@@ -29,3 +43,4 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_audit_log_tabla ON audit_log(tabla, registro_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_usuario ON audit_log(usuario_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON audit_log(created_at DESC);

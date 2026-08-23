@@ -8,6 +8,8 @@ import { Resend } from "resend"
 import { ArrowLeft } from "lucide-react"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { actualizarEventoSchema, crearSesionEntrenamientoSchema } from "@/lib/validations"
+import { ConfirmActionButton } from "@/components/confirm-action-button"
+
 
 async function actualizarEvento(eventoId: string, formData: FormData) {
   "use server"
@@ -19,8 +21,7 @@ async function actualizarEvento(eventoId: string, formData: FormData) {
   const { tipo, fecha_hora, lugar, rival, observaciones } = validation.data
 
   const supabase = await createClient()
-
-  await supabase
+  const { error } = await supabase
     .from("eventos")
     .update({
       tipo: tipo ?? "",
@@ -31,16 +32,16 @@ async function actualizarEvento(eventoId: string, formData: FormData) {
     })
     .eq("id", eventoId)
 
+  if (error) redirect(`/convocatorias/${eventoId}?error=${encodeURIComponent("Error al guardar los cambios")}`)
   redirect(`/convocatorias/${eventoId}`)
 }
 
 async function eliminarEvento(eventoId: string) {
   "use server"
   const supabase = await createClient()
-
   await supabase.from("convocatorias").delete().eq("evento_id", eventoId)
-  await supabase.from("eventos").delete().eq("id", eventoId)
-
+  const { error } = await supabase.from("eventos").delete().eq("id", eventoId)
+  if (error) redirect(`/convocatorias/${eventoId}?error=${encodeURIComponent("Error al eliminar el evento")}`)
   redirect("/convocatorias")
 }
 
@@ -63,16 +64,18 @@ async function toggleCampo(
   const nuevoValor = !valorActual
 
   if (existente) {
-    await supabase
+    const { error } = await supabase
       .from("convocatorias")
       .update({ [campo]: nuevoValor })
       .eq("id", existente.id)
+    if (error) redirect(`/convocatorias/${eventoId}?error=${encodeURIComponent("Error al actualizar")}`)
   } else {
-    await supabase.from("convocatorias").insert({
+    const { error } = await supabase.from("convocatorias").insert({
       evento_id: eventoId,
       jugadora_id: jugadoraId,
       [campo]: nuevoValor,
     })
+    if (error) redirect(`/convocatorias/${eventoId}?error=${encodeURIComponent("Error al actualizar")}`)
   }
 
   redirect(`/convocatorias/${eventoId}`)
@@ -119,7 +122,7 @@ async function enviarConvocatoria(eventoId: string) {
     .eq("id", eventoId)
     .single()
 
-  if (!evento) return
+  if (!evento) redirect(`/convocatorias/${eventoId}?error=${encodeURIComponent("Evento no encontrado")}`)
 
   const { data: convocatorias } = await supabase
     .from("convocatorias")
@@ -229,7 +232,6 @@ async function guardarSesionEntrenamiento(eventoId: string, formData: FormData) 
 
   const supabase = await createClient()
 
-  // Upsert sesion_entrenamiento
   const { data: sesionExistente } = await supabase
     .from("sesion_entrenamiento")
     .select("id")
@@ -239,7 +241,7 @@ async function guardarSesionEntrenamiento(eventoId: string, formData: FormData) 
   let sesionId: string
 
   if (sesionExistente) {
-    await supabase
+    const { error } = await supabase
       .from("sesion_entrenamiento")
       .update({
         objetivo_principal: objetivoPrincipal || null,
@@ -249,9 +251,10 @@ async function guardarSesionEntrenamiento(eventoId: string, formData: FormData) 
         valoracion_entrenamiento: valoracion || null,
       })
       .eq("id", sesionExistente.id)
+    if (error) redirect(`/convocatorias/${eventoId}?error=${encodeURIComponent("Error al guardar la planificación")}`)
     sesionId = sesionExistente.id
   } else {
-    const { data: nuevaSesion } = await supabase
+    const { data: nuevaSesion, error } = await supabase
       .from("sesion_entrenamiento")
       .insert({
         evento_id: eventoId,
@@ -263,23 +266,24 @@ async function guardarSesionEntrenamiento(eventoId: string, formData: FormData) 
       })
       .select("id")
       .single()
+    if (error) redirect(`/convocatorias/${eventoId}?error=${encodeURIComponent("Error al guardar la planificación")}`)
     sesionId = nuevaSesion!.id
   }
 
-  // Reemplazar ejercicios
   await supabase
     .from("sesion_entrenamiento_ejercicio")
     .delete()
     .eq("sesion_id", sesionId)
 
   if (ejercicioIds.length > 0) {
-    await supabase.from("sesion_entrenamiento_ejercicio").insert(
+    const { error } = await supabase.from("sesion_entrenamiento_ejercicio").insert(
       ejercicioIds.map((ejId, idx) => ({
         sesion_id: sesionId,
         ejercicio_id: ejId,
         orden: idx,
       }))
     )
+    if (error) redirect(`/convocatorias/${eventoId}?error=${encodeURIComponent("Error al guardar la planificación")}`)
   }
 
   redirect(`/convocatorias/${eventoId}`)
@@ -389,14 +393,13 @@ export default async function ConvocatoriaDetallePage({
           </p>
         </div>
 
-        <form action={eliminarAction}>
-          <button
-            type="submit"
-            className="rounded-md border border-destructive px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
-          >
-            Eliminar evento
-          </button>
-        </form>
+        <ConfirmActionButton
+          onConfirm={() => eliminarEvento(id)}
+          label="Eliminar evento"
+          confirmTitle="¿Eliminar este evento?"
+          confirmDescription="Se eliminará el evento y todas sus convocatorias. Esta acción no se puede deshacer."
+          className="rounded-md border border-destructive px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+        />
       </div>
 
       {envio === "ok" && (

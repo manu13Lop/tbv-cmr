@@ -14,6 +14,8 @@ import {
   MessageSquare,
   UserCog,
   ClipboardCheck,
+  GraduationCap,
+  History,
 } from "lucide-react"
 
 const navItems = [
@@ -25,8 +27,10 @@ const navItems = [
   { href: "/sanitario", label: "Sanitario", icon: HeartPulse, permiso: "sanitario.leer" },
   { href: "/scouting", label: "Scouting", icon: Search, permiso: "scouting.leer" },
   { href: "/logistica", label: "Logística", icon: Truck, permiso: "logistica.leer" },
+  { href: "/formacion", label: "Formación", icon: GraduationCap, permiso: null },
   { href: "/usuarios", label: "Usuarios", icon: UserCog, permiso: "usuarios.gestionar" },
   { href: "/mensajes", label: "Mensajes", icon: MessageSquare, permiso: "mensajes.enviar" },
+  { href: "/auditoria", label: "Auditoría", icon: History, permiso: null },
 ]
 
 export function SidebarNav({ permisos }: { permisos: string[] }) {

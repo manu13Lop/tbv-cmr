@@ -1,5 +1,5 @@
 import { generarICS, generarLinkGoogleCalendar } from "@/lib/ics"
-import { Resend } from "resend"
+import { resend, EMAIL_FROM } from "@/lib/resend"
 
 export async function enviarEmailConvocatoria({
   destinatarioEmail,
@@ -67,10 +67,8 @@ export async function enviarEmailConvocatoria({
     </div>
   `
 
-  const resend = new Resend(process.env.RESEND_API_KEY as string)
-
   await resend.emails.send({
-    from: "Triana Balonmano Vivero <onboarding@resend.dev>",
+    from: EMAIL_FROM,
     to: destinatarioEmail,
     subject: `Convocatoria: ${titulo} - ${fechaFormateada}`,
     html: htmlBody,

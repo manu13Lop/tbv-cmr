@@ -4,8 +4,10 @@ import Link from "next/link"
 import { FormSubmitButton } from "@/components/form-submit-button"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { actualizarEntrenadorSchema, asignarEquipoEntrenadorSchema } from "@/lib/validations"
-import { ArrowLeft, Trash2 } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
+import { ConfirmActionButton } from "@/components/confirm-action-button"
+
 
 async function actualizarEntrenador(id: string, formData: FormData) {
   "use server"
@@ -15,22 +17,22 @@ async function actualizarEntrenador(id: string, formData: FormData) {
     return redirect(`/entrenadores/${id}?error=${encodeURIComponent(getFirstError(validation.errors))}`)
   }
 
-  const supabase = await createClient()
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from("entrenadores")
+      .update({
+        nombre: validation.data.nombre,
+        apellidos: validation.data.apellidos,
+        email: validation.data.email || null,
+        telefono: validation.data.telefono || null,
+        titulacion: validation.data.titulacion || null,
+        especialidad: validation.data.especialidad || null,
+        activo: validation.data.activo ?? true,
+      })
+      .eq("id", id)
 
-  await supabase
-    .from("entrenadores")
-    .update({
-      nombre: validation.data.nombre,
-      apellidos: validation.data.apellidos,
-      email: validation.data.email || null,
-      telefono: validation.data.telefono || null,
-      titulacion: validation.data.titulacion || null,
-      especialidad: validation.data.especialidad || null,
-      activo: validation.data.activo ?? true,
-    })
-    .eq("id", id)
-
-  redirect(`/entrenadores/${id}`)
+    if (error) redirect(`/entrenadores/${id}?error=${encodeURIComponent("Error al guardar los cambios")}`)
+    redirect(`/entrenadores/${id}`)
 }
 
 async function asignarEquipo(entrenadorId: string, formData: FormData) {
@@ -41,25 +43,27 @@ async function asignarEquipo(entrenadorId: string, formData: FormData) {
     return redirect(`/entrenadores/${entrenadorId}?error=${encodeURIComponent(getFirstError(validation.errors))}`)
   }
 
-  const supabase = await createClient()
-  const rol = (formData.get("rol") as string) || "entrenador"
+    const supabase = await createClient()
+    const rol = (formData.get("rol") as string) || "entrenador"
 
-  await supabase.from("entrenador_equipo").insert({
-    entrenador_id: entrenadorId,
-    equipo_id: validation.data.equipo_id,
-    temporada: validation.data.temporada,
-    rol,
-  })
+    const { error } = await supabase.from("entrenador_equipo").insert({
+      entrenador_id: entrenadorId,
+      equipo_id: validation.data.equipo_id,
+      temporada: validation.data.temporada,
+      rol,
+    })
 
-  redirect(`/entrenadores/${entrenadorId}`)
+    if (error) redirect(`/entrenadores/${entrenadorId}?error=${encodeURIComponent("Error al asignar equipo")}`)
+    redirect(`/entrenadores/${entrenadorId}`)
 }
 
 async function desasignarEquipo(asignacionId: string, entrenadorId: string) {
   "use server"
 
-  const supabase = await createClient()
-  await supabase.from("entrenador_equipo").delete().eq("id", asignacionId)
-  redirect(`/entrenadores/${entrenadorId}`)
+    const supabase = await createClient()
+    const { error } = await supabase.from("entrenador_equipo").delete().eq("id", asignacionId)
+    if (error) redirect(`/entrenadores/${entrenadorId}?error=${encodeURIComponent("Error al desasignar equipo")}`)
+    redirect(`/entrenadores/${entrenadorId}`)
 }
 
 export default async function EntrenadorDetallePage({
@@ -225,14 +229,14 @@ export default async function EntrenadorDetallePage({
                   {a.rol === "entrenador" ? "Entrenador" : a.rol === "segundo_entrenador" ? "2do Entrenador" : a.rol === "auxiliar" ? "Auxiliar" : a.rol} — {a.temporada}
                 </span>
                 {puedeEditar && (
-                  <form action={desasignarEquipo.bind(null, a.id, id)}>
-                    <button
-                      type="submit"
-                      className="rounded-md p-1 text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </form>
+                  <ConfirmActionButton
+                    onConfirm={() => desasignarEquipo(a.id, id)}
+                    label=""
+                    icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>}
+                    confirmTitle="Desasignar equipo"
+                    confirmDescription="¿Seguro que quieres desasignar este equipo al entrenador?"
+                    className="rounded-md p-1 text-destructive hover:bg-destructive/10"
+                  />
                 )}
               </div>
             ))}

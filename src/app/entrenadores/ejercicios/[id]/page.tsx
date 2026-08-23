@@ -6,13 +6,15 @@ import { validateFormData, getFirstError } from "@/lib/validate"
 import { actualizarEjercicioSchema } from "@/lib/validations"
 import { ImageUpload } from "@/components/image-upload"
 import { optimizeImage, getImageExtension } from "@/lib/image-utils"
-import { ArrowLeft, Trash2 } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
+import { DeleteButton } from "@/components/delete-button"
 
 async function eliminarEjercicio(id: string) {
   "use server"
   const supabase = await createClient()
-  await supabase.from("ejercicios").delete().eq("id", id)
+  const { error } = await supabase.from("ejercicios").delete().eq("id", id)
+  if (error) redirect(`/entrenadores/ejercicios/${id}?error=Error+al+eliminar`)
   redirect("/entrenadores/ejercicios")
 }
 
@@ -35,7 +37,6 @@ async function actualizarEjercicio(id: string, formData: FormData) {
     objetivo_secundario_2: validation.data.objetivo_secundario_2 || null,
   }
 
-  // Subir nueva imagen si se adjunta
   const imagenFile = formData.get("imagen") as File | null
   if (imagenFile && imagenFile.size > 0) {
     const optimized = await optimizeImage(imagenFile)
@@ -104,22 +105,14 @@ export default async function EjercicioDetallePage({
           </p>
         </div>
         {puedeEditar && (
-          <form action={deleteAction}>
-            <button
-              type="submit"
-              onClick={(e) => {
-                if (!confirm("¿Eliminar este ejercicio?")) e.preventDefault()
-              }}
-              className="inline-flex items-center gap-1 rounded-md border border-destructive px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="size-3.5" />
-              Eliminar
-            </button>
-          </form>
+          <DeleteButton
+            action={deleteAction}
+            confirmTitle="¿Eliminar este ejercicio?"
+            confirmDescription="Se eliminará el ejercicio permanentemente. Esta acción no se puede deshacer."
+          />
         )}
       </div>
 
-      {/* Formulario de edición */}
       <form action={updateAction} className="max-w-2xl space-y-4">
         <ImageUpload
           name="imagen"

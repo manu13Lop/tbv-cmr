@@ -38,8 +38,11 @@ export async function middleware(request: NextRequest) {
     if (user && isLoginPage) {
       return NextResponse.redirect(new URL("/", request.url))
     }
-  } catch (error) {
-    console.error("Middleware error:", error)
+  } catch {
+    // Middleware should never crash — redirect to login as fallback
+    if (request.nextUrl.pathname !== "/login") {
+      return NextResponse.redirect(new URL("/login", request.url))
+    }
   }
 
   return response

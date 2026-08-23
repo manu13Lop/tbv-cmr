@@ -4,81 +4,24 @@ import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { FormSubmitButton } from "@/components/form-submit-button"
-import { ArrowLeft } from "lucide-react"
-import { validateFormData, getFirstError } from "@/lib/validate"
-import { crearUsuarioSchema } from "@/lib/validations"
+import { EliminarUsuarioButton } from "@/components/eliminar-usuario-button"
+import { ArrowLeft, Plus } from "lucide-react"
 import { PaginationWrapper as Pagination } from "@/components/pagination-wrapper"
-
-const ROLES = [
-  { id: "d711e285-4948-4d4f-8dc9-d5dc9872a253", nombre: "auxiliar" },
-  { id: "140e02da-1ff4-4d41-b419-552587262bac", nombre: "directiva" },
-  { id: "5c1b0361-228d-4ef2-9a26-17ef77e88d58", nombre: "director_tecnico" },
-  { id: "c0e7dca0-79ca-410b-8979-622a7e160407", nombre: "entrenador" },
-  { id: "038300fd-a3cd-4b61-8ac7-fd12743a5982", nombre: "sanitario" },
-]
-
-async function crearUsuario(formData: FormData) {
-  "use server"
-  const usuarioActual = await getUsuarioActual()
-  if (!usuarioActual || !(usuarioActual.esMaster || tienePermiso(usuarioActual.permisos, "usuarios.gestionar"))) {
-    return
-  }
-
-  const validation = validateFormData(crearUsuarioSchema, formData)
-  if (!validation.success) {
-    return redirect(`/usuarios?error=1`)
-  }
-
-  const { email, password, nombre, apellidos, rol_id } = validation.data
-
-  const admin = createAdminClient()
-
-  const { data: nuevoAuthUser, error: errorAuth } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  })
-
-  if (errorAuth || !nuevoAuthUser?.user) {
-    console.error(errorAuth)
-    return redirect("/usuarios?error=1")
-  }
-
-  const { error: errorTabla } = await admin.from("usuarios").insert({
-    id: nuevoAuthUser.user.id,
-    nombre,
-    apellidos,
-    rol_id,
-    es_master: false,
-  })
-
-  if (errorTabla) {
-    console.error(errorTabla)
-    return redirect("/usuarios?error=1")
-  }
-
-  redirect("/usuarios?creado=1")
-}
-
-async function cambiarRol(usuarioId: string, formData: FormData) {
-  "use server"
-  const usuarioActual = await getUsuarioActual()
-  if (!usuarioActual || !(usuarioActual.esMaster || tienePermiso(usuarioActual.permisos, "usuarios.gestionar"))) {
-    return
-  }
-
-  const rolId = formData.get("rol_id") as string
-  const supabase = await createClient()
-
-  await supabase.from("usuarios").update({ rol_id: rolId }).eq("id", usuarioId)
-
-  redirect("/usuarios")
-}
+import {
+  crearUsuario,
+  cambiarRol,
+  crearPermiso,
+  crearRol,
+  actualizarPermisosRol,
+  eliminarPermiso,
+  eliminarUsuario,
+} from "@/lib/usuarios-actions"
+import { getRoles } from "@/lib/roles"
 
 export default async function UsuariosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ creado?: string; error?: string; page?: string }>
+  searchParams: Promise<{ creado?: string; error?: string; page?: string; seccion?: string; editar_rol?: string }>
 }) {
   const usuarioActual = await getUsuarioActual()
   if (
@@ -88,15 +31,71 @@ export default async function UsuariosPage({
     redirect("/")
   }
 
-  const { creado, error, page } = await searchParams
+  const { creado, error, page, seccion } = await searchParams
 
   const supabase = await createClient()
-  const { data: usuarios } = await supabase
-    .from("usuarios")
-    .select("id, nombre, apellidos, rol_id, es_master")
-    .order("apellidos", { ascending: true })
+  const clienteQWeed = usuarioActual.esMaster ? createAdminClient() : supabase
 
-  const allUsuarios = usuarios ?? []
+  const [roles, { data: usuarios }, { data: permisosConRoles }] = await Promise.all([
+    getRoles(),
+    clienteQWeed
+      .from("usuarios")
+      .select(`
+        id,
+        nombre,
+        apellidos,
+        rol_id,
+        es_master,
+        usuario_permisos!left(
+          permiso_id,
+          permisos!inner(nombre)
+        )
+      `)
+      .order("apellidos", { ascending: true }),
+    usuarioActual.esMaster
+      ? clienteQWeed
+          .from("permisos")
+          .select(`
+            id,
+            nombre,
+            descripcion,
+            rol_permiso!left(rol_id)
+          `)
+          .order("nombre")
+      : Promise.resolve({ data: null }),
+  ])
+
+  const rolesMap = new Map(roles.map((r) => [r.id, r.nombre]))
+
+  const allUsuarios = (usuarios ?? []).map((u) => ({
+    id: u.id,
+    nombre: u.nombre,
+    apellidos: u.apellidos,
+    rol_id: u.rol_id,
+    es_master: u.es_master,
+    permisosIndividuales: ((u.usuario_permisos ?? []) as any[]).map((up) => up.permisos?.nombre).filter(Boolean) as string[],
+  }))
+
+  const permisos = (permisosConRoles ?? []).map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    descripcion: p.descripcion,
+    rolesIds: (p.rol_permiso ?? []).map((rp) => rp.rol_id) as string[],
+  }))
+
+  const permisosPorRol: Record<string, string[]> = {}
+  for (const p of permisos) {
+    for (const rolId of p.rolesIds) {
+      if (!permisosPorRol[rolId]) permisosPorRol[rolId] = []
+      permisosPorRol[rolId].push(p.nombre)
+    }
+  }
+
+  const permisosPorUsuario: Record<string, string[]> = {}
+  for (const u of allUsuarios) {
+    permisosPorUsuario[u.id] = u.permisosIndividuales
+  }
+
   const itemsPerPage = 15
   const totalPages = Math.ceil(allUsuarios.length / itemsPerPage)
   const currentPage = Math.max(1, Math.min(Number(page) || 1, totalPages || 1))
@@ -104,6 +103,8 @@ export default async function UsuariosPage({
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
+
+  const mostrarPermisos = seccion === "permisos" || usuarioActual.esMaster
 
   return (
     <div className="p-6">
@@ -120,6 +121,11 @@ export default async function UsuariosPage({
       {creado === "1" && (
         <div className="mb-4 rounded-md border border-primary bg-primary/10 p-3 text-sm text-primary">
           Usuario creado correctamente.
+        </div>
+      )}
+      {error === "email_duplicado" && (
+        <div className="mb-4 rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+          El email ya está registrado. Usa otro email o elimina el usuario existente.
         </div>
       )}
       {error === "1" && (
@@ -185,7 +191,7 @@ export default async function UsuariosPage({
             <option value="" disabled>
               Selecciona un rol
             </option>
-            {ROLES.map((r) => (
+            {roles.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.nombre}
               </option>
@@ -205,16 +211,25 @@ export default async function UsuariosPage({
               <th className="p-3 text-left font-medium">Nombre</th>
               <th className="p-3 text-left font-medium">Rol actual</th>
               <th className="p-3 text-left font-medium">Cambiar rol</th>
+              {usuarioActual.esMaster && (
+                <>
+                  <th className="p-3 text-left font-medium">Permisos</th>
+                  <th className="p-3 text-left font-medium">Acciones</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
             {paginatedUsuarios.map((u) => {
-              const rolNombre = ROLES.find((r) => r.id === u.rol_id)?.nombre ?? "Sin rol"
+              const rolNombre = rolesMap.get(u.rol_id) ?? "Sin rol"
               const cambiarRolAction = cambiarRol.bind(null, u.id)
 
               return (
-                <tr key={u.id} className="border-t border-border">
-                  <td className="p-3 font-medium">{u.nombre} {u.apellidos}</td>
+                   <tr key={u.id} className="border-t border-border">
+                   <td className="p-3 font-medium">
+                     {u.nombre} {u.apellidos}
+                     <span className="ml-2 text-xs text-muted-foreground/40">[{u.id.slice(0, 8)}...]</span>
+                   </td>
                   <td className="p-3">{u.es_master ? "Master" : rolNombre}</td>
                   <td className="p-3">
                     {u.es_master ? (
@@ -226,7 +241,7 @@ export default async function UsuariosPage({
                           defaultValue={u.rol_id ?? ""}
                           className="rounded-md border border-border bg-background p-1 text-xs"
                         >
-                          {ROLES.map((r) => (
+                          {roles.map((r) => (
                             <option key={r.id} value={r.id}>
                               {r.nombre}
                             </option>
@@ -238,6 +253,49 @@ export default async function UsuariosPage({
                       </form>
                     )}
                   </td>
+                  {usuarioActual.esMaster && (
+                    <td className="p-3">
+                      {u.es_master ? (
+                        <span className="text-xs text-muted-foreground">Master (todos)</span>
+                      ) : (
+                        <div className="flex flex-wrap items-center gap-1">
+                          {permisos.map((p) => {
+                            const tienePermisoUser = (permisosPorUsuario[u.id] ?? []).includes(p.nombre)
+                            if (!tienePermisoUser) return null
+                            return (
+                              <span key={p.id} className="text-xs px-1.5 py-0.5 bg-primary/10 text-primary rounded">
+                                {p.nombre}
+                              </span>
+                            )
+                          })}
+                          <span className="text-xs text-muted-foreground">
+                            ({permisosPorUsuario[u.id]?.length ?? 0} de {permisos?.length ?? 0})
+                          </span>
+                        </div>
+                      )}
+                    </td>
+                  )}
+                  {usuarioActual.esMaster && (
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                         <Link
+                           href={`/usuarios/editar?id=${encodeURIComponent(u.id)}`}
+                           className="text-xs text-primary hover:underline"
+                           title={`ID: ${u.id}`}
+                         >
+                          Gestionar
+                        </Link>
+                        <form action={eliminarUsuario.bind(null, u.id)} className="inline">
+                          <EliminarUsuarioButton
+                            className="text-xs text-destructive hover:text-red-700"
+                            title="Eliminar usuario"
+                          >
+                            Eliminar
+                          </EliminarUsuarioButton>
+                        </form>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               )
             })}

@@ -6,6 +6,7 @@ import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
 import { z } from "zod"
 import { validateFormData, getFirstError } from "@/lib/validate"
 
+
 export type MovimientoActionState = {
   error: string | null
   pendingConfirm: boolean
@@ -70,11 +71,7 @@ export async function actualizarMovimientoAction(
     })
     .eq("id", id)
 
-  if (error) {
-    console.error(error)
-    return { error: "error_guardado", pendingConfirm: false }
-  }
-
+  if (error) redirect(`/logistica/movimientos/${id}?error=${encodeURIComponent("Error al guardar el movimiento")}`)
   redirect(`/logistica/movimientos/${id}`)
 }
 
@@ -124,10 +121,6 @@ export async function borrarMovimientoAction(
     .delete()
     .eq("id", id)
 
-  if (error) {
-    console.error(error)
-    return { error: "error_borrado", pendingConfirm: false }
-  }
-
+  if (error) redirect(`/logistica/movimientos?error=${encodeURIComponent("Error al borrar el movimiento")}`)
   redirect("/logistica/movimientos")
 }

@@ -7,6 +7,8 @@ import { ArrowLeft } from "lucide-react"
 import { enviarEmailConvocatoria } from "@/lib/email-convocatoria"
 import { validateFormData, getFirstError } from "@/lib/validate"
 import { actualizarReconocimientoSchema } from "@/lib/validations"
+import { ConfirmActionButton } from "@/components/confirm-action-button"
+
 
 async function comprobarEdicion() {
   const usuario = await getUsuarioActual()
@@ -22,11 +24,10 @@ async function actualizarConvocatoria(convId: string, formData: FormData) {
     return redirect(`/sanitario/reconocimientos/${convId}?error=${encodeURIComponent(getFirstError(validation.errors))}`)
   }
 
-  const supabase = await createClient()
-
   const { temporada, fecha_hora, lugar, mensaje_instrucciones, notas } = validation.data
 
-  await supabase
+  const supabase = await createClient()
+  const { error } = await supabase
     .from("reconocimientos_medicos_convocatoria")
     .update({
       temporada,
@@ -37,6 +38,7 @@ async function actualizarConvocatoria(convId: string, formData: FormData) {
     })
     .eq("id", convId)
 
+  if (error) redirect(`/sanitario/reconocimientos/${convId}?error=${encodeURIComponent("Error al guardar los cambios")}`)
   redirect(`/sanitario/reconocimientos/${convId}`)
 }
 
@@ -45,17 +47,17 @@ async function eliminarConvocatoria(convId: string) {
   if (!(await comprobarEdicion())) return
 
   const supabase = await createClient()
-
   await supabase
     .from("reconocimientos_medicos_jugadora")
     .delete()
     .eq("convocatoria_id", convId)
 
-  await supabase
+  const { error } = await supabase
     .from("reconocimientos_medicos_convocatoria")
     .delete()
     .eq("id", convId)
 
+  if (error) redirect(`/sanitario/reconocimientos?error=${encodeURIComponent("Error al eliminar la convocatoria")}`)
   redirect("/sanitario/reconocimientos")
 }
 
@@ -68,8 +70,7 @@ async function actualizarResultado(
   if (!(await comprobarEdicion())) return
 
   const supabase = await createClient()
-
-  await supabase
+  const { error } = await supabase
     .from("reconocimientos_medicos_jugadora")
     .update({
       resultado: formData.get("resultado") as string,
@@ -81,6 +82,7 @@ async function actualizarResultado(
     .eq("convocatoria_id", convId)
     .eq("jugadora_id", jugadoraId)
 
+  if (error) redirect(`/sanitario/reconocimientos/${convId}?error=${encodeURIComponent("Error al guardar el resultado")}`)
   redirect(`/sanitario/reconocimientos/${convId}`)
 }
 
@@ -95,17 +97,19 @@ async function toggleCitar(
   const supabase = await createClient()
 
   if (yaEstaCitada) {
-    await supabase
+    const { error } = await supabase
       .from("reconocimientos_medicos_jugadora")
       .delete()
       .eq("convocatoria_id", convId)
       .eq("jugadora_id", jugadoraId)
+    if (error) redirect(`/sanitario/reconocimientos/${convId}?error=${encodeURIComponent("Error al actualizar citación")}`)
   } else {
-    await supabase.from("reconocimientos_medicos_jugadora").insert({
+    const { error } = await supabase.from("reconocimientos_medicos_jugadora").insert({
       convocatoria_id: convId,
       jugadora_id: jugadoraId,
       resultado: "pendiente",
     })
+    if (error) redirect(`/sanitario/reconocimientos/${convId}?error=${encodeURIComponent("Error al actualizar citación")}`)
   }
 
   redirect(`/sanitario/reconocimientos/${convId}`)
@@ -123,7 +127,7 @@ async function enviarConvocatoriaMedica(convId: string) {
     .eq("id", convId)
     .single()
 
-  if (!conv) return
+  if (!conv) redirect(`/sanitario/reconocimientos/${convId}?error=${encodeURIComponent("Convocatoria no encontrada")}`)
 
   const { data: citadas } = await supabase
     .from("reconocimientos_medicos_jugadora")
@@ -251,14 +255,13 @@ export default async function ReconocimientoDetallePage({
         </div>
 
         {puedeEditar && (
-          <form action={eliminarAction}>
-            <button
-              type="submit"
-              className="rounded-md border border-destructive px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
-            >
-              Eliminar convocatoria
-            </button>
-          </form>
+          <ConfirmActionButton
+            onConfirm={() => eliminarConvocatoria(id)}
+            label="Eliminar convocatoria"
+            confirmTitle="¿Eliminar esta convocatoria?"
+            confirmDescription="Se eliminará la convocatoria y todas las jugadoras citadas. Esta acción no se puede deshacer."
+            className="rounded-md border border-destructive px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+          />
         )}
       </div>
 

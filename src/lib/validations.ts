@@ -219,6 +219,17 @@ export const crearUsuarioSchema = z.object({
   rol_id: z.string().uuid("Selecciona un rol válido"),
 })
 
+export const actualizarUsuarioSchema = z.object({
+  nombre: z.string().min(1, "El nombre es obligatorio"),
+  apellidos: z.string().min(1, "Los apellidos son obligatorios"),
+  email: z
+    .string()
+    .email("Email no válido")
+    .optional()
+    .or(z.literal("")),
+  rol_id: z.string().uuid("Selecciona un rol válido").optional(),
+})
+
 // --- Schemas de Entrenadores ---
 
 const CATEGORIA_EJERCICIO = ["táctico", "técnica_individual", "portero", "físico"] as const
@@ -273,6 +284,49 @@ export const crearSesionEntrenamientoSchema = z.object({
 export const asignarEquipoEntrenadorSchema = z.object({
   equipo_id: z.string().uuid("Selecciona un equipo válido"),
   temporada: z.string().min(1, "La temporada es obligatoria"),
+})
+
+// --- Schemas de Formación ---
+
+export const crearCursoFormacionSchema = z.object({
+  titulo: z.string().min(1, "El título es obligatorio"),
+  categoria: z.string().min(1, "La categoría es obligatoria"),
+  nivel: z.enum(["principiante", "intermedio", "avanzado"]).optional(),
+  descripcion: z.string().optional().or(z.literal("")),
+  contenido_url: z.string().url("URL no válida").optional().or(z.literal("")),
+  pdf_url: z.string().url("URL no válida").optional().or(z.literal("")),
+  titulo_pdf: z.string().optional().or(z.literal("")),
+  duracion_minutos: z.coerce.number().int().min(0).optional(),
+})
+
+export const actualizarCursoFormacionSchema = z.object({
+  titulo: z.string().min(1, "El título es obligatorio"),
+  categoria: z.string().min(1, "La categoría es obligatoria"),
+  nivel: z.enum(["principiante", "intermedio", "avanzado"]).optional(),
+  descripcion: z.string().optional().or(z.literal("")),
+  contenido_url: z.string().url("URL no válida").optional().or(z.literal("")),
+  pdf_url: z.string().url("URL no válida").optional().or(z.literal("")),
+  titulo_pdf: z.string().optional().or(z.literal("")),
+  duracion_minutos: z.coerce.number().int().min(0).optional(),
+  activo: z.boolean().optional(),
+  destacado: z.boolean().optional(),
+})
+
+// --- Schemas de Scouting Rivales ---
+
+export const crearRivalScoutingSchema = z.object({
+  nombre: z.string().min(1, "El nombre es obligatorio"),
+  temporada: z.string().min(1, "La temporada es obligatoria"),
+  sistema_defensivo: z.string().optional().or(z.literal("")),
+  sistema_ofensivo: z.string().optional().or(z.literal("")),
+  puntos_fuertes: z.string().optional().or(z.literal("")),
+  puntos_debiles: z.string().optional().or(z.literal("")),
+  jugadas_pizarra: z.string().optional().or(z.literal("")),
+  notas: z.string().optional().or(z.literal("")),
+  videos: z.array(z.object({
+    url: z.string().url("URL no válida"),
+    descripcion: z.string().min(1, "La descripción es obligatoria"),
+  })).optional(),
 })
 
 // --- Tipos exportados ---

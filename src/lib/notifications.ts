@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase-server"
+import { createChildLogger } from "@/lib/logger"
+
+const log = createChildLogger("notifications")
 
 export type Notificacion = {
   id: string
@@ -63,17 +66,49 @@ export async function notificarUsuariosConPermiso(
   const { data: authData } = await supabase.auth.getUser()
   if (!authData.user) return
 
-  const { data: usuarios } = await supabase
+  const { data: usuariosConPermiso } = await supabase
     .from("usuarios")
     .select("id")
-  if (!usuarios) return
+    .neq("id", authData.user.id)
 
-  for (const u of usuarios) {
-    if (u.id === authData.user.id) continue
+  if (!usuariosConPermiso) return
+
+  const usuarioIds = usuariosConPermiso.map((u) => u.id)
+  if (usuarioIds.length === 0) return
+
+  const { data: usuarioPermisos } = await supabase
+    .from("usuario_permisos")
+    .select("usuario_id")
+    .in("usuario_id", usuarioIds)
+
+  const { data: rolesConPermiso } = await supabase
+    .from("rol_permiso")
+    .select("rol_id, permisos!inner(nombre)")
+    .eq("permisos.nombre", permiso)
+
+  const rolesIds = [...new Set((rolesConPermiso ?? []).map((rp) => rp.rol_id))]
+
+  let usuariosARol: string[] = []
+  if (rolesIds.length > 0) {
+    const { data: usuariosRoles } = await supabase
+      .from("usuarios")
+      .select("id")
+      .in("rol_id", rolesIds)
+      .neq("id", authData.user.id)
+    usuariosARol = (usuariosRoles ?? []).map((u) => u.id)
+  }
+
+  const usuariosDirectos = new Set(
+    (usuarioPermisos ?? []).map((up) => up.usuario_id)
+  )
+
+  const todosLosUsuarios = new Set([...usuariosARol, ...usuariosDirectos])
+
+  for (const uid of todosLosUsuarios) {
     try {
-      await crearNotificacion(u.id, tipo, titulo, descripcion, enlace)
+      await crearNotificacion(uid, tipo, titulo, descripcion, enlace)
     } catch (err) {
-      console.error("Error creando notificación:", err)
+      log.error({ err, uid, tipo, titulo }, "Error creando notificación")
     }
   }
 }

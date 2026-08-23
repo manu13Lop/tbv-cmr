@@ -40,7 +40,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 `
 
-export async function GET() {
+export async function POST() {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -49,7 +49,6 @@ export async function GET() {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 })
     }
 
-    // Check if user is master
     const { data: usuario } = await supabase
       .from("usuarios")
       .select("es_master")
@@ -60,7 +59,6 @@ export async function GET() {
       return NextResponse.json({ error: "Solo usuarios master pueden ejecutar setup" }, { status: 403 })
     }
 
-    // Try to query the table to see if it exists
     const { error: checkError } = await supabase
       .from("notificaciones")
       .select("id")
@@ -81,26 +79,23 @@ export async function GET() {
       })
     }
 
-    // Table doesn't exist - we need to create it via SQL
-    // Since we can't run DDL through PostgREST, we'll use the Management API
-    // Actually, let's try using pg RPC
-
     return NextResponse.json({
       status: "needs_manual_migration",
       message: "La tabla notificaciones no existe. Por favor, ejecuta el SQL en el dashboard de Supabase.",
       sql: MIGRATION_SQL,
       instructions: [
-        "1. Ve a https://supabase.com/dashboard/project/rjityxezckvvhfqcdsjt/sql/new",
+        "1. Ve al dashboard de Supabase > SQL Editor",
         "2. Pega el SQL que aparece en el campo 'sql' de esta respuesta",
         "3. Haz clic en 'Run'",
-        "4. Vuelve a esta página para verificar"
+        "4. Vuelve a ejecutar este endpoint para verificar"
       ]
     })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Error desconocido"
     return NextResponse.json({
       status: "error",
-      message: err.message
+      message
     }, { status: 500 })
   }
 }

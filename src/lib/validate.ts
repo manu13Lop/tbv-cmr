@@ -14,15 +14,12 @@ export function validateFormData<T>(
   schema: ZodSchema<T>,
   formData: FormData
 ): ValidationSuccess<T> | ValidationError {
-  // Convert FormData to plain object
   const raw: Record<string, unknown> = {}
 
   for (const [key, value] of formData.entries()) {
-    // Handle checkbox (only present when checked)
     if (value === "on") {
       raw[key] = true
     } else if (raw[key] !== undefined) {
-      // Handle multiple values (e.g. multiple checkboxes with same name)
       if (Array.isArray(raw[key])) {
         ;(raw[key] as unknown[]).push(value)
       } else {
@@ -33,12 +30,31 @@ export function validateFormData<T>(
     }
   }
 
-  // Handle missing checkboxes (set to false)
-  const shape = (schema as any)._def?.shape?.() || {}
+  const innerType = (schema as any)["_def"]?.["innerType"] ?? schema
+  const shape = (innerType as any)["_def"]?.shape ?? {}
   for (const key of Object.keys(shape)) {
-    const fieldDef = shape[key]?._def
+    const fieldDef = (shape[key]?._def ?? shape[key]?._def?.innerType?._def)
     if (fieldDef?.typeName === "ZodBoolean" && !(key in raw)) {
       raw[key] = false
+    }
+  }
+
+  const videos: { url?: string; descripcion?: string }[] = []
+  for (const [key, value] of Object.entries(raw)) {
+    const match = key.match(/^videos\[(\d+)\]\[(\w+)\]$/)
+    if (match) {
+      const idx = parseInt(match[1], 10)
+      const field = match[2] as "url" | "descripcion"
+      if (!videos[idx]) videos[idx] = {}
+      videos[idx][field] = String(value)
+    }
+  }
+  if (videos.length > 0 && videos.some((v) => v.url || v.descripcion)) {
+    raw.videos = videos
+  }
+  for (const key of Object.keys(raw)) {
+    if (/^videos\[\d+\]\[\w+\]$/.test(key)) {
+      delete raw[key]
     }
   }
 

@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function Home() {
@@ -15,7 +16,6 @@ export default function Home() {
           className="h-64 w-64 rounded-xl object-cover sm:h-80 sm:w-80"
         />
       </div>
-
       <div className="flex flex-col items-center gap-2">
         <h1 className="text-3xl font-bold text-primary">TBV</h1>
         <p className="text-muted-foreground">Triana Balonmano Vivero</p>

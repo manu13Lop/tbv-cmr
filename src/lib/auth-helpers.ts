@@ -1,13 +1,5 @@
 import { createClient } from "@/lib/supabase-server"
 
-const ROLES_NOMBRE: Record<string, string> = {
-  "d711e285-4948-4d4f-8dc9-d5dc9872a253": "auxiliar",
-  "140e02da-1ff4-4d41-b419-552587262bac": "directiva",
-  "5c1b0361-228d-4ef2-9a26-17ef77e88d58": "director_tecnico",
-  "c0e7dca0-79ca-410b-8979-622a7e160407": "entrenador",
-  "038300fd-a3cd-4b61-8ac7-fd12743a5982": "sanitario",
-}
-
 export async function getUsuarioActual() {
   const supabase = await createClient()
 
@@ -29,29 +21,58 @@ export async function getUsuarioActual() {
       .from("permisos")
       .select("nombre")
 
-    permisos = (todosLosPermisos ?? []).map((p: any) => p.nombre).filter(Boolean)
-  } else if (usuario.rol_id) {
-    const { data: rolPermisos } = await supabase
-      .from("rol_permiso")
+    permisos = (todosLosPermisos ?? []).map((p) => p.nombre).filter(Boolean)
+  } else {
+    const permisoIds: string[] = []
+
+    if (usuario.rol_id) {
+      const { data: rolPermisos } = await supabase
+        .from("rol_permiso")
+        .select("permiso_id")
+        .eq("rol_id", usuario.rol_id)
+
+      permisoIds.push(...(rolPermisos ?? []).map((p) => p.permiso_id))
+    }
+
+    const { data: permisosPropios } = await supabase
+      .from("usuario_permisos")
       .select("permiso_id")
-      .eq("rol_id", usuario.rol_id)
+      .eq("usuario_id", usuario.id)
 
-    const permisosIds = (rolPermisos ?? []).map((p: any) => p.permiso_id)
+    permisoIds.push(...(permisosPropios ?? []).map((p) => p.permiso_id))
 
-    if (permisosIds.length > 0) {
+    if (permisoIds.length > 0) {
       const { data: permisosData } = await supabase
         .from("permisos")
         .select("id, nombre")
-        .in("id", permisosIds)
+        .in("id", permisoIds)
 
-      permisos = (permisosData ?? []).map((p: any) => p.nombre).filter(Boolean)
+      const seen = new Set<string>()
+      for (const p of permisosData ?? []) {
+        if (!seen.has(p.nombre)) {
+          seen.add(p.nombre)
+          permisos.push(p.nombre)
+        }
+      }
     }
+  }
+
+  let puesto = "Sin rol"
+  if (usuario.es_master) {
+    puesto = "Master"
+  } else if (usuario.rol_id) {
+    const { data: rol } = await supabase
+      .from("roles")
+      .select("nombre")
+      .eq("id", usuario.rol_id)
+      .single()
+    puesto = rol?.nombre ?? "Sin rol"
   }
 
   return {
     id: usuario.id,
     nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
-    puesto: usuario.es_master ? "Master" : ROLES_NOMBRE[usuario.rol_id] ?? "Sin rol",
+    puesto,
     rolId: usuario.rol_id,
     esMaster: !!usuario.es_master,
     permisos,

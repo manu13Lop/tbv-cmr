@@ -35,15 +35,8 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body>
-        <script dangerouslySetInnerHTML={{ __html: `
-          if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-              navigator.serviceWorker.register('/sw.js').catch(() => {});
-            });
-          }
-        `}} />
-        <ThemeProvider
+          <body>
+         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
