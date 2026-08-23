@@ -1,34 +1,25 @@
-import Link from "next/link"
-import { redirect } from "next/navigation"
-import {
-  ArrowLeft,
-  Boxes,
-  TriangleAlert,
-  ArrowRightLeft,
-} from "lucide-react"
-import { createClient } from "@/lib/supabase-server"
-import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { ArrowLeft, Boxes, TriangleAlert, ArrowRightLeft } from 'lucide-react';
+import { createClient } from '@/lib/supabase-server';
+import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 
 export default async function LogisticaPage() {
-  const usuario = await getUsuarioActual()
-  if (!usuario || !tienePermiso(usuario.permisos, "logistica.leer")) {
-    redirect("/")
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'logistica.leer')) {
+    redirect('/');
   }
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const [{ count: totalArticulos }, { count: totalMovimientos }, { data: stockBajo }] =
     await Promise.all([
       supabase
-        .from("logistica_articulos")
-        .select("*", { count: "exact", head: true })
-        .eq("activo", true),
-      supabase
-        .from("logistica_movimientos")
-        .select("*", { count: "exact", head: true }),
-      supabase
-        .from("logistica_stock_minimos")
-        .select(`
+        .from('logistica_articulos')
+        .select('*', { count: 'exact', head: true })
+        .eq('activo', true),
+      supabase.from('logistica_movimientos').select('*', { count: 'exact', head: true }),
+      supabase.from('logistica_stock_minimos').select(`
           id,
           stock_minimo,
           logistica_articulos (
@@ -39,48 +30,48 @@ export default async function LogisticaPage() {
             activo
           )
         `),
-    ])
+    ]);
 
-  const articulosConStockBajo = (stockBajo ?? []).filter((item: any) => {
-    const articulo = item.logistica_articulos
-    if (!articulo || !articulo.activo) return false
-    return articulo.stock_actual <= item.stock_minimo
-  })
+  const articulosConStockBajo = (stockBajo ?? []).filter((item: Record<string, unknown>) => {
+    const articulo = item.logistica_articulos as Record<string, unknown>;
+    if (!articulo || !articulo.activo) return false;
+    return (articulo.stock_actual as number) <= (item.stock_minimo as number);
+  });
 
   return (
     <div className="p-6">
       <Link
         href="/"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
         Volver al inicio
       </Link>
 
-      <h1 className="mb-2 text-2xl font-bold text-primary">Logística</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
+      <h1 className="text-primary mb-2 text-2xl font-bold">Logística</h1>
+      <p className="text-muted-foreground mb-6 text-sm">
         Control de inventario, movimientos y stock mínimo.
       </p>
 
       <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="mb-2 flex items-center gap-2 text-primary">
+        <div className="border-border bg-card rounded-xl border p-4">
+          <div className="text-primary mb-2 flex items-center gap-2">
             <Boxes className="size-4" />
             <p className="text-sm font-medium">Artículos activos</p>
           </div>
           <p className="text-3xl font-bold">{totalArticulos ?? 0}</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="mb-2 flex items-center gap-2 text-primary">
+        <div className="border-border bg-card rounded-xl border p-4">
+          <div className="text-primary mb-2 flex items-center gap-2">
             <ArrowRightLeft className="size-4" />
             <p className="text-sm font-medium">Movimientos</p>
           </div>
           <p className="text-3xl font-bold">{totalMovimientos ?? 0}</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="mb-2 flex items-center gap-2 text-primary">
+        <div className="border-border bg-card rounded-xl border p-4">
+          <div className="text-primary mb-2 flex items-center gap-2">
             <TriangleAlert className="size-4" />
             <p className="text-sm font-medium">Stock bajo</p>
           </div>
@@ -91,63 +82,61 @@ export default async function LogisticaPage() {
       <div className="mb-6 grid gap-4 md:grid-cols-3">
         <Link
           href="/logistica/articulos"
-          className="rounded-xl border border-border bg-card p-5 transition hover:border-primary/40 hover:bg-muted/40"
+          className="border-border bg-card hover:border-primary/40 hover:bg-muted/40 rounded-xl border p-5 transition"
         >
-          <p className="mb-1 text-base font-semibold text-foreground">Artículos</p>
-          <p className="text-sm text-muted-foreground">
-            Catálogo, detalle y edición de artículos.
-          </p>
+          <p className="text-foreground mb-1 text-base font-semibold">Artículos</p>
+          <p className="text-muted-foreground text-sm">Catálogo, detalle y edición de artículos.</p>
         </Link>
 
         <Link
           href="/logistica/movimientos"
-          className="rounded-xl border border-border bg-card p-5 transition hover:border-primary/40 hover:bg-muted/40"
+          className="border-border bg-card hover:border-primary/40 hover:bg-muted/40 rounded-xl border p-5 transition"
         >
-          <p className="mb-1 text-base font-semibold text-foreground">Movimientos</p>
-          <p className="text-sm text-muted-foreground">
-            Entradas, salidas, ajustes e histórico.
-          </p>
+          <p className="text-foreground mb-1 text-base font-semibold">Movimientos</p>
+          <p className="text-muted-foreground text-sm">Entradas, salidas, ajustes e histórico.</p>
         </Link>
 
         <Link
           href="/logistica/stock-bajo"
-          className="rounded-xl border border-border bg-card p-5 transition hover:border-primary/40 hover:bg-muted/40"
+          className="border-border bg-card hover:border-primary/40 hover:bg-muted/40 rounded-xl border p-5 transition"
         >
-          <p className="mb-1 text-base font-semibold text-foreground">Stock bajo</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-foreground mb-1 text-base font-semibold">Stock bajo</p>
+          <p className="text-muted-foreground text-sm">
             Artículos en mínimo o por debajo del mínimo.
           </p>
         </Link>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-4">
-        <h2 className="mb-4 text-lg font-bold text-primary">Artículos con stock bajo</h2>
+      <div className="border-border bg-card rounded-xl border p-4">
+        <h2 className="text-primary mb-4 text-lg font-bold">Artículos con stock bajo</h2>
 
         {articulosConStockBajo.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             No hay artículos por debajo del stock mínimo.
           </p>
         ) : (
           <div className="space-y-3">
-            {articulosConStockBajo.map((item: any) => (
+            {articulosConStockBajo.map((item: Record<string, unknown>) => (
               <Link
-                key={item.id}
-                href={`/logistica/articulos/${item.logistica_articulos.id}`}
-                className="flex items-center justify-between rounded-lg border border-border bg-background p-3 transition hover:border-primary/30 hover:bg-muted/40"
+                key={item.id as string}
+                href={`/logistica/articulos/${(item.logistica_articulos as Record<string, unknown>).id as string}`}
+                className="border-border bg-background hover:border-primary/30 hover:bg-muted/40 flex items-center justify-between rounded-lg border p-3 transition"
               >
                 <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {item.logistica_articulos.nombre}
+                  <p className="text-foreground text-sm font-medium">
+                    {(item.logistica_articulos as Record<string, unknown>).nombre as string}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Stock actual: {item.logistica_articulos.stock_actual}{" "}
-                    {item.logistica_articulos.unidad}
+                  <p className="text-muted-foreground text-xs">
+                    Stock actual:{' '}
+                    {(item.logistica_articulos as Record<string, unknown>).stock_actual as string}{' '}
+                    {(item.logistica_articulos as Record<string, unknown>).unidad as string}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Mínimo</p>
-                  <p className="text-sm font-semibold text-destructive">
-                    {item.stock_minimo} {item.logistica_articulos.unidad}
+                  <p className="text-muted-foreground text-xs">Mínimo</p>
+                  <p className="text-destructive text-sm font-semibold">
+                    {item.stock_minimo as string}{' '}
+                    {(item.logistica_articulos as Record<string, unknown>).unidad as string}
                   </p>
                 </div>
               </Link>
@@ -156,5 +145,5 @@ export default async function LogisticaPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

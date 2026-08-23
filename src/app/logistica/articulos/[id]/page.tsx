@@ -1,37 +1,37 @@
-import Link from "next/link"
-import { notFound, redirect } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
-import { createClient } from "@/lib/supabase-server"
-import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
-import { FormSubmitButton } from "@/components/form-submit-button"
+import Link from 'next/link';
+import { notFound, redirect } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
+import { createClient } from '@/lib/supabase-server';
+import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
+import { FormSubmitButton } from '@/components/form-submit-button';
 
 async function actualizarArticuloDetalle(id: string, formData: FormData) {
-  "use server"
+  'use server';
 
-  const usuario = await getUsuarioActual()
-  if (!usuario || !tienePermiso(usuario.permisos, "logistica.editar")) {
-    redirect("/")
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'logistica.editar')) {
+    redirect('/');
   }
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
-  const nombre = (formData.get("nombre") as string)?.trim()
-  const categoria = (formData.get("categoria") as string)?.trim()
-  const descripcion = (formData.get("descripcion") as string)?.trim()
-  const unidad = (formData.get("unidad") as string)?.trim()
-  const esSanitario = formData.get("es_sanitario") === "on"
-  const activo = formData.get("activo") === "on"
-  const stockMinimoId = (formData.get("stock_minimo_id") as string) || ""
-  const stockMinimo = Number(formData.get("stock_minimo") || 0)
-  const equipoIdRaw = (formData.get("equipo_id") as string) || ""
-  const observaciones = (formData.get("observaciones_stock") as string)?.trim()
+  const nombre = (formData.get('nombre') as string)?.trim();
+  const categoria = (formData.get('categoria') as string)?.trim();
+  const descripcion = (formData.get('descripcion') as string)?.trim();
+  const unidad = (formData.get('unidad') as string)?.trim();
+  const esSanitario = formData.get('es_sanitario') === 'on';
+  const activo = formData.get('activo') === 'on';
+  const stockMinimoId = (formData.get('stock_minimo_id') as string) || '';
+  const stockMinimo = Number(formData.get('stock_minimo') || 0);
+  const equipoIdRaw = (formData.get('equipo_id') as string) || '';
+  const observaciones = (formData.get('observaciones_stock') as string)?.trim();
 
   if (!nombre || !categoria || !unidad) {
-    redirect(`/logistica/articulos/${id}`)
+    redirect(`/logistica/articulos/${id}`);
   }
 
   const { error: articuloError } = await supabase
-    .from("logistica_articulos")
+    .from('logistica_articulos')
     .update({
       nombre,
       categoria,
@@ -40,109 +40,105 @@ async function actualizarArticuloDetalle(id: string, formData: FormData) {
       es_sanitario: esSanitario,
       activo,
     })
-    .eq("id", id)
+    .eq('id', id);
 
   if (articuloError) {
-    console.error(articuloError)
-    redirect(`/logistica/articulos/${id}`)
+    console.error(articuloError);
+    redirect(`/logistica/articulos/${id}`);
   }
 
   if (stockMinimoId) {
     const { error: minimoError } = await supabase
-      .from("logistica_stock_minimos")
+      .from('logistica_stock_minimos')
       .update({
         stock_minimo: stockMinimo,
         equipo_id: equipoIdRaw || null,
         observaciones: observaciones || null,
       })
-      .eq("id", stockMinimoId)
+      .eq('id', stockMinimoId);
 
-    if (minimoError) console.error(minimoError)
+    if (minimoError) console.error(minimoError);
   } else {
-    const { error: insertError } = await supabase
-      .from("logistica_stock_minimos")
-      .insert({
-        articulo_id: id,
-        stock_minimo: stockMinimo,
-        equipo_id: equipoIdRaw || null,
-        observaciones: observaciones || null,
-      })
+    const { error: insertError } = await supabase.from('logistica_stock_minimos').insert({
+      articulo_id: id,
+      stock_minimo: stockMinimo,
+      equipo_id: equipoIdRaw || null,
+      observaciones: observaciones || null,
+    });
 
-    if (insertError) console.error(insertError)
+    if (insertError) console.error(insertError);
   }
 
-  redirect(`/logistica/articulos/${id}`)
+  redirect(`/logistica/articulos/${id}`);
 }
 
 async function crearMovimientoDesdeDetalle(id: string, formData: FormData) {
-  "use server"
+  'use server';
 
-  const usuario = await getUsuarioActual()
-  if (!usuario || !tienePermiso(usuario.permisos, "logistica.movimientos")) {
-    redirect("/")
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'logistica.movimientos')) {
+    redirect('/');
   }
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
-  const tipo = formData.get("tipo") as string
-  const cantidad = Number(formData.get("cantidad") || 0)
-  const motivo = (formData.get("motivo") as string)?.trim()
-  const equipoIdRaw = (formData.get("equipo_id") as string) || ""
+  const tipo = formData.get('tipo') as string;
+  const cantidad = Number(formData.get('cantidad') || 0);
+  const motivo = (formData.get('motivo') as string)?.trim();
+  const equipoIdRaw = (formData.get('equipo_id') as string) || '';
 
-  if (!["entrada", "salida", "ajuste"].includes(tipo) || cantidad <= 0) {
-    redirect(`/logistica/articulos/${id}`)
+  if (!['entrada', 'salida', 'ajuste'].includes(tipo) || cantidad <= 0) {
+    redirect(`/logistica/articulos/${id}`);
   }
 
   const { data: articulo } = await supabase
-    .from("logistica_articulos")
-    .select("id, stock_actual, activo")
-    .eq("id", id)
-    .single()
+    .from('logistica_articulos')
+    .select('id, stock_actual, activo')
+    .eq('id', id)
+    .single();
 
   if (!articulo || !articulo.activo) {
-    redirect(`/logistica/articulos/${id}`)
+    redirect(`/logistica/articulos/${id}`);
   }
 
-  if (tipo === "salida" && articulo.stock_actual < cantidad) {
-    redirect(`/logistica/articulos/${id}`)
+  if (tipo === 'salida' && articulo.stock_actual < cantidad) {
+    redirect(`/logistica/articulos/${id}`);
   }
 
-  const { error } = await supabase
-    .from("logistica_movimientos")
-    .insert({
-      articulo_id: id,
-      tipo,
-      cantidad,
-      motivo: motivo || null,
-      equipo_id: equipoIdRaw || null,
-      usuario_id: usuario.id,
-      usuario_nombre_snapshot: usuario.nombreCompleto,
-    })
+  const { error } = await supabase.from('logistica_movimientos').insert({
+    articulo_id: id,
+    tipo,
+    cantidad,
+    motivo: motivo || null,
+    equipo_id: equipoIdRaw || null,
+    usuario_id: usuario.id,
+    usuario_nombre_snapshot: usuario.nombreCompleto,
+  });
 
-  if (error) console.error(error)
+  if (error) console.error(error);
 
-  redirect(`/logistica/articulos/${id}`)
+  redirect(`/logistica/articulos/${id}`);
 }
 
 export default async function LogisticaArticuloDetallePage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = await params
+  const { id } = await params;
 
-  const usuario = await getUsuarioActual()
-  if (!usuario || !tienePermiso(usuario.permisos, "logistica.leer")) {
-    redirect("/")
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'logistica.leer')) {
+    redirect('/');
   }
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
-  const [{ data: articuloData }, { data: equipos }, { data: movimientos }] =
-    await Promise.all([
-      supabase
-        .from("logistica_articulos")
-        .select(`
+  const [{ data: articuloData }, { data: equipos }, { data: movimientos }] = await Promise.all([
+    supabase
+      .from('logistica_articulos')
+      .select(
+        `
           *,
           logistica_stock_minimos (
             id,
@@ -150,39 +146,42 @@ export default async function LogisticaArticuloDetallePage({
             observaciones,
             equipo_id
           )
-        `)
-        .eq("id", id)
-        .single(),
-      supabase
-        .from("equipos")
-        .select("id, nombre")
-        .order("nombre"),
-      supabase
-        .from("logistica_movimientos")
-        .select(`
+        `
+      )
+      .eq('id', id)
+      .single(),
+    supabase.from('equipos').select('id, nombre').order('nombre'),
+    supabase
+      .from('logistica_movimientos')
+      .select(
+        `
           *,
           equipos (
             nombre
           )
-        `)
-        .eq("articulo_id", id)
-        .order("created_at", { ascending: false }),
-    ])
+        `
+      )
+      .eq('articulo_id', id)
+      .order('created_at', { ascending: false }),
+  ]);
 
-  if (!articuloData) notFound()
+  if (!articuloData) notFound();
 
-  const articulo = articuloData as any
-  const minimo = articulo.logistica_stock_minimos?.[0] ?? null
-  const equipo = equipos?.find((e: any) => e.id === minimo?.equipo_id)
-  const stockBajo = articulo.stock_actual <= (minimo?.stock_minimo ?? 0)
-  const actualizarAction = actualizarArticuloDetalle.bind(null, id)
-  const crearMovimientoAction = crearMovimientoDesdeDetalle.bind(null, id)
+  const articulo = articuloData as unknown as Record<string, unknown>;
+  const minimo =
+    (articulo.logistica_stock_minimos as unknown as Record<string, unknown>[] | null)?.[0] ?? null;
+  const equipo = equipos?.find(
+    (e: Record<string, unknown>) => e.id === (minimo?.equipo_id as string)
+  );
+  const stockBajo = (articulo.stock_actual as number) <= ((minimo?.stock_minimo as number) ?? 0);
+  const actualizarAction = actualizarArticuloDetalle.bind(null, id);
+  const crearMovimientoAction = crearMovimientoDesdeDetalle.bind(null, id);
 
   return (
     <div className="p-6">
       <Link
         href="/logistica/articulos"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
         Volver a artículos
@@ -190,57 +189,59 @@ export default async function LogisticaArticuloDetallePage({
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-primary">{articulo.nombre}</h1>
-          <p className="text-sm text-muted-foreground">
-            {articulo.categoria}
-            {articulo.es_sanitario ? " · Material sanitario" : ""}
-            {equipo ? ` · ${equipo.nombre}` : ""}
+          <h1 className="text-primary text-2xl font-bold">{articulo.nombre as string}</h1>
+          <p className="text-muted-foreground text-sm">
+            {articulo.categoria as string}
+            {articulo.es_sanitario ? ' · Material sanitario' : ''}
+            {equipo ? ` · ${equipo.nombre}` : ''}
           </p>
         </div>
 
         <div className="flex gap-3">
-          <div className="rounded-lg border border-border bg-card px-4 py-3 text-center">
-            <p className="text-xs text-muted-foreground">Stock actual</p>
+          <div className="border-border bg-card rounded-lg border px-4 py-3 text-center">
+            <p className="text-muted-foreground text-xs">Stock actual</p>
             <p className="text-lg font-bold">
-              {articulo.stock_actual} {articulo.unidad}
+              {articulo.stock_actual as string} {articulo.unidad as string}
             </p>
           </div>
 
-          <div className="rounded-lg border border-border bg-card px-4 py-3 text-center">
-            <p className="text-xs text-muted-foreground">Stock mínimo</p>
+          <div className="border-border bg-card rounded-lg border px-4 py-3 text-center">
+            <p className="text-muted-foreground text-xs">Stock mínimo</p>
             <p className="text-lg font-bold">
-              {minimo?.stock_minimo ?? 0} {articulo.unidad}
+              {(minimo?.stock_minimo as string) ?? 0} {articulo.unidad as string}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="mb-6 rounded-xl border border-border bg-card p-4">
+      <div className="border-border bg-card mb-6 rounded-xl border p-4">
         <p className="text-sm">
-          Estado actual:{" "}
-          <span className={stockBajo ? "font-semibold text-destructive" : "font-semibold text-primary"}>
-            {stockBajo ? "Stock bajo" : "Correcto"}
+          Estado actual:{' '}
+          <span
+            className={stockBajo ? 'text-destructive font-semibold' : 'text-primary font-semibold'}
+          >
+            {stockBajo ? 'Stock bajo' : 'Correcto'}
           </span>
         </p>
       </div>
 
-      {tienePermiso(usuario.permisos, "logistica.editar") && (
+      {tienePermiso(usuario.permisos, 'logistica.editar') && (
         <form
           action={actualizarAction}
-          className="mb-8 rounded-xl border border-border bg-card p-4"
+          className="border-border bg-card mb-8 rounded-xl border p-4"
         >
-          <h2 className="mb-4 text-lg font-bold text-primary">Editar artículo</h2>
+          <h2 className="text-primary mb-4 text-lg font-bold">Editar artículo</h2>
 
-          <input type="hidden" name="stock_minimo_id" value={minimo?.id ?? ""} />
+          <input type="hidden" name="stock_minimo_id" value={(minimo?.id as string) ?? ''} />
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium">Nombre</label>
               <input
                 name="nombre"
-                defaultValue={articulo.nombre}
+                defaultValue={articulo.nombre as string}
                 required
-                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               />
             </div>
 
@@ -248,9 +249,9 @@ export default async function LogisticaArticuloDetallePage({
               <label className="mb-1 block text-sm font-medium">Categoría</label>
               <input
                 name="categoria"
-                defaultValue={articulo.categoria}
+                defaultValue={articulo.categoria as string}
                 required
-                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               />
             </div>
 
@@ -258,9 +259,9 @@ export default async function LogisticaArticuloDetallePage({
               <label className="mb-1 block text-sm font-medium">Unidad</label>
               <input
                 name="unidad"
-                defaultValue={articulo.unidad}
+                defaultValue={articulo.unidad as string}
                 required
-                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               />
             </div>
 
@@ -268,13 +269,13 @@ export default async function LogisticaArticuloDetallePage({
               <label className="mb-1 block text-sm font-medium">Equipo asociado</label>
               <select
                 name="equipo_id"
-                defaultValue={minimo?.equipo_id ?? ""}
-                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                defaultValue={(minimo?.equipo_id as string) ?? ''}
+                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               >
                 <option value="">Sin equipo específico</option>
-                {equipos?.map((equipo: any) => (
-                  <option key={equipo.id} value={equipo.id}>
-                    {equipo.nombre}
+                {equipos?.map((equipo: Record<string, unknown>) => (
+                  <option key={equipo.id as string} value={equipo.id as string}>
+                    {equipo.nombre as string}
                   </option>
                 ))}
               </select>
@@ -286,9 +287,9 @@ export default async function LogisticaArticuloDetallePage({
                 type="number"
                 name="stock_minimo"
                 min={0}
-                defaultValue={minimo?.stock_minimo ?? 0}
+                defaultValue={(minimo?.stock_minimo as number) ?? 0}
                 required
-                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               />
             </div>
 
@@ -297,17 +298,13 @@ export default async function LogisticaArticuloDetallePage({
                 <input
                   type="checkbox"
                   name="es_sanitario"
-                  defaultChecked={articulo.es_sanitario}
+                  defaultChecked={articulo.es_sanitario as boolean}
                 />
                 Material sanitario
               </label>
 
               <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  name="activo"
-                  defaultChecked={articulo.activo}
-                />
+                <input type="checkbox" name="activo" defaultChecked={articulo.activo as boolean} />
                 Activo
               </label>
             </div>
@@ -317,8 +314,8 @@ export default async function LogisticaArticuloDetallePage({
               <textarea
                 name="descripcion"
                 rows={3}
-                defaultValue={articulo.descripcion ?? ""}
-                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                defaultValue={(articulo.descripcion as string) ?? ''}
+                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               />
             </div>
 
@@ -329,8 +326,8 @@ export default async function LogisticaArticuloDetallePage({
               <textarea
                 name="observaciones_stock"
                 rows={2}
-                defaultValue={minimo?.observaciones ?? ""}
-                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                defaultValue={(minimo?.observaciones as string) ?? ''}
+                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               />
             </div>
           </div>
@@ -341,12 +338,12 @@ export default async function LogisticaArticuloDetallePage({
         </form>
       )}
 
-      {tienePermiso(usuario.permisos, "logistica.movimientos") && (
+      {tienePermiso(usuario.permisos, 'logistica.movimientos') && (
         <form
           action={crearMovimientoAction}
-          className="mb-8 rounded-xl border border-border bg-card p-4"
+          className="border-border bg-card mb-8 rounded-xl border p-4"
         >
-          <h2 className="mb-4 text-lg font-bold text-primary">Registrar movimiento</h2>
+          <h2 className="text-primary mb-4 text-lg font-bold">Registrar movimiento</h2>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
@@ -354,7 +351,7 @@ export default async function LogisticaArticuloDetallePage({
               <select
                 name="tipo"
                 defaultValue="entrada"
-                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               >
                 <option value="entrada">Entrada</option>
                 <option value="salida">Salida</option>
@@ -369,7 +366,7 @@ export default async function LogisticaArticuloDetallePage({
                 name="cantidad"
                 min={1}
                 required
-                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               />
             </div>
 
@@ -378,12 +375,12 @@ export default async function LogisticaArticuloDetallePage({
               <select
                 name="equipo_id"
                 defaultValue=""
-                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               >
                 <option value="">Sin equipo específico</option>
-                {equipos?.map((equipo: any) => (
-                  <option key={equipo.id} value={equipo.id}>
-                    {equipo.nombre}
+                {equipos?.map((equipo: Record<string, unknown>) => (
+                  <option key={equipo.id as string} value={equipo.id as string}>
+                    {equipo.nombre as string}
                   </option>
                 ))}
               </select>
@@ -394,7 +391,7 @@ export default async function LogisticaArticuloDetallePage({
               <textarea
                 name="motivo"
                 rows={3}
-                className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               />
             </div>
           </div>
@@ -405,64 +402,61 @@ export default async function LogisticaArticuloDetallePage({
         </form>
       )}
 
-      <div className="rounded-xl border border-border bg-card p-4">
-        <h2 className="mb-4 text-lg font-bold text-primary">Historial</h2>
+      <div className="border-border bg-card rounded-xl border p-4">
+        <h2 className="text-primary mb-4 text-lg font-bold">Historial</h2>
 
         {movimientos && movimientos.length > 0 ? (
           <div className="space-y-3">
-            {movimientos.map((movimiento: any) => (
+            {movimientos.map((movimiento: Record<string, unknown>) => (
               <div
-                key={movimiento.id}
-                className="rounded-lg border border-border bg-background p-3"
+                key={movimiento.id as string}
+                className="border-border bg-background rounded-lg border p-3"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-medium capitalize">
-                      {movimiento.tipo}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(movimiento.created_at).toLocaleString("es-ES")}
+                    <p className="text-sm font-medium capitalize">{movimiento.tipo as string}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {new Date(movimiento.created_at as string).toLocaleString('es-ES')}
                     </p>
                   </div>
 
                   <p
                     className={`text-sm font-semibold ${
-                      movimiento.tipo === "salida"
-                        ? "text-destructive"
-                        : "text-primary"
+                      movimiento.tipo === 'salida' ? 'text-destructive' : 'text-primary'
                     }`}
                   >
-                    {movimiento.tipo === "salida" ? "-" : "+"}
-                    {movimiento.cantidad} {articulo.unidad}
+                    {movimiento.tipo === 'salida' ? '-' : '+'}
+                    {movimiento.cantidad as string} {articulo.unidad as string}
                   </p>
                 </div>
 
-                {movimiento.equipos?.nombre && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Equipo: {movimiento.equipos.nombre}
+                {(movimiento.equipos as unknown as Record<string, unknown>)?.nombre ? (
+                  <p className="text-muted-foreground mt-2 text-xs">
+                    Equipo:{' '}
+                    {(movimiento.equipos as unknown as Record<string, unknown>).nombre as string}
                   </p>
-                )}
+                ) : null}
 
-                {movimiento.usuario_nombre_snapshot && (
-                  <p className="text-xs text-muted-foreground">
-                    Registrado por: {movimiento.usuario_nombre_snapshot}
+                {movimiento.usuario_nombre_snapshot ? (
+                  <p className="text-muted-foreground text-xs">
+                    Registrado por: {movimiento.usuario_nombre_snapshot as string}
                   </p>
-                )}
+                ) : null}
 
-                {movimiento.motivo && (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {movimiento.motivo}
+                {movimiento.motivo ? (
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    {movimiento.motivo as string}
                   </p>
-                )}
+                ) : null}
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             No hay movimientos registrados para este artículo.
           </p>
         )}
       </div>
     </div>
-  )
+  );
 }

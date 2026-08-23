@@ -1,28 +1,29 @@
-import Link from "next/link"
-import { redirect } from "next/navigation"
-import { ArrowLeft, Plus, Search } from "lucide-react"
-import { createClient } from "@/lib/supabase-server"
-import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
-import { PaginationWrapper as Pagination } from "@/components/pagination-wrapper"
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { ArrowLeft, Plus, Search } from 'lucide-react';
+import { createClient } from '@/lib/supabase-server';
+import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
+import { PaginationWrapper as Pagination } from '@/components/pagination-wrapper';
 
 export default async function LogisticaArticulosPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ q?: string; page?: string }>
+  searchParams?: Promise<{ q?: string; page?: string }>;
 }) {
-  const usuario = await getUsuarioActual()
-  if (!usuario || !tienePermiso(usuario.permisos, "logistica.leer")) {
-    redirect("/")
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'logistica.leer')) {
+    redirect('/');
   }
 
-  const params = (await searchParams) ?? {}
-  const q = params.q?.trim() ?? ""
+  const params = (await searchParams) ?? {};
+  const q = params.q?.trim() ?? '';
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   let query = supabase
-    .from("logistica_articulos")
-    .select(`
+    .from('logistica_articulos')
+    .select(
+      `
       *,
       logistica_stock_minimos (
         id,
@@ -30,32 +31,33 @@ export default async function LogisticaArticulosPage({
         observaciones,
         equipo_id
       )
-    `)
-    .order("nombre")
+    `
+    )
+    .order('nombre');
 
   if (q) {
-    query = query.or(`nombre.ilike.%${q}%,categoria.ilike.%${q}%,unidad.ilike.%${q}%`)
+    query = query.or(`nombre.ilike.%${q}%,categoria.ilike.%${q}%,unidad.ilike.%${q}%`);
   }
 
   const [{ data: articulos }, { data: equipos }] = await Promise.all([
     query,
-    supabase.from("equipos").select("id, nombre").order("nombre"),
-  ])
+    supabase.from('equipos').select('id, nombre').order('nombre'),
+  ]);
 
-  const itemsPerPage = 20
-  const allArticulos = articulos ?? []
-  const totalPages = Math.ceil(allArticulos.length / itemsPerPage)
-  const currentPage = Math.max(1, Math.min(Number(params.page) || 1, totalPages || 1))
+  const itemsPerPage = 20;
+  const allArticulos = articulos ?? [];
+  const totalPages = Math.ceil(allArticulos.length / itemsPerPage);
+  const currentPage = Math.max(1, Math.min(Number(params.page) || 1, totalPages || 1));
   const paginatedArticulos = allArticulos.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
-  )
+  );
 
   return (
     <div className="p-6">
       <Link
         href="/logistica"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
         Volver a logística
@@ -63,16 +65,16 @@ export default async function LogisticaArticulosPage({
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Artículos</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-primary text-2xl font-bold">Artículos</h1>
+          <p className="text-muted-foreground text-sm">
             Catálogo ordenado de artículos y acceso al detalle.
           </p>
         </div>
 
-        {tienePermiso(usuario.permisos, "logistica.editar") && (
+        {tienePermiso(usuario.permisos, 'logistica.editar') && (
           <Link
             href="/logistica/articulos/nuevo"
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+            className="bg-primary text-primary-foreground inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition hover:opacity-90"
           >
             <Plus className="size-4" />
             Nuevo artículo
@@ -80,22 +82,22 @@ export default async function LogisticaArticulosPage({
         )}
       </div>
 
-      <form className="mb-6 rounded-xl border border-border bg-card p-4">
+      <form className="border-border bg-card mb-6 rounded-xl border p-4">
         <div className="flex flex-col gap-3 md:flex-row">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
             <input
               type="text"
               name="q"
               defaultValue={q}
               placeholder="Buscar por nombre, categoría o unidad"
-              className="w-full rounded-md border border-border bg-background py-2 pl-9 pr-3 text-sm"
+              className="border-border bg-background w-full rounded-md border py-2 pr-3 pl-9 text-sm"
             />
           </div>
 
           <button
             type="submit"
-            className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+            className="border-border bg-background hover:bg-muted rounded-md border px-4 py-2 text-sm font-medium"
           >
             Buscar
           </button>
@@ -103,7 +105,7 @@ export default async function LogisticaArticulosPage({
           {q && (
             <Link
               href="/logistica/articulos"
-              className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+              className="border-border bg-background hover:bg-muted rounded-md border px-4 py-2 text-sm font-medium"
             >
               Limpiar
             </Link>
@@ -111,8 +113,8 @@ export default async function LogisticaArticulosPage({
         </div>
       </form>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="grid grid-cols-12 gap-3 border-b border-border bg-muted/40 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="border-border bg-card overflow-hidden rounded-xl border">
+        <div className="border-border bg-muted/40 text-muted-foreground grid grid-cols-12 gap-3 border-b px-4 py-3 text-xs font-semibold tracking-wide uppercase">
           <div className="col-span-4">Artículo</div>
           <div className="col-span-2">Categoría</div>
           <div className="col-span-2">Stock</div>
@@ -121,53 +123,63 @@ export default async function LogisticaArticulosPage({
         </div>
 
         {paginatedArticulos.length === 0 ? (
-          <div className="px-4 py-6 text-sm text-muted-foreground">
+          <div className="text-muted-foreground px-4 py-6 text-sm">
             No hay artículos que coincidan con la búsqueda.
           </div>
         ) : (
-          <div className="divide-y divide-border">
-            {paginatedArticulos.map((articulo: any) => {
-              const minimo = articulo.logistica_stock_minimos?.[0] ?? null
-              const stockBajo = articulo.stock_actual <= (minimo?.stock_minimo ?? 0)
-              const equipo = equipos?.find((e: any) => e.id === minimo?.equipo_id)
+          <div className="divide-border divide-y">
+            {paginatedArticulos.map((articulo: Record<string, unknown>) => {
+              const minimo =
+                (
+                  articulo.logistica_stock_minimos as unknown as Record<string, unknown>[] | null
+                )?.[0] ?? null;
+              const stockBajo =
+                (articulo.stock_actual as number) <= ((minimo?.stock_minimo as number) ?? 0);
+              const equipo = equipos?.find(
+                (e: Record<string, unknown>) => e.id === minimo?.equipo_id
+              );
 
               return (
                 <Link
-                  key={articulo.id}
-                  href={`/logistica/articulos/${articulo.id}`}
-                  className="grid grid-cols-12 gap-3 px-4 py-4 text-sm transition hover:bg-muted/30"
+                  key={articulo.id as string}
+                  href={`/logistica/articulos/${articulo.id as string}`}
+                  className="hover:bg-muted/30 grid grid-cols-12 gap-3 px-4 py-4 text-sm transition"
                 >
                   <div className="col-span-4 min-w-0">
-                    <p className="truncate font-medium text-foreground">{articulo.nombre}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {articulo.es_sanitario ? "Sanitario" : "General"}
-                      {equipo ? ` · ${equipo.nombre}` : ""}
+                    <p className="text-foreground truncate font-medium">
+                      {articulo.nombre as string}
+                    </p>
+                    <p className="text-muted-foreground truncate text-xs">
+                      {articulo.es_sanitario ? 'Sanitario' : 'General'}
+                      {equipo ? ` · ${equipo.nombre as string}` : ''}
                     </p>
                   </div>
 
-                  <div className="col-span-2 text-muted-foreground">{articulo.categoria}</div>
-
-                  <div className="col-span-2 text-foreground">
-                    {articulo.stock_actual} {articulo.unidad}
+                  <div className="text-muted-foreground col-span-2">
+                    {articulo.categoria as string}
                   </div>
 
-                  <div className="col-span-2 text-muted-foreground">
-                    {minimo?.stock_minimo ?? 0} {articulo.unidad}
+                  <div className="text-foreground col-span-2">
+                    {articulo.stock_actual as string} {articulo.unidad as string}
+                  </div>
+
+                  <div className="text-muted-foreground col-span-2">
+                    {(minimo?.stock_minimo as string) ?? 0} {articulo.unidad as string}
                   </div>
 
                   <div className="col-span-2">
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
                         stockBajo
-                          ? "bg-destructive/10 text-destructive"
-                          : "bg-primary/10 text-primary"
+                          ? 'bg-destructive/10 text-destructive'
+                          : 'bg-primary/10 text-primary'
                       }`}
                     >
-                      {stockBajo ? "Stock bajo" : "Correcto"}
+                      {stockBajo ? 'Stock bajo' : 'Correcto'}
                     </span>
                   </div>
                 </Link>
-              )
+              );
             })}
           </div>
         )}
@@ -175,5 +187,5 @@ export default async function LogisticaArticulosPage({
 
       <Pagination currentPage={currentPage} totalPages={totalPages} />
     </div>
-  )
+  );
 }

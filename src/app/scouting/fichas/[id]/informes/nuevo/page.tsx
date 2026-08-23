@@ -1,39 +1,62 @@
-import { createClient } from "@/lib/supabase-server"
-import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
-import { redirect, notFound } from "next/navigation"
-import Link from "next/link"
-import { FormSubmitButton } from "@/components/form-submit-button"
-import { ArrowLeft } from "lucide-react"
-import { validateFormData, getFirstError } from "@/lib/validate"
-import { crearInformeScoutingSchema } from "@/lib/validations"
+import { createClient } from '@/lib/supabase-server';
+import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
+import { redirect, notFound } from 'next/navigation';
+import Link from 'next/link';
+import { FormSubmitButton } from '@/components/form-submit-button';
+import { ArrowLeft } from 'lucide-react';
+import { validateFormData, getFirstError } from '@/lib/validate';
+import { crearInformeScoutingSchema } from '@/lib/validations';
+
+interface FichaData {
+  id: string;
+  jugadoras: { nombre: string; apellidos: string } | null;
+  nombre_externo: string | null;
+}
+
+interface CriterioScouting {
+  id: string;
+  clave: string;
+  etiqueta: string;
+  activo: boolean;
+  orden: number;
+}
+
+interface EquipoBasico {
+  id: string;
+  nombre: string;
+}
 
 async function crearInforme(fichaId: string, formData: FormData) {
-  "use server"
-  const usuario = await getUsuarioActual()
-  if (!usuario || !tienePermiso(usuario.permisos, "scouting.editar")) return
+  'use server';
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'scouting.editar')) return;
 
-  const validation = validateFormData(crearInformeScoutingSchema, formData)
+  const validation = validateFormData(crearInformeScoutingSchema, formData);
   if (!validation.success) {
-    return redirect(`/scouting/fichas/${fichaId}/informes/nuevo?error=${encodeURIComponent(getFirstError(validation.errors))}`)
+    return redirect(
+      `/scouting/fichas/${fichaId}/informes/nuevo?error=${encodeURIComponent(getFirstError(validation.errors))}`
+    );
   }
 
-  const { fecha, equipo_id, rival, temporada, minutos_jugados, nota_global, observaciones } = validation.data
+  const { fecha, equipo_id, rival, temporada, minutos_jugados, nota_global, observaciones } =
+    validation.data;
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
-  const { data: criterios } = await supabase
-    .from("scouting_criterios")
-    .select("clave")
-    .eq("activo", true)
+  const { data: rawCriterios } = await supabase
+    .from('scouting_criterios')
+    .select('clave')
+    .eq('activo', true);
+  const criterios = (rawCriterios ?? []) as unknown as { clave: string }[];
 
-  const valoraciones: Record<string, string> = {}
-  for (const c of (criterios ?? []) as any[]) {
-    const valor = formData.get(`criterio_${c.clave}`) as string | null
-    if (valor && valor.trim() !== "") valoraciones[c.clave] = valor.trim()
+  const valoraciones: Record<string, string> = {};
+  for (const c of criterios) {
+    const valor = formData.get(`criterio_${c.clave}`) as string | null;
+    if (valor && valor.trim() !== '') valoraciones[c.clave] = valor.trim();
   }
 
   const { data: informe, error } = await supabase
-    .from("scouting_informes")
+    .from('scouting_informes')
     .insert({
       ficha_id: fichaId,
       fecha,
@@ -48,74 +71,72 @@ async function crearInforme(fichaId: string, formData: FormData) {
       autor_nombre_snapshot: usuario.nombreCompleto,
       autor_puesto_snapshot: usuario.puesto,
     })
-    .select("id")
-    .single()
+    .select('id')
+    .single();
 
   if (error || !informe) {
-    console.error(error)
-    return redirect(`/scouting/fichas/${fichaId}`)
+    console.error(error);
+    return redirect(`/scouting/fichas/${fichaId}`);
   }
 
-  redirect(`/scouting/fichas/${fichaId}`)
+  redirect(`/scouting/fichas/${fichaId}`);
 }
 
 export default async function NuevoInformeFichaPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = await params
-  const usuario = await getUsuarioActual()
-  if (!usuario || !tienePermiso(usuario.permisos, "scouting.editar")) {
-    redirect("/scouting")
+  const { id } = await params;
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'scouting.editar')) {
+    redirect('/scouting');
   }
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
-  const { data: fichaData } = await supabase
-    .from("scouting_fichas")
-    .select("id, jugadoras ( nombre, apellidos ), nombre_externo")
-    .eq("id", id)
-    .single()
+  const { data: rawFichaData } = await supabase
+    .from('scouting_fichas')
+    .select('id, jugadoras ( nombre, apellidos ), nombre_externo')
+    .eq('id', id)
+    .single();
+  const fichaData = (rawFichaData ?? null) as unknown as FichaData | null;
 
-  if (!fichaData) notFound()
+  if (!fichaData) notFound();
 
-  const ficha = fichaData as any
+  const ficha = fichaData;
 
-  const { data: equipos } = await supabase
-    .from("equipos")
-    .select("id, nombre")
-    .order("nombre")
+  const { data: rawEquipos } = await supabase.from('equipos').select('id, nombre').order('nombre');
+  const equipos = (rawEquipos ?? []) as unknown as EquipoBasico[];
 
-  const { data: criterios } = await supabase
-    .from("scouting_criterios")
-    .select("*")
-    .eq("activo", true)
-    .order("orden")
+  const { data: rawCriteriosForm } = await supabase
+    .from('scouting_criterios')
+    .select('*')
+    .eq('activo', true)
+    .order('orden');
+  const criteriosForm = (rawCriteriosForm ?? []) as unknown as CriterioScouting[];
 
   const nombre = ficha.jugadoras
     ? `${ficha.jugadoras.nombre} ${ficha.jugadoras.apellidos}`
-    : ficha.nombre_externo
+    : ficha.nombre_externo;
 
-  const crearAction = crearInforme.bind(null, id)
+  const crearAction = crearInforme.bind(null, id);
 
   return (
     <div className="p-6">
       <Link
         href={`/scouting/fichas/${id}`}
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
         Volver a la ficha
       </Link>
 
-      <h1 className="mb-6 text-2xl font-bold text-primary">
-        Nuevo informe — {nombre}
-      </h1>
+      <h1 className="text-primary mb-6 text-2xl font-bold">Nuevo informe — {nombre ?? ''}</h1>
 
       <form
         action={crearAction}
-        className="max-w-3xl space-y-6 rounded-lg border border-border bg-card p-4"
+        className="border-border bg-card max-w-3xl space-y-6 rounded-lg border p-4"
       >
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <div>
@@ -124,7 +145,7 @@ export default async function NuevoInformeFichaPage({
               type="date"
               name="fecha"
               required
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             />
           </div>
           <div>
@@ -132,10 +153,10 @@ export default async function NuevoInformeFichaPage({
             <select
               name="equipo_id"
               defaultValue=""
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             >
               <option value="">-</option>
-              {equipos?.map((e) => (
+              {equipos.map((e) => (
                 <option key={e.id} value={e.id}>
                   {e.nombre}
                 </option>
@@ -146,7 +167,7 @@ export default async function NuevoInformeFichaPage({
             <label className="mb-1 block text-sm font-medium">Rival</label>
             <input
               name="rival"
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             />
           </div>
           <div>
@@ -155,7 +176,7 @@ export default async function NuevoInformeFichaPage({
               name="temporada"
               required
               placeholder="2025-2026"
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             />
           </div>
         </div>
@@ -166,7 +187,7 @@ export default async function NuevoInformeFichaPage({
             <input
               type="number"
               name="minutos_jugados"
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             />
           </div>
           <div>
@@ -176,7 +197,7 @@ export default async function NuevoInformeFichaPage({
               name="nota_global"
               min={1}
               max={5}
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             />
           </div>
         </div>
@@ -184,14 +205,14 @@ export default async function NuevoInformeFichaPage({
         <div>
           <p className="mb-3 text-sm font-medium">Valoración detallada</p>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {criterios?.map((c) => (
+            {criteriosForm.map((c) => (
               <div key={c.id}>
                 <label className="mb-1 block text-sm font-medium">{c.etiqueta}</label>
                 <input
                   type="text"
                   name={`criterio_${c.clave}`}
                   placeholder="Escribe tu valoración..."
-                  className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                  className="border-border bg-background w-full rounded-md border p-2 text-sm"
                 />
               </div>
             ))}
@@ -203,12 +224,12 @@ export default async function NuevoInformeFichaPage({
           <textarea
             name="observaciones"
             rows={4}
-            className="w-full rounded-md border border-border bg-background p-2 text-sm"
+            className="border-border bg-background w-full rounded-md border p-2 text-sm"
           />
         </div>
 
         <FormSubmitButton>Guardar informe</FormSubmitButton>
       </form>
     </div>
-  )
+  );
 }

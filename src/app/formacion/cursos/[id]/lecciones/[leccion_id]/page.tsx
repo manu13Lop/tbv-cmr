@@ -1,72 +1,86 @@
-import { createClient } from "@/lib/supabase-server"
-import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
-import { notFound, redirect } from "next/navigation"
-import Link from "next/link"
-import { ArrowLeft, Play, FileText } from "lucide-react"
-import { ProgressBar } from "@/components/progress-bar"
+import { createClient } from '@/lib/supabase-server';
+import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
+import { notFound, redirect } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft, Play, FileText } from 'lucide-react';
+import { ProgressBar } from '@/components/progress-bar';
 
 export default async function LeccionPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string; leccion_id: string }>
-  searchParams: Promise<{ curso?: string }>
+  params: Promise<{ id: string; leccion_id: string }>;
+  searchParams: Promise<{ curso?: string }>;
 }) {
-  const { id, leccion_id } = await params
-  const { curso: cursoParam } = await searchParams
+  const { leccion_id } = await params;
+  const { curso: cursoParam } = await searchParams;
 
-  const usuario = await getUsuarioActual()
-  if (!usuario || !tienePermiso(usuario.permisos, "scouting.leer")) {
-    redirect("/")
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'scouting.leer')) {
+    redirect('/');
   }
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const { data: leccion } = await supabase
-    .from("formacion_lecciones")
-    .select("*")
-    .eq("id", leccion_id)
-    .eq("activo", true)
-    .single()
+    .from('formacion_lecciones')
+    .select('*')
+    .eq('id', leccion_id)
+    .eq('activo', true)
+    .single();
 
-  if (!leccion) notFound()
+  if (!leccion) notFound();
 
-  const cursoId = cursoParam ?? leccion.curso_id
+  const cursoId = cursoParam ?? leccion.curso_id;
 
   const { data: cursoData } = await supabase
-    .from("formacion_cursos")
-    .select("titulo")
-    .eq("id", cursoId)
-    .single()
+    .from('formacion_cursos')
+    .select('titulo')
+    .eq('id', cursoId)
+    .single();
 
   const { data: todasLecciones } = await supabase
-    .from("formacion_lecciones")
-    .select("id, titulo, orden")
-    .eq("curso_id", cursoId)
-    .eq("activo", true)
-    .order("orden")
+    .from('formacion_lecciones')
+    .select('id, titulo, orden')
+    .eq('curso_id', cursoId)
+    .eq('activo', true)
+    .order('orden');
 
   const { data: progreso } = await supabase
-    .from("formacion_progreso")
-    .select("porcentaje, completado, leccion_actual_id")
-    .eq("curso_id", cursoId)
-    .eq("usuario_id", usuario.id)
-    .maybeSingle()
+    .from('formacion_progreso')
+    .select('porcentaje, completado, leccion_actual_id')
+    .eq('curso_id', cursoId)
+    .eq('usuario_id', usuario.id)
+    .maybeSingle();
 
-  const leccionIndex = todasLecciones?.findIndex((l) => l.id === leccion_id) ?? 0
-  const totalLecciones = todasLecciones?.length ?? 0
-  const pctLeccion = totalLecciones > 0 ? Math.round(((leccionIndex + 1) / totalLecciones) * 100) : 0
+  const leccionIndex = todasLecciones?.findIndex((l) => l.id === leccion_id) ?? 0;
+  const totalLecciones = todasLecciones?.length ?? 0;
+  const pctLeccion =
+    totalLecciones > 0 ? Math.round(((leccionIndex + 1) / totalLecciones) * 100) : 0;
 
-  await updateLeccionProgreso(supabase, usuario.id, cursoId, leccion_id, pctLeccion, progreso)
+  await updateLeccionProgreso(
+    await supabase,
+    usuario.id,
+    cursoId,
+    leccion_id,
+    pctLeccion,
+    progreso
+  );
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <nav className="mb-4 flex items-center gap-1 text-xs text-muted-foreground">
-        <Link href="/" className="hover:text-foreground">Inicio</Link>
+    <div className="mx-auto max-w-4xl p-6">
+      <nav className="text-muted-foreground mb-4 flex items-center gap-1 text-xs">
+        <Link href="/" className="hover:text-foreground">
+          Inicio
+        </Link>
         <span>/</span>
-        <Link href="/formacion" className="hover:text-foreground">Formación</Link>
+        <Link href="/formacion" className="hover:text-foreground">
+          Formación
+        </Link>
         <span>/</span>
-        <Link href={`/formacion/cursos/${cursoId}`} className="hover:text-foreground">{cursoData?.titulo ?? "Curso"}</Link>
+        <Link href={`/formacion/cursos/${cursoId}`} className="hover:text-foreground">
+          {cursoData?.titulo ?? 'Curso'}
+        </Link>
         <span>/</span>
         <span className="text-foreground">{leccion.titulo}</span>
       </nav>
@@ -74,7 +88,7 @@ export default async function LeccionPage({
       <div className="mb-6">
         <Link
           href={`/formacion/cursos/${cursoId}`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
         >
           <ArrowLeft className="size-4" />
           Volver al curso
@@ -83,13 +97,13 @@ export default async function LeccionPage({
 
       <div className="mb-6">
         <div className="mb-2 flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-primary">{leccion.titulo}</h1>
-          {leccion.tipo === "video" && <Play className="size-5 text-muted-foreground" />}
-          {leccion.tipo === "texto" && <FileText className="size-5 text-muted-foreground" />}
+          <h1 className="text-primary text-2xl font-bold">{leccion.titulo}</h1>
+          {leccion.tipo === 'video' && <Play className="text-muted-foreground size-5" />}
+          {leccion.tipo === 'texto' && <FileText className="text-muted-foreground size-5" />}
         </div>
 
         {totalLecciones > 0 && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Lección {leccionIndex + 1} de {totalLecciones}
           </p>
         )}
@@ -101,11 +115,11 @@ export default async function LeccionPage({
         </div>
       )}
 
-      <div className="mb-8 rounded-lg border border-border bg-card p-6">
-        {leccion.tipo === "video" && leccion.contenido_url && (
+      <div className="border-border bg-card mb-8 rounded-lg border p-6">
+        {leccion.tipo === 'video' && leccion.contenido_url && (
           <div className="mb-4 aspect-video w-full">
             <iframe
-              src={leccion.contenido_url.replace("watch?v=", "embed/")}
+              src={leccion.contenido_url.replace('watch?v=', 'embed/')}
               className="h-full w-full rounded-md"
               allowFullScreen
               title={leccion.titulo}
@@ -113,20 +127,20 @@ export default async function LeccionPage({
           </div>
         )}
 
-        {leccion.tipo === "texto" && leccion.contenido_texto && (
+        {leccion.tipo === 'texto' && leccion.contenido_texto && (
           <div
             className="prose max-w-none"
             dangerouslySetInnerHTML={{ __html: leccion.contenido_texto }}
           />
         )}
 
-        {leccion.tipo === "pdf" && leccion.contenido_url && (
-          <div className="rounded-md border border-border bg-muted p-4 text-center">
+        {leccion.tipo === 'pdf' && leccion.contenido_url && (
+          <div className="border-border bg-muted rounded-md border p-4 text-center">
             <a
               href={leccion.contenido_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 text-sm text-primary hover:underline"
+              className="text-primary flex items-center justify-center gap-2 text-sm hover:underline"
             >
               <FileText className="size-5" />
               Abrir documento PDF
@@ -134,30 +148,27 @@ export default async function LeccionPage({
           </div>
         )}
 
-        {leccion.tipo === "imagen" && leccion.contenido_url && (
-          <img
-            src={leccion.contenido_url}
-            alt={leccion.titulo}
-            className="max-w-full rounded-md"
-          />
+        {leccion.tipo === 'imagen' && leccion.contenido_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={leccion.contenido_url} alt={leccion.titulo} className="max-w-full rounded-md" />
         )}
 
         {!leccion.contenido_url && !leccion.contenido_texto && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             No hay contenido disponible para esta lección.
           </p>
         )}
 
         {leccion.duracion_minutos > 0 && (
-          <p className="mt-4 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-4 text-xs">
             Duración estimada: {leccion.duracion_minutos} minutos
           </p>
         )}
       </div>
 
       {todasLecciones && todasLecciones.length > 0 && (
-        <div className="border-t border-border pt-6">
-          <h2 className="mb-3 text-lg font-bold text-primary">Lecciones del curso</h2>
+        <div className="border-border border-t pt-6">
+          <h2 className="text-primary mb-3 text-lg font-bold">Lecciones del curso</h2>
           <div className="space-y-2">
             {todasLecciones.map((l, idx) => (
               <Link
@@ -165,8 +176,8 @@ export default async function LeccionPage({
                 href={`/formacion/cursos/${cursoId}/lecciones/${l.id}?curso=${cursoId}`}
                 className={`flex items-center gap-3 rounded-md border p-3 text-sm transition-colors ${
                   l.id === leccion_id
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-border bg-card text-muted-foreground hover:border-primary/50"
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-border bg-card text-muted-foreground hover:border-primary/50'
                 }`}
               >
                 <span className="w-5 text-center text-xs">{idx + 1}</span>
@@ -177,33 +188,31 @@ export default async function LeccionPage({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 async function updateLeccionProgreso(
-  supabase: any,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   usuarioId: string,
   cursoId: string,
   leccionId: string,
   porcentaje: number,
   progreso: { porcentaje: number; completado: boolean } | null
 ) {
-  if (progreso?.completado) return
+  if (progreso?.completado) return;
 
-  const porcentajeCurso = progreso?.porcentaje ?? 0
-  const nuevoPorcentaje = Math.max(porcentajeCurso, porcentaje)
+  const porcentajeCurso = progreso?.porcentaje ?? 0;
+  const nuevoPorcentaje = Math.max(porcentajeCurso, porcentaje);
 
-  await supabase
-    .from("formacion_progreso")
-    .upsert({
-      curso_id: cursoId,
-      usuario_id: usuarioId,
-      leccion_actual_id: leccionId,
-      porcentaje: nuevoPorcentaje,
-      completado: nuevoPorcentaje >= 100,
-      completado_at: nuevoPorcentaje >= 100 ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
-    })
+  await supabase.from('formacion_progreso').upsert({
+    curso_id: cursoId,
+    usuario_id: usuarioId,
+    leccion_actual_id: leccionId,
+    porcentaje: nuevoPorcentaje,
+    completado: nuevoPorcentaje >= 100,
+    completado_at: nuevoPorcentaje >= 100 ? new Date().toISOString() : null,
+    updated_at: new Date().toISOString(),
+  });
 }
 
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic';

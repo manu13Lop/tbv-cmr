@@ -1,31 +1,42 @@
-import Link from "next/link"
-import { redirect } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
-import { createClient } from "@/lib/supabase-server"
-import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
-import { FormSubmitButton } from "@/components/form-submit-button"
-import { validateFormData, getFirstError } from "@/lib/validate"
-import { crearArticuloSchema } from "@/lib/validations"
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
+import { createClient } from '@/lib/supabase-server';
+import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
+import { FormSubmitButton } from '@/components/form-submit-button';
+import { validateFormData, getFirstError } from '@/lib/validate';
+import { crearArticuloSchema } from '@/lib/validations';
 
 async function crearArticulo(formData: FormData) {
-  "use server"
+  'use server';
 
-  const usuario = await getUsuarioActual()
-  if (!usuario || !tienePermiso(usuario.permisos, "logistica.editar")) {
-    redirect("/")
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'logistica.editar')) {
+    redirect('/');
   }
 
-  const validation = validateFormData(crearArticuloSchema, formData)
+  const validation = validateFormData(crearArticuloSchema, formData);
   if (!validation.success) {
-    return redirect(`/logistica/articulos/nuevo?error=${encodeURIComponent(getFirstError(validation.errors))}`)
+    return redirect(
+      `/logistica/articulos/nuevo?error=${encodeURIComponent(getFirstError(validation.errors))}`
+    );
   }
 
-  const { nombre, categoria, unidad, descripcion, es_sanitario, stock_minimo, equipo_id, observaciones_stock } = validation.data
+  const {
+    nombre,
+    categoria,
+    unidad,
+    descripcion,
+    es_sanitario,
+    stock_minimo,
+    equipo_id,
+    observaciones_stock,
+  } = validation.data;
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const { data: articulo, error: articuloError } = await supabase
-    .from("logistica_articulos")
+    .from('logistica_articulos')
     .insert({
       nombre,
       categoria,
@@ -34,62 +45,60 @@ async function crearArticulo(formData: FormData) {
       es_sanitario: es_sanitario || false,
       activo: true,
     })
-    .select("id")
-    .single()
+    .select('id')
+    .single();
 
   if (articuloError || !articulo) {
-    console.error(articuloError)
-    redirect("/logistica/articulos/nuevo")
+    console.error(articuloError);
+    redirect('/logistica/articulos/nuevo');
   }
 
-  const { error: minimoError } = await supabase
-    .from("logistica_stock_minimos")
-    .insert({
-      articulo_id: articulo.id,
-      stock_minimo: stock_minimo || 0,
-      equipo_id: equipo_id || null,
-      observaciones: observaciones_stock || null,
-    })
+  const { error: minimoError } = await supabase.from('logistica_stock_minimos').insert({
+    articulo_id: articulo.id,
+    stock_minimo: stock_minimo || 0,
+    equipo_id: equipo_id || null,
+    observaciones: observaciones_stock || null,
+  });
 
   if (minimoError) {
-    console.error(minimoError)
+    console.error(minimoError);
   }
 
-  redirect(`/logistica/articulos/${articulo.id}`)
+  redirect(`/logistica/articulos/${articulo.id}`);
 }
 
 export default async function NuevoArticuloLogisticaPage() {
-  const usuario = await getUsuarioActual()
-  if (!usuario || !tienePermiso(usuario.permisos, "logistica.editar")) {
-    redirect("/")
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'logistica.editar')) {
+    redirect('/');
   }
 
-  const supabase = await createClient()
-  const { data: equipos } = await supabase.from("equipos").select("id, nombre").order("nombre")
+  const supabase = await createClient();
+  const { data: equipos } = await supabase.from('equipos').select('id, nombre').order('nombre');
 
   return (
     <div className="p-6">
       <Link
         href="/logistica/articulos"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1 text-sm"
       >
         <ArrowLeft className="size-4" />
         Volver a artículos
       </Link>
 
-      <h1 className="mb-2 text-2xl font-bold text-primary">Nuevo artículo</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
+      <h1 className="text-primary mb-2 text-2xl font-bold">Nuevo artículo</h1>
+      <p className="text-muted-foreground mb-6 text-sm">
         Da de alta el artículo y define su stock mínimo.
       </p>
 
-      <form action={crearArticulo} className="rounded-xl border border-border bg-card p-4">
+      <form action={crearArticulo} className="border-border bg-card rounded-xl border p-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium">Nombre</label>
             <input
               name="nombre"
               required
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             />
           </div>
 
@@ -98,7 +107,7 @@ export default async function NuevoArticuloLogisticaPage() {
             <input
               name="categoria"
               required
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
               placeholder="Botiquín, higiene, material deportivo..."
             />
           </div>
@@ -108,7 +117,7 @@ export default async function NuevoArticuloLogisticaPage() {
             <input
               name="unidad"
               required
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
               placeholder="uds, botellas, cajas..."
             />
           </div>
@@ -118,12 +127,12 @@ export default async function NuevoArticuloLogisticaPage() {
             <select
               name="equipo_id"
               defaultValue=""
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             >
               <option value="">Sin equipo específico</option>
-              {equipos?.map((equipo: any) => (
-                <option key={equipo.id} value={equipo.id}>
-                  {equipo.nombre}
+              {equipos?.map((equipo: Record<string, unknown>) => (
+                <option key={equipo.id as string} value={equipo.id as string}>
+                  {equipo.nombre as string}
                 </option>
               ))}
             </select>
@@ -137,7 +146,7 @@ export default async function NuevoArticuloLogisticaPage() {
               min={0}
               defaultValue={0}
               required
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             />
           </div>
 
@@ -153,18 +162,16 @@ export default async function NuevoArticuloLogisticaPage() {
             <textarea
               name="descripcion"
               rows={3}
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-medium">
-              Observaciones de stock mínimo
-            </label>
+            <label className="mb-1 block text-sm font-medium">Observaciones de stock mínimo</label>
             <textarea
               name="observaciones_stock"
               rows={2}
-              className="w-full rounded-md border border-border bg-background p-2 text-sm"
+              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             />
           </div>
         </div>
@@ -174,5 +181,5 @@ export default async function NuevoArticuloLogisticaPage() {
         </div>
       </form>
     </div>
-  )
+  );
 }

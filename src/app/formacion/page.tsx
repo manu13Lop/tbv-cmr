@@ -1,78 +1,85 @@
-import type { Metadata } from "next"
-import { createClient } from "@/lib/supabase-server"
-import { getUsuarioActual, tienePermiso } from "@/lib/auth-helpers"
-import { redirect } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/button"
-import { Plus, BookOpen, HelpCircle, BarChart3, GraduationCap } from "lucide-react"
-import { ProgressBar } from "@/components/progress-bar"
-import { CATEGORIAS_FORMACION, NIVELES_FORMACION, getCategoriaLabel, getCategoriaColor, getNivelLabel } from "@/lib/formacion"
+import type { Metadata } from 'next';
+import { createClient } from '@/lib/supabase-server';
+import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/button';
+import { Plus, BookOpen, HelpCircle, GraduationCap } from 'lucide-react';
+import { ProgressBar } from '@/components/progress-bar';
+import {
+  CATEGORIAS_FORMACION,
+  getCategoriaLabel,
+  getCategoriaColor,
+  getNivelLabel,
+} from '@/lib/formacion';
 
 export const metadata: Metadata = {
-  title: "Formación - TBV Balonmano",
-  description: "Cursos, talleres y quizzes de formación deportiva",
-}
+  title: 'Formación - TBV Balonmano',
+  description: 'Cursos, talleres y quizzes de formación deportiva',
+};
 
 export default async function FormacionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ categoria?: string }>
+  searchParams: Promise<{ categoria?: string }>;
 }) {
-  const usuario = await getUsuarioActual()
-  if (!usuario || !tienePermiso(usuario.permisos, "scouting.leer")) {
-    redirect("/")
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'scouting.leer')) {
+    redirect('/');
   }
 
-  const puedeEditar = tienePermiso(usuario.permisos, "formacion.editar") || usuario.esMaster
-  const { categoria } = await searchParams
+  const puedeEditar = tienePermiso(usuario.permisos, 'formacion.editar') || usuario.esMaster;
+  const { categoria } = await searchParams;
 
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   let query = supabase
-    .from("formacion_cursos")
-    .select("id, titulo, slug, categoria, descripcion, duracion_minutos, nivel, activo, destacado, created_at")
-    .eq("activo", true)
-    .order("created_at", { ascending: false })
+    .from('formacion_cursos')
+    .select(
+      'id, titulo, slug, categoria, descripcion, duracion_minutos, nivel, activo, destacado, created_at'
+    )
+    .eq('activo', true)
+    .order('created_at', { ascending: false });
 
   if (categoria) {
-    query = query.eq("categoria", categoria)
+    query = query.eq('categoria', categoria);
   }
 
-  const { data: cursos } = await query
+  const { data: cursos } = await query;
 
   const { data: progreso } = await supabase
-    .from("formacion_progreso")
-    .select("curso_id, porcentaje, completado")
-    .eq("usuario_id", usuario.id)
+    .from('formacion_progreso')
+    .select('curso_id, porcentaje, completado')
+    .eq('usuario_id', usuario.id);
 
-  const progresoMap = new Map((progreso ?? []).map((p) => [p.curso_id, p]))
+  const progresoMap = new Map((progreso ?? []).map((p) => [p.curso_id, p]));
 
   const { data: quizzes } = await supabase
-    .from("formacion_quizzes")
-    .select(`
+    .from('formacion_quizzes')
+    .select(
+      `
       id, titulo, categoria, activo,
       formacion_quiz_preguntas!inner(id)
-    `)
-    .eq("activo", true)
-    .order("created_at", { ascending: false })
-    .limit(6)
+    `
+    )
+    .eq('activo', true)
+    .order('created_at', { ascending: false })
+    .limit(6);
 
   const { data: resultadosRecientes } = await supabase
-    .from("formacion_quiz_resultados")
-    .select("quiz_id, puntuacion, completado_at")
-    .eq("usuario_id", usuario.id)
-    .order("completado_at", { ascending: false })
-    .limit(3)
+    .from('formacion_quiz_resultados')
+    .select('quiz_id, puntuacion, completado_at')
+    .eq('usuario_id', usuario.id)
+    .order('completado_at', { ascending: false })
+    .limit(3);
 
-  const categoriaActiva = !categoria
-    ? "todas"
-    : categoria
+  const categoriaActiva = !categoria ? 'todas' : categoria;
 
   return (
     <div className="p-6">
       {/* Breadcrumb */}
-      <nav className="mb-4 flex items-center gap-1 text-xs text-muted-foreground">
-        <Link href="/" className="flex items-center gap-1 hover:text-foreground">
+      <nav className="text-muted-foreground mb-4 flex items-center gap-1 text-xs">
+        <Link href="/" className="hover:text-foreground flex items-center gap-1">
           <span>🏠</span>
           <span>Inicio</span>
         </Link>
@@ -83,11 +90,11 @@ export default async function FormacionPage({
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
+          <h1 className="text-primary flex items-center gap-2 text-3xl font-bold">
             <GraduationCap className="size-7" />
             Formación Deportiva
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Cursos y quizzes de balonmano para mejorar tu conocimiento técnico-táctico
           </p>
         </div>
@@ -103,17 +110,21 @@ export default async function FormacionPage({
 
       {/* Stats rápidos */}
       <div className="mb-6 grid grid-cols-3 gap-4">
-        <div className="rounded-lg border border-border bg-card p-4 text-center">
-          <div className="text-2xl font-bold text-primary">{cursos?.filter((c) => c.activo).length ?? 0}</div>
-          <p className="text-xs text-muted-foreground">Cursos disponibles</p>
+        <div className="border-border bg-card rounded-lg border p-4 text-center">
+          <div className="text-primary text-2xl font-bold">
+            {cursos?.filter((c) => c.activo).length ?? 0}
+          </div>
+          <p className="text-muted-foreground text-xs">Cursos disponibles</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4 text-center">
+        <div className="border-border bg-card rounded-lg border p-4 text-center">
           <div className="text-2xl font-bold text-green-600">{progresoMap.size}</div>
-          <p className="text-xs text-muted-foreground">Cursos iniciados</p>
+          <p className="text-muted-foreground text-xs">Cursos iniciados</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4 text-center">
-          <div className="text-2xl font-bold text-primary">{progreso?.filter((p) => p.completado).length ?? 0}</div>
-          <p className="text-xs text-muted-foreground">Cursos completados</p>
+        <div className="border-border bg-card rounded-lg border p-4 text-center">
+          <div className="text-primary text-2xl font-bold">
+            {progreso?.filter((p) => p.completado).length ?? 0}
+          </div>
+          <p className="text-muted-foreground text-xs">Cursos completados</p>
         </div>
       </div>
 
@@ -122,9 +133,9 @@ export default async function FormacionPage({
         <Link
           href="/formacion"
           className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-            categoriaActiva === "todas"
-              ? "bg-primary text-primary-foreground"
-              : "border border-border bg-card text-muted-foreground hover:bg-muted"
+            categoriaActiva === 'todas'
+              ? 'bg-primary text-primary-foreground'
+              : 'border-border bg-card text-muted-foreground hover:bg-muted border'
           }`}
         >
           Todas
@@ -135,8 +146,8 @@ export default async function FormacionPage({
             href={`/formacion?categoria=${cat.value}`}
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
               categoria === cat.value
-                ? "bg-primary text-primary-foreground"
-                : "border border-border bg-card text-muted-foreground hover:bg-muted"
+                ? 'bg-primary text-primary-foreground'
+                : 'border-border bg-card text-muted-foreground hover:bg-muted border'
             }`}
           >
             {cat.label}
@@ -147,65 +158,54 @@ export default async function FormacionPage({
       {/* Cursos destacados */}
       {cursos?.some((c) => c.destacado) && (
         <>
-          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-primary">
+          <h2 className="text-primary mb-3 flex items-center gap-2 text-lg font-bold">
             <BookOpen className="size-5" />
             Cursos destacados
           </h2>
           <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {cursos.filter((c) => c.destacado).map((curso) => (
-              <CursoCard
-                key={curso.id}
-                curso={curso}
-                progreso={progresoMap.get(curso.id)}
-                usuarioId={usuario.id}
-                puedeEditar={puedeEditar}
-              />
-            ))}
+            {cursos
+              .filter((c) => c.destacado)
+              .map((curso) => (
+                <CursoCard key={curso.id} curso={curso} progreso={progresoMap.get(curso.id)} />
+              ))}
           </div>
         </>
       )}
 
       {/* Todos los cursos */}
-      <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-primary">
+      <h2 className="text-primary mb-3 flex items-center gap-2 text-lg font-bold">
         <BookOpen className="size-5" />
-        {categoria ? `Cursos de ${getCategoriaLabel(categoria)}` : "Todos los cursos"}
+        {categoria ? `Cursos de ${getCategoriaLabel(categoria)}` : 'Todos los cursos'}
       </h2>
 
       {!cursos || cursos.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground">
+        <div className="border-border bg-card text-muted-foreground rounded-lg border p-8 text-center">
           No hay cursos disponibles en esta categoría.
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {cursos.filter((c) => !c.destacado || !cursos?.some((d) => d.destacado)).map((curso) => (
-            <CursoCard
-              key={curso.id}
-              curso={curso}
-              progreso={progresoMap.get(curso.id)}
-              usuarioId={usuario.id}
-              puedeEditar={puedeEditar}
-            />
-          ))}
+          {cursos
+            .filter((c) => !c.destacado || !cursos?.some((d) => d.destacado))
+            .map((curso) => (
+              <CursoCard key={curso.id} curso={curso} progreso={progresoMap.get(curso.id)} />
+            ))}
         </div>
       )}
 
       {/* Quizzes */}
       <div className="mt-12">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-primary">
+          <h2 className="text-primary flex items-center gap-2 text-lg font-bold">
             <HelpCircle className="size-5" />
             Quizzes recientes
           </h2>
-          <Link
-            href="/formacion/quizzes"
-            className="text-xs text-primary hover:underline"
-          >
+          <Link href="/formacion/quizzes" className="text-primary text-xs hover:underline">
             Ver todos →
           </Link>
         </div>
 
         {!quizzes || quizzes.length === 0 ? (
-          <div className="rounded-lg border border-border bg-card p-6 text-center text-muted-foreground">
+          <div className="border-border bg-card text-muted-foreground rounded-lg border p-6 text-center">
             No hay quizzes disponibles.
           </div>
         ) : (
@@ -221,86 +221,88 @@ export default async function FormacionPage({
         )}
       </div>
     </div>
-  )
+  );
 }
 
 function CursoCard({
   curso,
   progreso,
-  usuarioId,
-  puedeEditar,
 }: {
-  curso: any
-  progreso?: { porcentaje: number; completado: boolean } | undefined
-  usuarioId: string
-  puedeEditar: boolean
+  curso: Record<string, unknown>;
+  progreso?: { porcentaje: number; completado: boolean } | undefined;
 }) {
-  const pct = progreso?.porcentaje ?? 0
-  const completado = progreso?.completado ?? false
+  const pct = (progreso?.porcentaje as number) ?? 0;
+  const completado = progreso?.completado ?? false;
 
   return (
     <Link
-      href={`/formacion/cursos/${curso.id}`}
-      className="group rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm"
+      href={`/formacion/cursos/${curso.id as string}`}
+      className="group border-border bg-card hover:border-primary/50 rounded-lg border p-4 transition-all hover:shadow-sm"
     >
       <div className="mb-2 flex items-start justify-between gap-2">
-        <h3 className="font-medium group-hover:text-primary">{curso.titulo}</h3>
+        <h3 className="group-hover:text-primary font-medium">{curso.titulo as string}</h3>
         {completado && <span className="shrink-0 text-xs">✅</span>}
       </div>
 
-      {curso.descripcion && (
-        <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{curso.descripcion}</p>
+      {(curso.descripcion as unknown as string) && (
+        <p className="text-muted-foreground mb-3 line-clamp-2 text-sm">
+          {curso.descripcion as unknown as string}
+        </p>
       )}
 
       <div className="mb-3 flex flex-wrap gap-1">
-        <span className={`rounded px-2 py-0.5 text-xs font-medium ${getCategoriaColor(curso.categoria)}`}>
-          {getCategoriaLabel(curso.categoria)}
+        <span
+          className={`rounded px-2 py-0.5 text-xs font-medium ${getCategoriaColor(curso.categoria as string)}`}
+        >
+          {getCategoriaLabel(curso.categoria as string)}
         </span>
-        <span className="rounded bg-muted px-2 py-0.5 text-xs">
-          {getNivelLabel(curso.nivel ?? "intermedio")}
+        <span className="bg-muted rounded px-2 py-0.5 text-xs">
+          {getNivelLabel((curso.nivel as string) ?? 'intermedio')}
         </span>
-        {curso.duracion_minutos > 0 && (
-          <span className="rounded bg-muted px-2 py-0.5 text-xs">
-            {curso.duracion_minutos} min
+        {(curso.duracion_minutos as number) > 0 && (
+          <span className="bg-muted rounded px-2 py-0.5 text-xs">
+            {curso.duracion_minutos as number} min
           </span>
         )}
       </div>
 
       {pct > 0 && (
-        <ProgressBar porcentaje={pct} label={completado ? "Completado" : "Tu progreso"} />
+        <ProgressBar porcentaje={pct} label={completado ? 'Completado' : 'Tu progreso'} />
       )}
     </Link>
-  )
+  );
 }
 
 function QuizCard({
   quiz,
   ultimoResultado,
 }: {
-  quiz: any
-   ultimoResultado?: { puntuacion: number; completado_at: string } | undefined
+  quiz: Record<string, unknown>;
+  ultimoResultado?: { puntuacion: number; completado_at: string } | undefined;
 }) {
   return (
     <Link
-      href={`/formacion/quizzes/${quiz.id}`}
-      className="rounded-lg border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm"
+      href={`/formacion/quizzes/${quiz.id as string}`}
+      className="border-border bg-card hover:border-primary/50 rounded-lg border p-4 transition-all hover:shadow-sm"
     >
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-medium">{quiz.titulo}</h3>
-          <span className={`mt-1 text-xs ${getCategoriaColor(quiz.categoria)} rounded px-2 py-0.5 font-medium`}>
-            {getCategoriaLabel(quiz.categoria)}
+          <h3 className="font-medium">{quiz.titulo as string}</h3>
+          <span
+            className={`mt-1 text-xs ${getCategoriaColor(quiz.categoria as string)} rounded px-2 py-0.5 font-medium`}
+          >
+            {getCategoriaLabel(quiz.categoria as string)}
           </span>
         </div>
         {ultimoResultado && (
           <div className="text-right">
-            <div className="text-lg font-bold text-primary">{ultimoResultado.puntuacion}%</div>
-            <span className="text-xs text-muted-foreground">
-              {new Date(ultimoResultado.completado_at).toLocaleDateString("es-ES")}
+            <div className="text-primary text-lg font-bold">{ultimoResultado.puntuacion}%</div>
+            <span className="text-muted-foreground text-xs">
+              {new Date(ultimoResultado.completado_at).toLocaleDateString('es-ES')}
             </span>
           </div>
         )}
       </div>
     </Link>
-  )
+  );
 }
