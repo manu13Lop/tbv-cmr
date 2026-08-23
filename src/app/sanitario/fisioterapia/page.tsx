@@ -138,33 +138,35 @@ export default async function FisioterapiaPage({
           No hay lesiones activas registradas.
         </div>
       ) : (
-        <div className="border-border mb-8 overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground">
-              <tr>
-                <th className="p-3 text-left font-medium">Jugadora</th>
-                <th className="p-3 text-left font-medium">Tipo</th>
-                <th className="p-3 text-left font-medium">Fecha</th>
-                <th className="p-3 text-left font-medium">Gravedad</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedActivas.map((l) => (
-                <tr key={l.id} className="border-border hover:bg-muted/50 border-t">
-                  <td className="p-3 font-medium">
-                    <Link href={`/sanitario/lesiones/${l.id}`} className="hover:underline">
-                      {l.jugadoras?.nombre} {l.jugadoras?.apellidos}
-                    </Link>
-                  </td>
-                  <td className="p-3">{l.tipo}</td>
-                  <td className="p-3">{new Date(l.fecha_lesion).toLocaleDateString('es-ES')}</td>
-                  <td className="p-3">
-                    <span className={gravedadColor[l.gravedad] ?? ''}>{l.gravedad ?? '-'}</span>
-                  </td>
+        <div className="border-border mb-8 rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-muted-foreground">
+                <tr>
+                  <th className="p-3 text-left font-medium">Jugadora</th>
+                  <th className="p-3 text-left font-medium">Tipo</th>
+                  <th className="p-3 text-left font-medium">Fecha</th>
+                  <th className="p-3 text-left font-medium">Gravedad</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginatedActivas.map((l) => (
+                  <tr key={l.id} className="border-border hover:bg-muted/50 border-t">
+                    <td className="p-3 font-medium">
+                      <Link href={`/sanitario/lesiones/${l.id}`} className="hover:underline">
+                        {l.jugadoras?.nombre} {l.jugadoras?.apellidos}
+                      </Link>
+                    </td>
+                    <td className="p-3">{l.tipo}</td>
+                    <td className="p-3">{new Date(l.fecha_lesion).toLocaleDateString('es-ES')}</td>
+                    <td className="p-3">
+                      <span className={gravedadColor[l.gravedad] ?? ''}>{l.gravedad ?? '-'}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -176,31 +178,33 @@ export default async function FisioterapiaPage({
           No hay lesiones cerradas todavía.
         </div>
       ) : (
-        <div className="border-border overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground">
-              <tr>
-                <th className="p-3 text-left font-medium">Jugadora</th>
-                <th className="p-3 text-left font-medium">Tipo</th>
-                <th className="p-3 text-left font-medium">Fecha</th>
-                <th className="p-3 text-left font-medium">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedCerradas.map((l) => (
-                <tr key={l.id} className="border-border hover:bg-muted/50 border-t">
-                  <td className="p-3 font-medium">
-                    <Link href={`/sanitario/lesiones/${l.id}`} className="hover:underline">
-                      {l.jugadoras?.nombre} {l.jugadoras?.apellidos}
-                    </Link>
-                  </td>
-                  <td className="p-3">{l.tipo}</td>
-                  <td className="p-3">{new Date(l.fecha_lesion).toLocaleDateString('es-ES')}</td>
-                  <td className="text-muted-foreground p-3">{l.estado}</td>
+        <div className="border-border rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-muted-foreground">
+                <tr>
+                  <th className="p-3 text-left font-medium">Jugadora</th>
+                  <th className="p-3 text-left font-medium">Tipo</th>
+                  <th className="p-3 text-left font-medium">Fecha</th>
+                  <th className="p-3 text-left font-medium">Estado</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paginatedCerradas.map((l) => (
+                  <tr key={l.id} className="border-border hover:bg-muted/50 border-t">
+                    <td className="p-3 font-medium">
+                      <Link href={`/sanitario/lesiones/${l.id}`} className="hover:underline">
+                        {l.jugadoras?.nombre} {l.jugadoras?.apellidos}
+                      </Link>
+                    </td>
+                    <td className="p-3">{l.tipo}</td>
+                    <td className="p-3">{new Date(l.fecha_lesion).toLocaleDateString('es-ES')}</td>
+                    <td className="text-muted-foreground p-3">{l.estado}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

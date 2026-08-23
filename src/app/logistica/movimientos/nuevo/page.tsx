@@ -6,6 +6,7 @@ import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { FormSubmitButton } from '@/components/form-submit-button';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearMovimientoSchema } from '@/lib/validations';
+import { InputField, SelectField, TextareaField } from '@/components/ui';
 
 async function crearMovimiento(formData: FormData) {
   'use server';
@@ -91,73 +92,50 @@ export default async function NuevoMovimientoLogisticaPage() {
 
       <form action={crearMovimiento} className="border-border bg-card rounded-xl border p-4">
         <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Artículo</label>
-            <select
-              name="articulo_id"
-              required
-              defaultValue=""
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            >
-              <option value="" disabled>
-                Selecciona un artículo
-              </option>
-              {articulos?.map((articulo: Record<string, unknown>) => (
-                <option key={articulo.id as string} value={articulo.id as string}>
-                  {articulo.nombre as string} · stock {articulo.stock_actual as string}{' '}
-                  {articulo.unidad as string}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectField
+            label="Artículo"
+            name="articulo_id"
+            required
+            defaultValue=""
+            placeholder="Selecciona un artículo"
+            options={(articulos ?? []).map((articulo: Record<string, unknown>) => ({
+              value: articulo.id as string,
+              label: `${articulo.nombre as string} · stock ${articulo.stock_actual as string} ${articulo.unidad as string}`,
+            }))}
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Tipo</label>
-            <select
-              name="tipo"
-              defaultValue="entrada"
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            >
-              <option value="entrada">Entrada</option>
-              <option value="salida">Salida</option>
-              <option value="ajuste">Ajuste</option>
-            </select>
-          </div>
+          <SelectField
+            label="Tipo"
+            name="tipo"
+            defaultValue="entrada"
+            options={[
+              { value: 'entrada', label: 'Entrada' },
+              { value: 'salida', label: 'Salida' },
+              { value: 'ajuste', label: 'Ajuste' },
+            ]}
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Cantidad</label>
-            <input
-              type="number"
-              name="cantidad"
-              min={1}
-              required
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
+          <InputField label="Cantidad" type="number" name="cantidad" min="1" required />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Equipo</label>
-            <select
-              name="equipo_id"
-              defaultValue=""
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            >
-              <option value="">Sin equipo específico</option>
-              {equipos?.map((equipo: Record<string, unknown>) => (
-                <option key={equipo.id as string} value={equipo.id as string}>
-                  {equipo.nombre as string}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectField
+            label="Equipo"
+            name="equipo_id"
+            defaultValue=""
+            options={[
+              { value: '', label: 'Sin equipo específico' },
+              ...(equipos?.map((equipo: Record<string, unknown>) => ({
+                value: equipo.id as string,
+                label: equipo.nombre as string,
+              })) ?? []),
+            ]}
+          />
 
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Motivo</label>
-            <textarea
+            <TextareaField
+              label="Motivo"
               name="motivo"
               rows={3}
               placeholder="Reposición, entrega a equipo, ajuste por recuento..."
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             />
           </div>
         </div>

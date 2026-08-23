@@ -7,6 +7,7 @@ import { actualizarEntrenadorSchema, asignarEquipoEntrenadorSchema } from '@/lib
 import { ArrowLeft } from 'lucide-react';
 import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { ConfirmActionButton } from '@/components/confirm-action-button';
+import { InputField, SelectField } from '@/components/ui';
 
 async function actualizarEntrenador(id: string, formData: FormData) {
   'use server';
@@ -142,76 +143,59 @@ export default async function EntrenadorDetallePage({
         </summary>
         <form action={updateAction} className="space-y-4 p-4 pt-0">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium">Nombre</label>
-              <input
-                name="nombre"
-                defaultValue={entrenador.nombre}
-                required
-                disabled={!puedeEditar}
-                className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Apellidos</label>
-              <input
-                name="apellidos"
-                defaultValue={entrenador.apellidos}
-                required
-                disabled={!puedeEditar}
-                className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium">Email</label>
-              <input
-                name="email"
-                type="email"
-                defaultValue={entrenador.email ?? ''}
-                disabled={!puedeEditar}
-                className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Teléfono</label>
-              <input
-                name="telefono"
-                defaultValue={entrenador.telefono ?? ''}
-                disabled={!puedeEditar}
-                className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">Titulación</label>
-            <input
-              name="titulacion"
-              defaultValue={entrenador.titulacion ?? ''}
+            <InputField
+              label="Nombre"
+              name="nombre"
+              defaultValue={entrenador.nombre}
+              required
               disabled={!puedeEditar}
-              className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
+            />
+            <InputField
+              label="Apellidos"
+              name="apellidos"
+              defaultValue={entrenador.apellidos}
+              required
+              disabled={!puedeEditar}
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Especialidad</label>
-            <select
-              name="especialidad"
-              defaultValue={entrenador.especialidad ?? ''}
+          <div className="grid grid-cols-2 gap-4">
+            <InputField
+              label="Email"
+              name="email"
+              type="email"
+              defaultValue={entrenador.email ?? ''}
               disabled={!puedeEditar}
-              className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-            >
-              <option value="">Sin especialidad</option>
-              <option value="entrenador_general">Entrenador general</option>
-              <option value="entrenador_porteros">Entrenador de porteros</option>
-              <option value="preparador_fisico">Preparador físico</option>
-              <option value="analista">Analista</option>
-              <option value="otro">Otro</option>
-            </select>
+            />
+            <InputField
+              label="Teléfono"
+              name="telefono"
+              defaultValue={entrenador.telefono ?? ''}
+              disabled={!puedeEditar}
+            />
           </div>
+
+          <InputField
+            label="Titulación"
+            name="titulacion"
+            defaultValue={entrenador.titulacion ?? ''}
+            disabled={!puedeEditar}
+          />
+
+          <SelectField
+            label="Especialidad"
+            name="especialidad"
+            defaultValue={entrenador.especialidad ?? ''}
+            disabled={!puedeEditar}
+            options={[
+              { value: '', label: 'Sin especialidad' },
+              { value: 'entrenador_general', label: 'Entrenador general' },
+              { value: 'entrenador_porteros', label: 'Entrenador de porteros' },
+              { value: 'preparador_fisico', label: 'Preparador físico' },
+              { value: 'analista', label: 'Analista' },
+              { value: 'otro', label: 'Otro' },
+            ]}
+          />
 
           {puedeEditar && <FormSubmitButton>Guardar cambios</FormSubmitButton>}
         </form>
@@ -283,41 +267,35 @@ export default async function EntrenadorDetallePage({
         {puedeEditar && equiposNoAsignados.length > 0 && (
           <form action={asignarAction} className="flex items-end gap-3">
             <div className="flex-1">
-              <label className="mb-1 block text-sm font-medium">Asignar equipo</label>
-              <select
+              <SelectField
+                label="Asignar equipo"
                 name="equipo_id"
                 required
-                className="border-border bg-background w-full rounded-md border p-2 text-sm"
-              >
-                <option value="" disabled>
-                  Selecciona un equipo
-                </option>
-                {equiposNoAsignados.map((eq) => (
-                  <option key={eq.id} value={eq.id}>
-                    {eq.nombre} ({eq.categoria}) - {eq.temporada}
-                  </option>
-                ))}
-              </select>
+                placeholder="Selecciona un equipo"
+                options={equiposNoAsignados.map((eq) => ({
+                  value: eq.id,
+                  label: `${eq.nombre} (${eq.categoria}) - ${eq.temporada}`,
+                }))}
+              />
             </div>
             <div className="w-40">
-              <label className="mb-1 block text-sm font-medium">Rol</label>
-              <select
+              <SelectField
+                label="Rol"
                 name="rol"
-                className="border-border bg-background w-full rounded-md border p-2 text-sm"
-              >
-                <option value="entrenador">Entrenador</option>
-                <option value="segundo_entrenador">2do Entrenador</option>
-                <option value="auxiliar">Auxiliar</option>
-                <option value="otro">Otro</option>
-              </select>
+                options={[
+                  { value: 'entrenador', label: 'Entrenador' },
+                  { value: 'segundo_entrenador', label: '2do Entrenador' },
+                  { value: 'auxiliar', label: 'Auxiliar' },
+                  { value: 'otro', label: 'Otro' },
+                ]}
+              />
             </div>
             <div className="w-32">
-              <label className="mb-1 block text-sm font-medium">Temporada</label>
-              <input
+              <InputField
+                label="Temporada"
                 name="temporada"
                 defaultValue={new Date().getFullYear().toString()}
                 required
-                className="border-border bg-background w-full rounded-md border p-2 text-sm"
               />
             </div>
             <FormSubmitButton>Asignar</FormSubmitButton>

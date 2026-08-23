@@ -8,6 +8,7 @@ import { ExportCSVButton } from '@/components/export-csv-button';
 import { ExportPDFButton } from '@/components/export-pdf-button';
 import { formatDateForCSV } from '@/lib/export-csv';
 import { PaginationWrapper as Pagination } from '@/components/pagination-wrapper';
+import { InputField, SelectField } from '@/components/ui';
 
 const ITEMS_PER_PAGE = 15;
 
@@ -191,95 +192,67 @@ export default async function JugadorasPage({
       </div>
 
       <form className="border-border bg-card mb-6 grid grid-cols-2 gap-3 rounded-lg border p-4 md:grid-cols-4">
-        <div>
-          <label className="mb-1 block text-xs font-medium">Nombre</label>
-          <input
-            name="nombre"
-            defaultValue={filtros.nombre ?? ''}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium">Equipo</label>
-          <select
-            name="equipo"
-            defaultValue={filtros.equipo ?? ''}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          >
-            <option value="">Todos</option>
-            {equipos?.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium">Categoría</label>
-          <select
-            name="categoria"
-            defaultValue={filtros.categoria ?? ''}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          >
-            <option value="">Todas</option>
-            {categorias.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium">Temporada</label>
-          <input
-            name="temporada"
-            defaultValue={filtros.temporada ?? ''}
-            placeholder="2025-2026"
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium">Posición</label>
-          <select
-            name="posicion"
-            defaultValue={filtros.posicion ?? ''}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          >
-            <option value="">Todas</option>
-            <option value="Portera">Portera</option>
-            <option value="Lateral izquierdo">Lateral izquierdo</option>
-            <option value="Lateral derecho">Lateral derecho</option>
-            <option value="Central">Central</option>
-            <option value="Extremo izquierdo">Extremo izquierdo</option>
-            <option value="Extremo derecho">Extremo derecho</option>
-            <option value="Pivote">Pivote</option>
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium">Estado</label>
-          <select
-            name="estado"
-            defaultValue={filtros.estado ?? ''}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          >
-            <option value="">Todas</option>
-            <option value="activa">Activa</option>
-            <option value="inactiva">Inactiva</option>
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium">Rec. médico</label>
-          <select
-            name="rec_medico"
-            defaultValue={filtros.rec_medico ?? ''}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          >
-            <option value="">Todos</option>
-            <option value="apto">Apto</option>
-            <option value="no_apto">No apto</option>
-            <option value="pendiente">Pendiente</option>
-          </select>
-        </div>
+        <InputField label="Nombre" name="nombre" defaultValue={filtros.nombre ?? ''} />
+        <SelectField
+          label="Equipo"
+          name="equipo"
+          defaultValue={filtros.equipo ?? ''}
+          options={[
+            { value: '', label: 'Todos' },
+            ...(equipos ?? []).map((e) => ({ value: e.id, label: e.nombre })),
+          ]}
+        />
+        <SelectField
+          label="Categoría"
+          name="categoria"
+          defaultValue={filtros.categoria ?? ''}
+          options={[
+            { value: '', label: 'Todas' },
+            ...categorias.map((c) => ({ value: c, label: c })),
+          ]}
+        />
+        <InputField
+          label="Temporada"
+          name="temporada"
+          defaultValue={filtros.temporada ?? ''}
+          placeholder="2025-2026"
+        />
+        <SelectField
+          label="Posición"
+          name="posicion"
+          defaultValue={filtros.posicion ?? ''}
+          options={[
+            { value: '', label: 'Todas' },
+            { value: 'Portera', label: 'Portera' },
+            { value: 'Lateral izquierdo', label: 'Lateral izquierdo' },
+            { value: 'Lateral derecho', label: 'Lateral derecho' },
+            { value: 'Central', label: 'Central' },
+            { value: 'Extremo izquierdo', label: 'Extremo izquierdo' },
+            { value: 'Extremo derecho', label: 'Extremo derecho' },
+            { value: 'Pivote', label: 'Pivote' },
+          ]}
+        />
+        <SelectField
+          label="Estado"
+          name="estado"
+          defaultValue={filtros.estado ?? ''}
+          options={[
+            { value: '', label: 'Todas' },
+            { value: 'activa', label: 'Activa' },
+            { value: 'inactiva', label: 'Inactiva' },
+          ]}
+        />
+        <SelectField
+          label="Rec. médico"
+          name="rec_medico"
+          defaultValue={filtros.rec_medico ?? ''}
+          options={[
+            { value: '', label: 'Todos' },
+            { value: 'apto', label: 'Apto' },
+            { value: 'no_apto', label: 'No apto' },
+            { value: 'pendiente', label: 'Pendiente' },
+          ]}
+        />
         <div className="flex items-end">
           <Button type="submit" variant="secondary" className="w-full">
             Filtrar
@@ -292,58 +265,60 @@ export default async function JugadorasPage({
           No hay jugadoras con esos filtros.
         </div>
       ) : (
-        <div className="border-border overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground">
-              <tr>
-                <th className="p-3 text-left font-medium">Nombre</th>
-                <th className="p-3 text-left font-medium">Equipo</th>
-                <th className="p-3 text-left font-medium">Dorsal</th>
-                <th className="p-3 text-left font-medium">Posición</th>
-                <th className="p-3 text-left font-medium">Rec. médico</th>
-                <th className="p-3 text-left font-medium">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jugadorasData.map((j: Record<string, unknown>) => {
-                const vinculo = (
-                  j.jugadora_equipo_temporada as unknown as Record<string, unknown>[]
-                )?.[0];
-                return (
-                  <tr key={j.id as string} className="border-border hover:bg-muted/50 border-t">
-                    <td className="p-3 font-medium">
-                      <Link href={`/jugadoras/${j.id as string}`} className="hover:underline">
-                        {j.nombre as string} {j.apellidos as string}
-                      </Link>
-                    </td>
-                    <td className="p-3">
-                      {vinculo?.equipos
-                        ? `${(vinculo.equipos as unknown as Record<string, unknown>).nombre} (${(vinculo.equipos as unknown as Record<string, unknown>).categoria})`
-                        : '-'}
-                    </td>
-                    <td className="p-3">{(vinculo?.dorsal as string) ?? '-'}</td>
-                    <td className="p-3">{(vinculo?.posicion as string) ?? '-'}</td>
-                    <td className="p-3">
-                      <span
-                        className={
-                          (j.reconocimiento_medico_estado as string) === 'apto'
-                            ? 'text-primary'
-                            : 'text-destructive'
-                        }
-                      >
-                        {(j.reconocimiento_medico_estado as string) ?? 'pendiente'}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      <span className={j.activa ? 'text-primary' : 'text-muted-foreground'}>
-                        {j.activa ? 'Activa' : 'Inactiva'}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="border-border rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-muted-foreground">
+                <tr>
+                  <th className="p-3 text-left font-medium">Nombre</th>
+                  <th className="p-3 text-left font-medium">Equipo</th>
+                  <th className="p-3 text-left font-medium">Dorsal</th>
+                  <th className="p-3 text-left font-medium">Posición</th>
+                  <th className="p-3 text-left font-medium">Rec. médico</th>
+                  <th className="p-3 text-left font-medium">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jugadorasData.map((j: Record<string, unknown>) => {
+                  const vinculo = (
+                    j.jugadora_equipo_temporada as unknown as Record<string, unknown>[]
+                  )?.[0];
+                  return (
+                    <tr key={j.id as string} className="border-border hover:bg-muted/50 border-t">
+                      <td className="p-3 font-medium">
+                        <Link href={`/jugadoras/${j.id as string}`} className="hover:underline">
+                          {j.nombre as string} {j.apellidos as string}
+                        </Link>
+                      </td>
+                      <td className="p-3">
+                        {vinculo?.equipos
+                          ? `${(vinculo.equipos as unknown as Record<string, unknown>).nombre} (${(vinculo.equipos as unknown as Record<string, unknown>).categoria})`
+                          : '-'}
+                      </td>
+                      <td className="p-3">{(vinculo?.dorsal as string) ?? '-'}</td>
+                      <td className="p-3">{(vinculo?.posicion as string) ?? '-'}</td>
+                      <td className="p-3">
+                        <span
+                          className={
+                            (j.reconocimiento_medico_estado as string) === 'apto'
+                              ? 'text-primary'
+                              : 'text-destructive'
+                          }
+                        >
+                          {(j.reconocimiento_medico_estado as string) ?? 'pendiente'}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span className={j.activa ? 'text-primary' : 'text-muted-foreground'}>
+                          {j.activa ? 'Activa' : 'Inactiva'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

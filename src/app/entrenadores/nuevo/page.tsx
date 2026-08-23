@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { FormSubmitButton } from '@/components/form-submit-button';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearEntrenadorSchema } from '@/lib/validations';
+import { InputField, SelectField } from '@/components/ui';
 import { logCambio } from '@/lib/audit';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -88,65 +89,33 @@ export default async function NuevoEntrenadorPage() {
 
       <form action={crearEntrenador} className="max-w-lg space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Nombre *</label>
-            <input
-              name="nombre"
-              required
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Apellidos *</label>
-            <input
-              name="apellidos"
-              required
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
+          <InputField label="Nombre" name="nombre" required />
+          <InputField label="Apellidos" name="apellidos" required />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Email</label>
-            <input
-              name="email"
-              type="email"
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Teléfono</label>
-            <input
-              name="telefono"
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
+          <InputField label="Email" name="email" type="email" />
+          <InputField label="Teléfono" name="telefono" />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Titulación</label>
-          <input
-            name="titulacion"
-            placeholder="Ej: Nivel II, Nivel III, etc."
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          />
-        </div>
+        <InputField
+          label="Titulación"
+          name="titulacion"
+          placeholder="Ej: Nivel II, Nivel III, etc."
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Especialidad</label>
-          <select
-            name="especialidad"
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          >
-            <option value="">Sin especialidad</option>
-            <option value="entrenador_general">Entrenador general</option>
-            <option value="entrenador_porteros">Entrenador de porteros</option>
-            <option value="preparador_fisico">Preparador físico</option>
-            <option value="analista">Analista</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
+        <SelectField
+          label="Especialidad"
+          name="especialidad"
+          options={[
+            { value: '', label: 'Sin especialidad' },
+            { value: 'entrenador_general', label: 'Entrenador general' },
+            { value: 'entrenador_porteros', label: 'Entrenador de porteros' },
+            { value: 'preparador_fisico', label: 'Preparador físico' },
+            { value: 'analista', label: 'Analista' },
+            { value: 'otro', label: 'Otro' },
+          ]}
+        />
 
         {/* Asignación de equipos */}
         <AsignarEquipoEntrenador equipos={equipos ?? []} />

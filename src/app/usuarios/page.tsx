@@ -4,6 +4,7 @@ import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { FormSubmitButton } from '@/components/form-submit-button';
+import { InputField, SelectField } from '@/components/ui';
 import { EliminarUsuarioButton } from '@/components/eliminar-usuario-button';
 import { ArrowLeft } from 'lucide-react';
 import { PaginationWrapper as Pagination } from '@/components/pagination-wrapper';
@@ -143,173 +144,137 @@ export default async function UsuariosPage({
         <p className="text-sm font-medium">Nuevo usuario</p>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Nombre</label>
-            <input
-              name="nombre"
-              required
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Apellidos</label>
-            <input
-              name="apellidos"
-              required
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
+          <InputField label="Nombre" name="nombre" required />
+          <InputField label="Apellidos" name="apellidos" required />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Email</label>
-          <input
-            type="email"
-            name="email"
-            required
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          />
-        </div>
+        <InputField label="Email" type="email" name="email" required />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Contraseña provisional</label>
-          <input
-            type="password"
-            name="password"
-            required
-            minLength={6}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          />
-        </div>
+        <InputField label="Contraseña provisional" type="password" name="password" required />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Rol</label>
-          <select
-            name="rol_id"
-            required
-            defaultValue=""
-            className="border-border bg-background w-full rounded-md border p-2 text-sm"
-          >
-            <option value="" disabled>
-              Selecciona un rol
-            </option>
-            {roles.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          label="Rol"
+          name="rol_id"
+          required
+          defaultValue=""
+          placeholder="Selecciona un rol"
+          options={roles.map((r) => ({
+            value: r.id,
+            label: r.nombre,
+          }))}
+        />
 
         <FormSubmitButton>Crear usuario</FormSubmitButton>
       </form>
 
       <h2 className="text-primary mb-3 text-lg font-bold">Usuarios existentes</h2>
 
-      <div className="border-border overflow-hidden rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted text-muted-foreground">
-            <tr>
-              <th className="p-3 text-left font-medium">Nombre</th>
-              <th className="p-3 text-left font-medium">Rol actual</th>
-              <th className="p-3 text-left font-medium">Cambiar rol</th>
-              {usuarioActual.esMaster && (
-                <>
-                  <th className="p-3 text-left font-medium">Permisos</th>
-                  <th className="p-3 text-left font-medium">Acciones</th>
-                </>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedUsuarios.map((u) => {
-              const rolNombre = rolesMap.get(u.rol_id) ?? 'Sin rol';
-              const cambiarRolAction = cambiarRol.bind(null, u.id);
+      <div className="border-border rounded-lg border">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted text-muted-foreground">
+              <tr>
+                <th className="p-3 text-left font-medium">Nombre</th>
+                <th className="p-3 text-left font-medium">Rol actual</th>
+                <th className="p-3 text-left font-medium">Cambiar rol</th>
+                {usuarioActual.esMaster && (
+                  <>
+                    <th className="p-3 text-left font-medium">Permisos</th>
+                    <th className="p-3 text-left font-medium">Acciones</th>
+                  </>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedUsuarios.map((u) => {
+                const rolNombre = rolesMap.get(u.rol_id) ?? 'Sin rol';
+                const cambiarRolAction = cambiarRol.bind(null, u.id);
 
-              return (
-                <tr key={u.id} className="border-border border-t">
-                  <td className="p-3 font-medium">
-                    {u.nombre} {u.apellidos}
-                    <span className="text-muted-foreground/40 ml-2 text-xs">
-                      [{u.id.slice(0, 8)}...]
-                    </span>
-                  </td>
-                  <td className="p-3">{u.es_master ? 'Master' : rolNombre}</td>
-                  <td className="p-3">
-                    {u.es_master ? (
-                      <span className="text-muted-foreground text-xs">No aplica</span>
-                    ) : (
-                      <form action={cambiarRolAction} className="flex gap-2">
-                        <select
-                          name="rol_id"
-                          defaultValue={u.rol_id ?? ''}
-                          className="border-border bg-background rounded-md border p-1 text-xs"
-                        >
-                          {roles.map((r) => (
-                            <option key={r.id} value={r.id}>
-                              {r.nombre}
-                            </option>
-                          ))}
-                        </select>
-                        <button type="submit" className="text-primary text-xs hover:underline">
-                          Guardar
-                        </button>
-                      </form>
-                    )}
-                  </td>
-                  {usuarioActual.esMaster && (
+                return (
+                  <tr key={u.id} className="border-border border-t">
+                    <td className="p-3 font-medium">
+                      {u.nombre} {u.apellidos}
+                      <span className="text-muted-foreground/40 ml-2 text-xs">
+                        [{u.id.slice(0, 8)}...]
+                      </span>
+                    </td>
+                    <td className="p-3">{u.es_master ? 'Master' : rolNombre}</td>
                     <td className="p-3">
                       {u.es_master ? (
-                        <span className="text-muted-foreground text-xs">Master (todos)</span>
+                        <span className="text-muted-foreground text-xs">No aplica</span>
                       ) : (
-                        <div className="flex flex-wrap items-center gap-1">
-                          {permisos.map((p) => {
-                            const tienePermisoUser = (permisosPorUsuario[u.id] ?? []).includes(
-                              p.nombre
-                            );
-                            if (!tienePermisoUser) return null;
-                            return (
-                              <span
-                                key={p.id}
-                                className="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-xs"
-                              >
-                                {p.nombre}
-                              </span>
-                            );
-                          })}
-                          <span className="text-muted-foreground text-xs">
-                            ({permisosPorUsuario[u.id]?.length ?? 0} de {permisos?.length ?? 0})
-                          </span>
-                        </div>
+                        <form action={cambiarRolAction} className="flex gap-2">
+                          <select
+                            name="rol_id"
+                            defaultValue={u.rol_id ?? ''}
+                            className="border-border bg-background rounded-md border p-1 text-xs"
+                          >
+                            {roles.map((r) => (
+                              <option key={r.id} value={r.id}>
+                                {r.nombre}
+                              </option>
+                            ))}
+                          </select>
+                          <button type="submit" className="text-primary text-xs hover:underline">
+                            Guardar
+                          </button>
+                        </form>
                       )}
                     </td>
-                  )}
-                  {usuarioActual.esMaster && (
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/usuarios/editar?id=${encodeURIComponent(u.id)}`}
-                          className="text-primary text-xs hover:underline"
-                          title={`ID: ${u.id}`}
-                        >
-                          Gestionar
-                        </Link>
-                        <form action={eliminarUsuario.bind(null, u.id)} className="inline">
-                          <EliminarUsuarioButton
-                            className="text-destructive text-xs hover:text-red-700"
-                            title="Eliminar usuario"
+                    {usuarioActual.esMaster && (
+                      <td className="p-3">
+                        {u.es_master ? (
+                          <span className="text-muted-foreground text-xs">Master (todos)</span>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-1">
+                            {permisos.map((p) => {
+                              const tienePermisoUser = (permisosPorUsuario[u.id] ?? []).includes(
+                                p.nombre
+                              );
+                              if (!tienePermisoUser) return null;
+                              return (
+                                <span
+                                  key={p.id}
+                                  className="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-xs"
+                                >
+                                  {p.nombre}
+                                </span>
+                              );
+                            })}
+                            <span className="text-muted-foreground text-xs">
+                              ({permisosPorUsuario[u.id]?.length ?? 0} de {permisos?.length ?? 0})
+                            </span>
+                          </div>
+                        )}
+                      </td>
+                    )}
+                    {usuarioActual.esMaster && (
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/usuarios/editar?id=${encodeURIComponent(u.id)}`}
+                            className="text-primary text-xs hover:underline"
+                            title={`ID: ${u.id}`}
                           >
-                            Eliminar
-                          </EliminarUsuarioButton>
-                        </form>
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                            Gestionar
+                          </Link>
+                          <form action={eliminarUsuario.bind(null, u.id)} className="inline">
+                            <EliminarUsuarioButton
+                              className="text-destructive text-xs hover:text-red-700"
+                              title="Eliminar usuario"
+                            >
+                              Eliminar
+                            </EliminarUsuarioButton>
+                          </form>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <Pagination currentPage={currentPage} totalPages={totalPages} />

@@ -5,6 +5,7 @@ import { Button } from '@/components/button';
 import { Plus, Copy } from 'lucide-react';
 import { ConvocatoriasView } from '@/components/convocatorias-view';
 import { FilterBar, FilterOption } from '@/components/filter-bar';
+import { SelectField } from '@/components/ui';
 import { Suspense } from 'react';
 
 async function duplicarEventos(formData: FormData) {
@@ -171,18 +172,20 @@ export default async function ConvocatoriasPage({
               <span className="text-sm font-medium">
                 Duplicar eventos seleccionados, repitiendo cada
               </span>
-              <select
+              <SelectField
+                label=""
                 name="semanas"
                 defaultValue="1"
-                className="border-border bg-background rounded-md border p-1.5 text-sm"
-              >
-                <option value="1">1 semana</option>
-                <option value="2">2 semanas</option>
-                <option value="3">3 semanas</option>
-                <option value="4">4 semanas</option>
-                <option value="8">8 semanas</option>
-                <option value="12">12 semanas</option>
-              </select>
+                options={[
+                  { value: '1', label: '1 semana' },
+                  { value: '2', label: '2 semanas' },
+                  { value: '3', label: '3 semanas' },
+                  { value: '4', label: '4 semanas' },
+                  { value: '8', label: '8 semanas' },
+                  { value: '12', label: '12 semanas' },
+                ]}
+                className="w-auto"
+              />
               <button
                 type="submit"
                 className="bg-primary text-primary-foreground inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-xs hover:opacity-90"
@@ -192,52 +195,57 @@ export default async function ConvocatoriasPage({
               </button>
             </div>
 
-            <div className="border-border overflow-hidden rounded-lg border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted text-muted-foreground">
-                  <tr>
-                    <th className="w-10 p-3"></th>
-                    <th className="p-3 text-left font-medium">Fecha</th>
-                    <th className="p-3 text-left font-medium">Tipo</th>
-                    <th className="p-3 text-left font-medium">Equipo</th>
-                    <th className="p-3 text-left font-medium">Rival</th>
-                    <th className="p-3 text-left font-medium">Lugar</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {eventos.map((e: Record<string, unknown>) => (
-                    <tr key={e.id as string} className="border-border hover:bg-muted/50 border-t">
-                      <td className="p-3">
-                        <input
-                          type="checkbox"
-                          name="evento_id"
-                          value={e.id as string}
-                          className="size-4"
-                        />
-                      </td>
-                      <td className="p-3 font-medium">
-                        <Link href={`/convocatorias/${e.id as string}`} className="hover:underline">
-                          {new Date(e.fecha_hora as string).toLocaleString('es-ES', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </Link>
-                      </td>
-                      <td className="p-3 capitalize">{e.tipo as string}</td>
-                      <td className="p-3">
-                        {e.equipos
-                          ? `${(e.equipos as Record<string, unknown>).nombre} (${(e.equipos as Record<string, unknown>).categoria})`
-                          : '-'}
-                      </td>
-                      <td className="p-3">{(e.rival as string) ?? '-'}</td>
-                      <td className="p-3">{(e.lugar as string) ?? '-'}</td>
+            <div className="border-border rounded-lg border">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted text-muted-foreground">
+                    <tr>
+                      <th className="w-10 p-3"></th>
+                      <th className="p-3 text-left font-medium">Fecha</th>
+                      <th className="p-3 text-left font-medium">Tipo</th>
+                      <th className="p-3 text-left font-medium">Equipo</th>
+                      <th className="p-3 text-left font-medium">Rival</th>
+                      <th className="p-3 text-left font-medium">Lugar</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {eventos.map((e: Record<string, unknown>) => (
+                      <tr key={e.id as string} className="border-border hover:bg-muted/50 border-t">
+                        <td className="p-3">
+                          <input
+                            type="checkbox"
+                            name="evento_id"
+                            value={e.id as string}
+                            className="size-4"
+                          />
+                        </td>
+                        <td className="p-3 font-medium">
+                          <Link
+                            href={`/convocatorias/${e.id as string}`}
+                            className="hover:underline"
+                          >
+                            {new Date(e.fecha_hora as string).toLocaleString('es-ES', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </Link>
+                        </td>
+                        <td className="p-3 capitalize">{e.tipo as string}</td>
+                        <td className="p-3">
+                          {e.equipos
+                            ? `${(e.equipos as Record<string, unknown>).nombre} (${(e.equipos as Record<string, unknown>).categoria})`
+                            : '-'}
+                        </td>
+                        <td className="p-3">{(e.rival as string) ?? '-'}</td>
+                        <td className="p-3">{(e.lugar as string) ?? '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </form>
 

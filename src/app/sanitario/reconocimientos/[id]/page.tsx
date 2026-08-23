@@ -371,94 +371,96 @@ export default async function ReconocimientoDetallePage({
       {!citadas || citadas.length === 0 ? (
         <p className="text-muted-foreground mb-6 text-sm">No hay jugadoras citadas todavía.</p>
       ) : (
-        <div className="border-border mb-6 overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground">
-              <tr>
-                <th className="p-3 text-left font-medium">Jugadora</th>
-                <th className="p-3 text-left font-medium">Resultado</th>
-                <th className="p-3 text-left font-medium">Fecha realizado</th>
-                <th className="p-3 text-left font-medium">Observaciones</th>
-                {puedeEditar && <th className="p-3 text-left font-medium"></th>}
-              </tr>
-            </thead>
-            <tbody>
-              {citadas.map((c) => {
-                const jug = c.jugadoras;
-                const resultadoAction = actualizarResultado.bind(null, id, jug?.id ?? '');
-                const quitarAction = toggleCitar.bind(null, id, jug?.id ?? '', true);
+        <div className="border-border mb-6 rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-muted-foreground">
+                <tr>
+                  <th className="p-3 text-left font-medium">Jugadora</th>
+                  <th className="p-3 text-left font-medium">Resultado</th>
+                  <th className="p-3 text-left font-medium">Fecha realizado</th>
+                  <th className="p-3 text-left font-medium">Observaciones</th>
+                  {puedeEditar && <th className="p-3 text-left font-medium"></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {citadas.map((c) => {
+                  const jug = c.jugadoras;
+                  const resultadoAction = actualizarResultado.bind(null, id, jug?.id ?? '');
+                  const quitarAction = toggleCitar.bind(null, id, jug?.id ?? '', true);
 
-                return (
-                  <tr key={jug?.id} className="border-border border-t">
-                    <td className="p-3 align-top font-medium">
-                      {jug?.nombre} {jug?.apellidos}
-                      {!jug?.email && <div className="text-destructive text-xs">(sin email)</div>}
-                    </td>
-                    <td className="p-3 align-top" colSpan={3}>
-                      {puedeEditar ? (
-                        <form
-                          action={resultadoAction}
-                          className="flex flex-wrap items-center gap-2"
-                        >
-                          <select
-                            name="resultado"
-                            defaultValue={c.resultado ?? 'pendiente'}
+                  return (
+                    <tr key={jug?.id} className="border-border border-t">
+                      <td className="p-3 align-top font-medium">
+                        {jug?.nombre} {jug?.apellidos}
+                        {!jug?.email && <div className="text-destructive text-xs">(sin email)</div>}
+                      </td>
+                      <td className="p-3 align-top" colSpan={3}>
+                        {puedeEditar ? (
+                          <form
+                            action={resultadoAction}
+                            className="flex flex-wrap items-center gap-2"
+                          >
+                            <select
+                              name="resultado"
+                              defaultValue={c.resultado ?? 'pendiente'}
+                              className={
+                                'rounded-md px-2 py-1 text-xs ' +
+                                (resultadoColor[c.resultado ?? 'pendiente'] ?? '')
+                              }
+                            >
+                              <option value="pendiente">Pendiente</option>
+                              <option value="apto">Apto</option>
+                              <option value="no_apto">No apto</option>
+                            </select>
+                            <input
+                              type="date"
+                              name="fecha_realizado"
+                              defaultValue={c.fecha_realizado ?? ''}
+                              className="border-border bg-background rounded-md border p-1 text-xs"
+                            />
+                            <input
+                              name="observaciones"
+                              defaultValue={c.observaciones ?? ''}
+                              placeholder="Observaciones"
+                              className="border-border bg-background flex-1 rounded-md border p-1 text-xs"
+                            />
+                            <button
+                              type="submit"
+                              className="bg-primary text-primary-foreground rounded-md px-2 py-1 text-xs"
+                            >
+                              Guardar
+                            </button>
+                          </form>
+                        ) : (
+                          <span
                             className={
                               'rounded-md px-2 py-1 text-xs ' +
                               (resultadoColor[c.resultado ?? 'pendiente'] ?? '')
                             }
                           >
-                            <option value="pendiente">Pendiente</option>
-                            <option value="apto">Apto</option>
-                            <option value="no_apto">No apto</option>
-                          </select>
-                          <input
-                            type="date"
-                            name="fecha_realizado"
-                            defaultValue={c.fecha_realizado ?? ''}
-                            className="border-border bg-background rounded-md border p-1 text-xs"
-                          />
-                          <input
-                            name="observaciones"
-                            defaultValue={c.observaciones ?? ''}
-                            placeholder="Observaciones"
-                            className="border-border bg-background flex-1 rounded-md border p-1 text-xs"
-                          />
-                          <button
-                            type="submit"
-                            className="bg-primary text-primary-foreground rounded-md px-2 py-1 text-xs"
-                          >
-                            Guardar
-                          </button>
-                        </form>
-                      ) : (
-                        <span
-                          className={
-                            'rounded-md px-2 py-1 text-xs ' +
-                            (resultadoColor[c.resultado ?? 'pendiente'] ?? '')
-                          }
-                        >
-                          {c.resultado ?? 'pendiente'}
-                        </span>
-                      )}
-                    </td>
-                    {puedeEditar && (
-                      <td className="p-3 align-top">
-                        <form action={quitarAction}>
-                          <button
-                            type="submit"
-                            className="text-destructive text-xs hover:underline"
-                          >
-                            Quitar
-                          </button>
-                        </form>
+                            {c.resultado ?? 'pendiente'}
+                          </span>
+                        )}
                       </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      {puedeEditar && (
+                        <td className="p-3 align-top">
+                          <form action={quitarAction}>
+                            <button
+                              type="submit"
+                              className="text-destructive text-xs hover:underline"
+                            >
+                              Quitar
+                            </button>
+                          </form>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

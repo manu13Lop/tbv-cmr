@@ -6,6 +6,7 @@ import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { FormSubmitButton } from '@/components/form-submit-button';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearArticuloSchema } from '@/lib/validations';
+import { InputField, SelectField, TextareaField } from '@/components/ui';
 
 async function crearArticulo(formData: FormData) {
   'use server';
@@ -93,62 +94,38 @@ export default async function NuevoArticuloLogisticaPage() {
 
       <form action={crearArticulo} className="border-border bg-card rounded-xl border p-4">
         <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Nombre</label>
-            <input
-              name="nombre"
-              required
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
+          <InputField label="Nombre" name="nombre" required />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Categoría</label>
-            <input
-              name="categoria"
-              required
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-              placeholder="Botiquín, higiene, material deportivo..."
-            />
-          </div>
+          <InputField
+            label="Categoría"
+            name="categoria"
+            required
+            placeholder="Botiquín, higiene, material deportivo..."
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Unidad</label>
-            <input
-              name="unidad"
-              required
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-              placeholder="uds, botellas, cajas..."
-            />
-          </div>
+          <InputField label="Unidad" name="unidad" required placeholder="uds, botellas, cajas..." />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Equipo asociado</label>
-            <select
-              name="equipo_id"
-              defaultValue=""
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            >
-              <option value="">Sin equipo específico</option>
-              {equipos?.map((equipo: Record<string, unknown>) => (
-                <option key={equipo.id as string} value={equipo.id as string}>
-                  {equipo.nombre as string}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectField
+            label="Equipo asociado"
+            name="equipo_id"
+            defaultValue=""
+            options={[
+              { value: '', label: 'Sin equipo específico' },
+              ...(equipos?.map((equipo: Record<string, unknown>) => ({
+                value: equipo.id as string,
+                label: equipo.nombre as string,
+              })) ?? []),
+            ]}
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Stock mínimo</label>
-            <input
-              type="number"
-              name="stock_minimo"
-              min={0}
-              defaultValue={0}
-              required
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
+          <InputField
+            label="Stock mínimo"
+            type="number"
+            name="stock_minimo"
+            min="0"
+            defaultValue="0"
+            required
+          />
 
           <div className="flex items-end">
             <label className="flex items-center gap-2 text-sm font-medium">
@@ -158,20 +135,14 @@ export default async function NuevoArticuloLogisticaPage() {
           </div>
 
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Descripción</label>
-            <textarea
-              name="descripcion"
-              rows={3}
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
+            <TextareaField label="Descripción" name="descripcion" rows={3} />
           </div>
 
           <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Observaciones de stock mínimo</label>
-            <textarea
+            <TextareaField
+              label="Observaciones de stock mínimo"
               name="observaciones_stock"
               rows={2}
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
             />
           </div>
         </div>

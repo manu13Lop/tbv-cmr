@@ -62,51 +62,53 @@ export default async function PsicologiaPage() {
           Todavía no hay sesiones de psicología registradas.
         </div>
       ) : (
-        <div className="border-border overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground">
-              <tr>
-                <th className="p-3 text-left font-medium">Tipo</th>
-                <th className="p-3 text-left font-medium">Destino</th>
-                <th className="p-3 text-left font-medium">Tema</th>
-                <th className="p-3 text-left font-medium">Fecha</th>
-                <th className="p-3 text-left font-medium">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sesiones.map((s: Record<string, unknown>) => {
-                const destino =
-                  s.tipo_sesion === 'individual'
-                    ? `${(s.jugadoras as Record<string, unknown>)?.nombre ?? ''} ${(s.jugadoras as Record<string, unknown>)?.apellidos ?? ''}`.trim()
-                    : ((s.equipos as Record<string, unknown>)?.nombre ?? 'Equipo');
+        <div className="border-border rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-muted-foreground">
+                <tr>
+                  <th className="p-3 text-left font-medium">Tipo</th>
+                  <th className="p-3 text-left font-medium">Destino</th>
+                  <th className="p-3 text-left font-medium">Tema</th>
+                  <th className="p-3 text-left font-medium">Fecha</th>
+                  <th className="p-3 text-left font-medium">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sesiones.map((s: Record<string, unknown>) => {
+                  const destino =
+                    s.tipo_sesion === 'individual'
+                      ? `${(s.jugadoras as Record<string, unknown>)?.nombre ?? ''} ${(s.jugadoras as Record<string, unknown>)?.apellidos ?? ''}`.trim()
+                      : ((s.equipos as Record<string, unknown>)?.nombre ?? 'Equipo');
 
-                return (
-                  <tr key={s.id as string} className="border-border hover:bg-muted/50 border-t">
-                    <td className="p-3 capitalize">{s.tipo_sesion as string}</td>
-                    <td className="p-3 font-medium">
-                      <Link
-                        href={`/sanitario/psicologia/${s.id as string}`}
-                        className="hover:underline"
-                      >
-                        {destino as string}
-                      </Link>
-                    </td>
-                    <td className="p-3">{s.tema as string}</td>
-                    <td className="p-3">
-                      {new Date(s.fecha_hora as string).toLocaleString('es-ES', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </td>
-                    <td className="text-muted-foreground p-3 capitalize">{s.estado as string}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <tr key={s.id as string} className="border-border hover:bg-muted/50 border-t">
+                      <td className="p-3 capitalize">{s.tipo_sesion as string}</td>
+                      <td className="p-3 font-medium">
+                        <Link
+                          href={`/sanitario/psicologia/${s.id as string}`}
+                          className="hover:underline"
+                        >
+                          {destino as string}
+                        </Link>
+                      </td>
+                      <td className="p-3">{s.tema as string}</td>
+                      <td className="p-3">
+                        {new Date(s.fecha_hora as string).toLocaleString('es-ES', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </td>
+                      <td className="text-muted-foreground p-3 capitalize">{s.estado as string}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

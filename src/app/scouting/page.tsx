@@ -360,49 +360,51 @@ export default async function ScoutingPage({
               No hay fichas con esos filtros.
             </div>
           ) : (
-            <div className="border-border overflow-hidden rounded-lg border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted text-muted-foreground">
-                  <tr>
-                    <th className="p-3 text-left font-medium">Jugadora</th>
-                    <th className="p-3 text-left font-medium">Club actual</th>
-                    <th className="p-3 text-left font-medium">Posición</th>
-                    <th className="p-3 text-left font-medium">Edad</th>
-                    <th className="p-3 text-left font-medium">Informes</th>
-                    <th className="p-3 text-left font-medium">Última nota</th>
-                    <th className="p-3 text-left font-medium">Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedFichas.map((f) => {
-                    const nombre = f.jugadoras
-                      ? `${f.jugadoras.nombre} ${f.jugadoras.apellidos}`
-                      : f.nombre_externo;
-                    const informes = [...(f.scouting_informes ?? [])].sort(
-                      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-                    );
-                    const edad = calcularEdad(f.fecha_nacimiento);
+            <div className="border-border rounded-lg border">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted text-muted-foreground">
+                    <tr>
+                      <th className="p-3 text-left font-medium">Jugadora</th>
+                      <th className="p-3 text-left font-medium">Club actual</th>
+                      <th className="p-3 text-left font-medium">Posición</th>
+                      <th className="p-3 text-left font-medium">Edad</th>
+                      <th className="p-3 text-left font-medium">Informes</th>
+                      <th className="p-3 text-left font-medium">Última nota</th>
+                      <th className="p-3 text-left font-medium">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedFichas.map((f) => {
+                      const nombre = f.jugadoras
+                        ? `${f.jugadoras.nombre} ${f.jugadoras.apellidos}`
+                        : f.nombre_externo;
+                      const informes = [...(f.scouting_informes ?? [])].sort(
+                        (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+                      );
+                      const edad = calcularEdad(f.fecha_nacimiento);
 
-                    return (
-                      <tr key={f.id} className="border-border hover:bg-muted/50 border-t">
-                        <td className="p-3 font-medium">
-                          <Link href={`/scouting/fichas/${f.id}`} className="hover:underline">
-                            {nombre ?? ''}
-                          </Link>
-                        </td>
-                        <td className="p-3">{f.club_actual ?? '-'}</td>
-                        <td className="p-3">{f.posicion ?? '-'}</td>
-                        <td className="p-3">{edad ?? '-'}</td>
-                        <td className="p-3">{informes.length}</td>
-                        <td className="p-3">{informes[0]?.nota_global ?? '-'}</td>
-                        <td className="p-3">
-                          <span className={estadoColor[f.estado] ?? ''}>{f.estado}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                      return (
+                        <tr key={f.id} className="border-border hover:bg-muted/50 border-t">
+                          <td className="p-3 font-medium">
+                            <Link href={`/scouting/fichas/${f.id}`} className="hover:underline">
+                              {nombre ?? ''}
+                            </Link>
+                          </td>
+                          <td className="p-3">{f.club_actual ?? '-'}</td>
+                          <td className="p-3">{f.posicion ?? '-'}</td>
+                          <td className="p-3">{edad ?? '-'}</td>
+                          <td className="p-3">{informes.length}</td>
+                          <td className="p-3">{informes[0]?.nota_global ?? '-'}</td>
+                          <td className="p-3">
+                            <span className={estadoColor[f.estado] ?? ''}>{f.estado}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 

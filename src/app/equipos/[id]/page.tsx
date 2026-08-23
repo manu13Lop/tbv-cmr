@@ -7,6 +7,7 @@ import { ArrowLeft, CalendarDays } from 'lucide-react';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { actualizarEquipoSchema } from '@/lib/validations';
 import { logCambio } from '@/lib/audit';
+import { InputField } from '@/components/ui';
 
 async function actualizarEquipo(id: string, formData: FormData) {
   'use server';
@@ -110,50 +111,41 @@ export default async function EquipoDetallePage({ params }: { params: Promise<{ 
       <h1 className="text-primary mb-6 text-2xl font-bold">{equipo.nombre}</h1>
 
       <form action={updateAction} className="max-w-lg space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Nombre</label>
-          <input
-            name="nombre"
-            defaultValue={equipo.nombre}
-            required
-            disabled={!puedeEditar}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-          />
-        </div>
+        <InputField
+          label="Nombre"
+          name="nombre"
+          defaultValue={equipo.nombre}
+          required
+          disabled={!puedeEditar}
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Categoría</label>
-          <input
-            name="categoria"
-            list="categorias"
-            defaultValue={equipo.categoria}
-            required
-            disabled={!puedeEditar}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-          />
-          <datalist id="categorias">
-            <option value="Benjamín" />
-            <option value="Alevín" />
-            <option value="Infantil" />
-            <option value="Cadete" />
-            <option value="Juvenil" />
-            <option value="Junior" />
-            <option value="Senior" />
-            <option value="Senior A" />
-            <option value="Senior B" />
-          </datalist>
-        </div>
+        <InputField
+          label="Categoría"
+          name="categoria"
+          list="categorias"
+          defaultValue={equipo.categoria}
+          required
+          disabled={!puedeEditar}
+        />
+        <datalist id="categorias">
+          <option value="Benjamín" />
+          <option value="Alevín" />
+          <option value="Infantil" />
+          <option value="Cadete" />
+          <option value="Juvenil" />
+          <option value="Junior" />
+          <option value="Senior" />
+          <option value="Senior A" />
+          <option value="Senior B" />
+        </datalist>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Temporada</label>
-          <input
-            name="temporada"
-            defaultValue={equipo.temporada}
-            required
-            disabled={!puedeEditar}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-          />
-        </div>
+        <InputField
+          label="Temporada"
+          name="temporada"
+          defaultValue={equipo.temporada}
+          required
+          disabled={!puedeEditar}
+        />
 
         <div className="flex items-center gap-2">
           <input

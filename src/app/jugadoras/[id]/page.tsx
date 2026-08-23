@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { actualizarJugadoraSchema, asignarEquipoSchema, crearTutorSchema } from '@/lib/validations';
 import { ConfirmActionButton } from '@/components/confirm-action-button';
+import { InputField, SelectField } from '@/components/ui';
 
 async function actualizarJugadora(id: string, formData: FormData) {
   'use server';
@@ -135,6 +136,7 @@ async function borrarTutor(id: string, tutorId: string) {
 }
 
 const tallaOptions = ['', 'XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const tallaSelectOptions = tallaOptions.map((t) => ({ value: t, label: t === '' ? '-' : t }));
 
 function TallaSelect({
   name,
@@ -148,21 +150,13 @@ function TallaSelect({
   disabled: boolean;
 }) {
   return (
-    <div>
-      <label className="mb-1 block text-sm font-medium">{label}</label>
-      <select
-        name={name}
-        defaultValue={value ?? ''}
-        disabled={disabled}
-        className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-      >
-        {tallaOptions.map((t) => (
-          <option key={t} value={t}>
-            {t === '' ? '-' : t}
-          </option>
-        ))}
-      </select>
-    </div>
+    <SelectField
+      label={label}
+      name={name}
+      defaultValue={value ?? ''}
+      disabled={disabled}
+      options={tallaSelectOptions}
+    />
   );
 }
 
@@ -229,60 +223,45 @@ export default async function JugadoraDetallePage({
       )}
 
       <form action={updateAction} className="max-w-lg space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Nombre</label>
-          <input
-            name="nombre"
-            defaultValue={jugadora.nombre}
-            required
-            disabled={!puedeEditar}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-          />
-        </div>
+        <InputField
+          label="Nombre"
+          name="nombre"
+          defaultValue={jugadora.nombre}
+          required
+          disabled={!puedeEditar}
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Apellidos</label>
-          <input
-            name="apellidos"
-            defaultValue={jugadora.apellidos}
-            required
-            disabled={!puedeEditar}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-          />
-        </div>
+        <InputField
+          label="Apellidos"
+          name="apellidos"
+          defaultValue={jugadora.apellidos}
+          required
+          disabled={!puedeEditar}
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Fecha de nacimiento</label>
-          <input
-            type="date"
-            name="fecha_nacimiento"
-            defaultValue={jugadora.fecha_nacimiento}
-            required
-            disabled={!puedeEditar}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-          />
-        </div>
+        <InputField
+          label="Fecha de nacimiento"
+          type="date"
+          name="fecha_nacimiento"
+          defaultValue={jugadora.fecha_nacimiento}
+          required
+          disabled={!puedeEditar}
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Código interno</label>
-          <input
-            name="codigo_interno"
-            defaultValue={jugadora.codigo_interno ?? ''}
-            disabled={!puedeEditar}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-          />
-        </div>
+        <InputField
+          label="Código interno"
+          name="codigo_interno"
+          defaultValue={jugadora.codigo_interno ?? ''}
+          disabled={!puedeEditar}
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Email</label>
-          <input
-            type="email"
-            name="email"
-            defaultValue={jugadora.email ?? ''}
-            disabled={!puedeEditar}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-          />
-        </div>
+        <InputField
+          label="Email"
+          type="email"
+          name="email"
+          defaultValue={jugadora.email ?? ''}
+          disabled={!puedeEditar}
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <TallaSelect
@@ -317,19 +296,17 @@ export default async function JugadoraDetallePage({
           />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Reconocimiento médico</label>
-          <select
-            name="reconocimiento_medico_estado"
-            defaultValue={jugadora.reconocimiento_medico_estado ?? 'pendiente'}
-            disabled={!puedeEditar}
-            className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
-          >
-            <option value="pendiente">Pendiente</option>
-            <option value="apto">Apto</option>
-            <option value="no_apto">No apto</option>
-          </select>
-        </div>
+        <SelectField
+          label="Reconocimiento médico"
+          name="reconocimiento_medico_estado"
+          defaultValue={jugadora.reconocimiento_medico_estado ?? 'pendiente'}
+          disabled={!puedeEditar}
+          options={[
+            { value: 'pendiente', label: 'Pendiente' },
+            { value: 'apto', label: 'Apto' },
+            { value: 'no_apto', label: 'No apto' },
+          ]}
+        />
 
         <div className="flex items-center gap-2">
           <input
@@ -356,44 +333,46 @@ export default async function JugadoraDetallePage({
           Esta jugadora no está asignada a ningún equipo todavía.
         </p>
       ) : (
-        <div className="border-border mb-6 overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground">
-              <tr>
-                <th className="p-3 text-left font-medium">Equipo</th>
-                <th className="p-3 text-left font-medium">Temporada</th>
-                <th className="p-3 text-left font-medium">Dorsal</th>
-                <th className="p-3 text-left font-medium">Posición</th>
-                {puedeEditar && <th className="p-3 text-left font-medium"></th>}
-              </tr>
-            </thead>
-            <tbody>
-              {vinculos.map((v: Record<string, unknown>) => {
-                return (
-                  <tr key={v.id as string} className="border-border border-t">
-                    <td className="p-3">
-                      {(v.equipos as Record<string, unknown>)?.nombre as string} (
-                      {(v.equipos as Record<string, unknown>)?.categoria as string})
-                    </td>
-                    <td className="p-3">{v.temporada as string}</td>
-                    <td className="p-3">{(v.dorsal as string) ?? '-'}</td>
-                    <td className="p-3">{(v.posicion as string) ?? '-'}</td>
-                    {puedeEditar && (
-                      <td className="p-3 text-right">
-                        <ConfirmActionButton
-                          onConfirm={() => quitarVinculo(id, v.id as string)}
-                          label="Quitar"
-                          confirmTitle="Quitar vínculo de equipo"
-                          confirmDescription="¿Segura que quieres desasignar esta jugadora de este equipo?"
-                          className="text-destructive text-xs hover:underline"
-                        />
+        <div className="border-border mb-6 rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-muted-foreground">
+                <tr>
+                  <th className="p-3 text-left font-medium">Equipo</th>
+                  <th className="p-3 text-left font-medium">Temporada</th>
+                  <th className="p-3 text-left font-medium">Dorsal</th>
+                  <th className="p-3 text-left font-medium">Posición</th>
+                  {puedeEditar && <th className="p-3 text-left font-medium"></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {vinculos.map((v: Record<string, unknown>) => {
+                  return (
+                    <tr key={v.id as string} className="border-border border-t">
+                      <td className="p-3">
+                        {(v.equipos as Record<string, unknown>)?.nombre as string} (
+                        {(v.equipos as Record<string, unknown>)?.categoria as string})
                       </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <td className="p-3">{v.temporada as string}</td>
+                      <td className="p-3">{(v.dorsal as string) ?? '-'}</td>
+                      <td className="p-3">{(v.posicion as string) ?? '-'}</td>
+                      {puedeEditar && (
+                        <td className="p-3 text-right">
+                          <ConfirmActionButton
+                            onConfirm={() => quitarVinculo(id, v.id as string)}
+                            label="Quitar"
+                            confirmTitle="Quitar vínculo de equipo"
+                            confirmDescription="¿Segura que quieres desasignar esta jugadora de este equipo?"
+                            className="text-destructive text-xs hover:underline"
+                          />
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -404,62 +383,37 @@ export default async function JugadoraDetallePage({
         >
           <p className="text-sm font-medium">Asignar a un equipo</p>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Equipo</label>
-            <select
-              name="equipo_id"
-              required
-              defaultValue=""
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            >
-              <option value="" disabled>
-                Selecciona un equipo
-              </option>
-              {equipos?.map((eq) => (
-                <option key={eq.id} value={eq.id}>
-                  {eq.nombre} ({eq.categoria}) - {eq.temporada}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SelectField
+            label="Equipo"
+            name="equipo_id"
+            required
+            defaultValue=""
+            placeholder="Selecciona un equipo"
+            options={(equipos ?? []).map((eq) => ({
+              value: eq.id,
+              label: `${eq.nombre} (${eq.categoria}) - ${eq.temporada}`,
+            }))}
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Temporada</label>
-            <input
-              name="temporada"
-              required
-              placeholder="Ej: 2025-2026"
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
+          <InputField label="Temporada" name="temporada" required placeholder="Ej: 2025-2026" />
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium">Dorsal</label>
-              <input
-                type="number"
-                name="dorsal"
-                min="0"
-                className="border-border bg-background w-full rounded-md border p-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Posición</label>
-              <select
-                name="posicion"
-                defaultValue=""
-                className="border-border bg-background w-full rounded-md border p-2 text-sm"
-              >
-                <option value="">-</option>
-                <option value="Portera">Portera</option>
-                <option value="Lateral izquierdo">Lateral izquierdo</option>
-                <option value="Lateral derecho">Lateral derecho</option>
-                <option value="Central">Central</option>
-                <option value="Extremo izquierdo">Extremo izquierdo</option>
-                <option value="Extremo derecho">Extremo derecho</option>
-                <option value="Pivote">Pivote</option>
-              </select>
-            </div>
+            <InputField label="Dorsal" type="number" name="dorsal" min="0" />
+            <SelectField
+              label="Posición"
+              name="posicion"
+              defaultValue=""
+              options={[
+                { value: '', label: '-' },
+                { value: 'Portera', label: 'Portera' },
+                { value: 'Lateral izquierdo', label: 'Lateral izquierdo' },
+                { value: 'Lateral derecho', label: 'Lateral derecho' },
+                { value: 'Central', label: 'Central' },
+                { value: 'Extremo izquierdo', label: 'Extremo izquierdo' },
+                { value: 'Extremo derecho', label: 'Extremo derecho' },
+                { value: 'Pivote', label: 'Pivote' },
+              ]}
+            />
           </div>
 
           <FormSubmitButton>Asignar</FormSubmitButton>
@@ -475,41 +429,43 @@ export default async function JugadoraDetallePage({
           Esta jugadora no tiene tutores registrados.
         </p>
       ) : (
-        <div className="border-border mb-6 overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground">
-              <tr>
-                <th className="p-3 text-left font-medium">Nombre</th>
-                <th className="p-3 text-left font-medium">Email</th>
-                <th className="p-3 text-left font-medium">Teléfono</th>
-                <th className="p-3 text-left font-medium">Parentesco</th>
-                {puedeEditar && <th className="p-3 text-left font-medium"></th>}
-              </tr>
-            </thead>
-            <tbody>
-              {tutores.map((t: Record<string, unknown>) => {
-                return (
-                  <tr key={t.id as string} className="border-border border-t">
-                    <td className="p-3">{t.nombre as string}</td>
-                    <td className="p-3">{(t.email as string) ?? '-'}</td>
-                    <td className="p-3">{(t.telefono as string) ?? '-'}</td>
-                    <td className="p-3">{(t.parentesco as string) ?? '-'}</td>
-                    {puedeEditar && (
-                      <td className="p-3 text-right">
-                        <ConfirmActionButton
-                          onConfirm={() => borrarTutor(id, t.id as string)}
-                          label="Quitar"
-                          confirmTitle="Eliminar tutor"
-                          confirmDescription="¿Segura que quieres eliminar este tutor legal?"
-                          className="text-destructive text-xs hover:underline"
-                        />
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="border-border mb-6 rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted text-muted-foreground">
+                <tr>
+                  <th className="p-3 text-left font-medium">Nombre</th>
+                  <th className="p-3 text-left font-medium">Email</th>
+                  <th className="p-3 text-left font-medium">Teléfono</th>
+                  <th className="p-3 text-left font-medium">Parentesco</th>
+                  {puedeEditar && <th className="p-3 text-left font-medium"></th>}
+                </tr>
+              </thead>
+              <tbody>
+                {tutores.map((t: Record<string, unknown>) => {
+                  return (
+                    <tr key={t.id as string} className="border-border border-t">
+                      <td className="p-3">{t.nombre as string}</td>
+                      <td className="p-3">{(t.email as string) ?? '-'}</td>
+                      <td className="p-3">{(t.telefono as string) ?? '-'}</td>
+                      <td className="p-3">{(t.parentesco as string) ?? '-'}</td>
+                      {puedeEditar && (
+                        <td className="p-3 text-right">
+                          <ConfirmActionButton
+                            onConfirm={() => borrarTutor(id, t.id as string)}
+                            label="Quitar"
+                            confirmTitle="Eliminar tutor"
+                            confirmDescription="¿Segura que quieres eliminar este tutor legal?"
+                            className="text-destructive text-xs hover:underline"
+                          />
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -520,45 +476,23 @@ export default async function JugadoraDetallePage({
         >
           <p className="text-sm font-medium">Añadir tutor legal</p>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Nombre</label>
-            <input
-              name="nombre"
-              required
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
+          <InputField label="Nombre" name="nombre" required />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">Email</label>
-            <input
-              type="email"
-              name="email"
-              className="border-border bg-background w-full rounded-md border p-2 text-sm"
-            />
-          </div>
+          <InputField label="Email" type="email" name="email" />
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium">Teléfono</label>
-              <input
-                name="telefono"
-                className="border-border bg-background w-full rounded-md border p-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Parentesco</label>
-              <select
-                name="parentesco"
-                defaultValue=""
-                className="border-border bg-background w-full rounded-md border p-2 text-sm"
-              >
-                <option value="">-</option>
-                <option value="Madre">Madre</option>
-                <option value="Padre">Padre</option>
-                <option value="Tutor legal">Tutor legal</option>
-              </select>
-            </div>
+            <InputField label="Teléfono" name="telefono" />
+            <SelectField
+              label="Parentesco"
+              name="parentesco"
+              defaultValue=""
+              options={[
+                { value: '', label: '-' },
+                { value: 'Madre', label: 'Madre' },
+                { value: 'Padre', label: 'Padre' },
+                { value: 'Tutor legal', label: 'Tutor legal' },
+              ]}
+            />
           </div>
 
           <FormSubmitButton>Añadir tutor</FormSubmitButton>

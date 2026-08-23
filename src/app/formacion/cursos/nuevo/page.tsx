@@ -6,6 +6,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { FormSubmitButton } from '@/components/form-submit-button';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearCursoFormacionSchema } from '@/lib/validations';
+import { InputField, SelectField, TextareaField } from '@/components/ui';
 import { logCambio } from '@/lib/audit';
 import { CATEGORIAS_FORMACION, NIVELES_FORMACION } from '@/lib/formacion';
 
@@ -109,70 +110,43 @@ export default async function NuevoCursoPage({
         action={crearCurso}
         className="border-border bg-card max-w-2xl space-y-4 rounded-lg border p-4"
       >
-        <div>
-          <label className="mb-1 block text-sm font-medium">Título *</label>
-          <input
-            name="titulo"
-            required
-            className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-          />
-        </div>
+        <InputField label="Título" name="titulo" required />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Categoría *</label>
-          <select
-            name="categoria"
-            required
-            defaultValue=""
-            className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-          >
-            <option value="" disabled>
-              Selecciona una categoría
-            </option>
-            {CATEGORIAS_FORMACION.map((cat) => (
-              <option key={cat.value} value={cat.value}>
-                {cat.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          label="Categoría"
+          name="categoria"
+          required
+          defaultValue=""
+          placeholder="Selecciona una categoría"
+          options={CATEGORIAS_FORMACION.map((cat) => ({
+            value: cat.value,
+            label: cat.label,
+          }))}
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Nivel</label>
-          <select
-            name="nivel"
-            defaultValue="intermedio"
-            className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-          >
-            {NIVELES_FORMACION.map((n) => (
-              <option key={n.value} value={n.value}>
-                {n.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          label="Nivel"
+          name="nivel"
+          defaultValue="intermedio"
+          options={NIVELES_FORMACION.map((n) => ({
+            value: n.value,
+            label: n.label,
+          }))}
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Descripción</label>
-          <textarea
-            name="descripcion"
-            rows={3}
-            placeholder="Describe el contenido del curso..."
-            className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-          />
-        </div>
+        <TextareaField
+          label="Descripción"
+          name="descripcion"
+          rows={3}
+          placeholder="Describe el contenido del curso..."
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">
-            URL del contenido (vídeo o enlace)
-          </label>
-          <input
-            name="contenido_url"
-            type="url"
-            placeholder="https://..."
-            className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-          />
-        </div>
+        <InputField
+          label="URL del contenido (vídeo o enlace)"
+          name="contenido_url"
+          type="url"
+          placeholder="https://..."
+        />
 
         <div className="border-border bg-muted/30 rounded-md border border-dashed p-6 text-center">
           <p className="mb-2 text-sm font-medium">Subir PDF</p>
@@ -181,16 +155,13 @@ export default async function NuevoCursoPage({
           </p>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Duración estimada (minutos)</label>
-          <input
-            name="duracion_minutos"
-            type="number"
-            min={0}
-            defaultValue={30}
-            className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-          />
-        </div>
+        <InputField
+          label="Duración estimada (minutos)"
+          name="duracion_minutos"
+          type="number"
+          min="0"
+          defaultValue="30"
+        />
 
         <FormSubmitButton>
           <Save className="size-4" />

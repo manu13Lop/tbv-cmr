@@ -515,100 +515,102 @@ export default async function ConvocatoriaDetallePage({
             </form>
           </div>
 
-          <div className="border-border mb-6 overflow-hidden rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted text-muted-foreground">
-                <tr>
-                  <th className="p-3 text-left font-medium">Dorsal</th>
-                  <th className="p-3 text-left font-medium">Jugadora</th>
-                  <th className="p-3 text-center font-medium">Enviar convocatoria</th>
-                  <th className="p-3 text-center font-medium">Confirmada</th>
-                  <th className="p-3 text-center font-medium">Asistió</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jugadorasEquipo.map((je: Record<string, unknown>) => {
-                  const jug = je.jugadoras as unknown as Record<string, unknown>;
-                  const conv = mapaConvocatorias.get(jug.id as string);
+          <div className="border-border mb-6 rounded-lg border">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted text-muted-foreground">
+                  <tr>
+                    <th className="p-3 text-left font-medium">Dorsal</th>
+                    <th className="p-3 text-left font-medium">Jugadora</th>
+                    <th className="p-3 text-center font-medium">Enviar convocatoria</th>
+                    <th className="p-3 text-center font-medium">Confirmada</th>
+                    <th className="p-3 text-center font-medium">Asistió</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {jugadorasEquipo.map((je: Record<string, unknown>) => {
+                    const jug = je.jugadoras as unknown as Record<string, unknown>;
+                    const conv = mapaConvocatorias.get(jug.id as string);
 
-                  const actionConvocada = toggleCampo.bind(
-                    null,
-                    id,
-                    jug.id as string,
-                    'convocada',
-                    conv?.convocada ?? false
-                  );
-                  const actionConfirmada = toggleCampo.bind(
-                    null,
-                    id,
-                    jug.id as string,
-                    'confirmada',
-                    conv?.confirmada ?? false
-                  );
-                  const actionAsistio = toggleCampo.bind(
-                    null,
-                    id,
-                    jug.id as string,
-                    'asistio',
-                    conv?.asistio ?? false
-                  );
+                    const actionConvocada = toggleCampo.bind(
+                      null,
+                      id,
+                      jug.id as string,
+                      'convocada',
+                      conv?.convocada ?? false
+                    );
+                    const actionConfirmada = toggleCampo.bind(
+                      null,
+                      id,
+                      jug.id as string,
+                      'confirmada',
+                      conv?.confirmada ?? false
+                    );
+                    const actionAsistio = toggleCampo.bind(
+                      null,
+                      id,
+                      jug.id as string,
+                      'asistio',
+                      conv?.asistio ?? false
+                    );
 
-                  return (
-                    <tr key={jug.id as string} className="border-border border-t">
-                      <td className="p-3">{(je.dorsal as string) ?? '-'}</td>
-                      <td className="p-3 font-medium">
-                        {jug.nombre as string} {jug.apellidos as string}
-                        {!jug.email && (
-                          <span className="text-destructive ml-2 text-xs">(sin email)</span>
-                        )}
-                      </td>
-                      <td className="p-3 text-center">
-                        <form action={actionConvocada}>
-                          <button
-                            type="submit"
-                            className={
-                              conv?.convocada
-                                ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
-                                : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
-                            }
-                          >
-                            {conv?.convocada ? 'Sí' : 'No'}
-                          </button>
-                        </form>
-                      </td>
-                      <td className="p-3 text-center">
-                        <form action={actionConfirmada}>
-                          <button
-                            type="submit"
-                            className={
-                              conv?.confirmada
-                                ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
-                                : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
-                            }
-                          >
-                            {conv?.confirmada ? 'Sí' : 'No'}
-                          </button>
-                        </form>
-                      </td>
-                      <td className="p-3 text-center">
-                        <form action={actionAsistio}>
-                          <button
-                            type="submit"
-                            className={
-                              conv?.asistio
-                                ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
-                                : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
-                            }
-                          >
-                            {conv?.asistio ? 'Sí' : 'No'}
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                    return (
+                      <tr key={jug.id as string} className="border-border border-t">
+                        <td className="p-3">{(je.dorsal as string) ?? '-'}</td>
+                        <td className="p-3 font-medium">
+                          {jug.nombre as string} {jug.apellidos as string}
+                          {!jug.email && (
+                            <span className="text-destructive ml-2 text-xs">(sin email)</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-center">
+                          <form action={actionConvocada}>
+                            <button
+                              type="submit"
+                              className={
+                                conv?.convocada
+                                  ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
+                                  : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
+                              }
+                            >
+                              {conv?.convocada ? 'Sí' : 'No'}
+                            </button>
+                          </form>
+                        </td>
+                        <td className="p-3 text-center">
+                          <form action={actionConfirmada}>
+                            <button
+                              type="submit"
+                              className={
+                                conv?.confirmada
+                                  ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
+                                  : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
+                              }
+                            >
+                              {conv?.confirmada ? 'Sí' : 'No'}
+                            </button>
+                          </form>
+                        </td>
+                        <td className="p-3 text-center">
+                          <form action={actionAsistio}>
+                            <button
+                              type="submit"
+                              className={
+                                conv?.asistio
+                                  ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
+                                  : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
+                              }
+                            >
+                              {conv?.asistio ? 'Sí' : 'No'}
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </>
       )}

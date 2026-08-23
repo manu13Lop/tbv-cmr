@@ -6,6 +6,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { FormSubmitButton } from '@/components/form-submit-button';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { actualizarCursoFormacionSchema } from '@/lib/validations';
+import { InputField, SelectField, TextareaField } from '@/components/ui';
 import { logCambio } from '@/lib/audit';
 import { CATEGORIAS_FORMACION, NIVELES_FORMACION } from '@/lib/formacion';
 
@@ -133,95 +134,61 @@ export default async function EditarCursoPage({
         <input type="hidden" name="pdf_url" value={curso.pdf_url ?? ''} />
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Título *</label>
-            <input
-              name="titulo"
-              required
-              defaultValue={curso.titulo}
-              className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Categoría *</label>
-            <select
-              name="categoria"
-              required
-              defaultValue={curso.categoria}
-              className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-            >
-              <option value="" disabled>
-                Selecciona una categoría
-              </option>
-              {CATEGORIAS_FORMACION.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <InputField label="Título" name="titulo" required defaultValue={curso.titulo} />
+          <SelectField
+            label="Categoría"
+            name="categoria"
+            required
+            defaultValue={curso.categoria}
+            placeholder="Selecciona una categoría"
+            options={CATEGORIAS_FORMACION.map((cat) => ({
+              value: cat.value,
+              label: cat.label,
+            }))}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Nivel</label>
-            <select
-              name="nivel"
-              defaultValue={curso.nivel ?? 'intermedio'}
-              className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-            >
-              {NIVELES_FORMACION.map((n) => (
-                <option key={n.value} value={n.value}>
-                  {n.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Duración estimada (minutos)</label>
-            <input
-              name="duracion_minutos"
-              type="number"
-              min={0}
-              defaultValue={curso.duracion_minutos ?? 0}
-              className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-medium">Descripción</label>
-          <textarea
-            name="descripcion"
-            rows={3}
-            placeholder="Describe el contenido del curso..."
-            defaultValue={curso.descripcion ?? ''}
-            className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
+          <SelectField
+            label="Nivel"
+            name="nivel"
+            defaultValue={curso.nivel ?? 'intermedio'}
+            options={NIVELES_FORMACION.map((n) => ({
+              value: n.value,
+              label: n.label,
+            }))}
+          />
+          <InputField
+            label="Duración estimada (minutos)"
+            name="duracion_minutos"
+            type="number"
+            min="0"
+            defaultValue={curso.duracion_minutos ?? 0}
           />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">
-            URL del contenido (vídeo o enlace)
-          </label>
-          <input
-            name="contenido_url"
-            type="url"
-            placeholder="https://..."
-            defaultValue={curso.contenido_url ?? ''}
-            className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-          />
-        </div>
+        <TextareaField
+          label="Descripción"
+          name="descripcion"
+          rows={3}
+          placeholder="Describe el contenido del curso..."
+          defaultValue={curso.descripcion ?? ''}
+        />
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Título del PDF</label>
-          <input
-            name="titulo_pdf"
-            placeholder="Ej: Guía de tácticas 6-0"
-            defaultValue={curso.titulo_pdf ?? ''}
-            className="border-border bg-background focus-visible:ring-ring/50 w-full rounded-md border p-2 text-sm outline-none focus-visible:ring-2"
-          />
-        </div>
+        <InputField
+          label="URL del contenido (vídeo o enlace)"
+          name="contenido_url"
+          type="url"
+          placeholder="https://..."
+          defaultValue={curso.contenido_url ?? ''}
+        />
+
+        <InputField
+          label="Título del PDF"
+          name="titulo_pdf"
+          placeholder="Ej: Guía de tácticas 6-0"
+          defaultValue={curso.titulo_pdf ?? ''}
+        />
 
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-sm">

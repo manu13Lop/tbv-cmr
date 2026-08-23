@@ -63,41 +63,43 @@ export default async function MensajeDetallePage({
 
       <h2 className="text-primary mb-4 text-lg font-bold">Destinatarios</h2>
 
-      <div className="border-border overflow-hidden rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted text-muted-foreground">
-            <tr>
-              <th className="p-3 text-left font-medium">Nombre</th>
-              <th className="p-3 text-left font-medium">Tipo</th>
-              <th className="p-3 text-left font-medium">Email</th>
-              <th className="p-3 text-left font-medium">Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(mensaje.mensajes_destinatarios ?? []).map((d: Record<string, unknown>) => (
-              <tr key={d.id as string} className="border-border border-t">
-                <td className="p-3">{d.nombre as string}</td>
-                <td className="p-3 capitalize">{d.tipo as string}</td>
-                <td className="p-3">{d.email as string}</td>
-                <td className="p-3">
-                  {mensaje.requiere_confirmacion ? (
-                    d.leido_en ? (
-                      <span className="text-primary">
-                        Leído el {new Date(d.leido_en as string).toLocaleString('es-ES')}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">Sin confirmar</span>
-                    )
-                  ) : (
-                    <span className="text-muted-foreground">
-                      {d.enviado ? 'Enviado' : 'Pendiente'}
-                    </span>
-                  )}
-                </td>
+      <div className="border-border rounded-lg border">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted text-muted-foreground">
+              <tr>
+                <th className="p-3 text-left font-medium">Nombre</th>
+                <th className="p-3 text-left font-medium">Tipo</th>
+                <th className="p-3 text-left font-medium">Email</th>
+                <th className="p-3 text-left font-medium">Estado</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(mensaje.mensajes_destinatarios ?? []).map((d: Record<string, unknown>) => (
+                <tr key={d.id as string} className="border-border border-t">
+                  <td className="p-3">{d.nombre as string}</td>
+                  <td className="p-3 capitalize">{d.tipo as string}</td>
+                  <td className="p-3">{d.email as string}</td>
+                  <td className="p-3">
+                    {mensaje.requiere_confirmacion ? (
+                      d.leido_en ? (
+                        <span className="text-primary">
+                          Leído el {new Date(d.leido_en as string).toLocaleString('es-ES')}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">Sin confirmar</span>
+                      )
+                    ) : (
+                      <span className="text-muted-foreground">
+                        {d.enviado ? 'Enviado' : 'Pendiente'}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

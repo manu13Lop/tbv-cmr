@@ -267,67 +267,69 @@ export default async function AuditoriaPage({
       )}
 
       {logs && logs.length > 0 && (
-        <div className="border-border bg-card overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-border bg-muted/20 border-b">
-                <th className="px-4 py-2 text-left font-medium">Fecha</th>
-                <th className="px-4 py-2 text-left font-medium">Usuario</th>
-                <th className="px-4 py-2 text-left font-medium">Tabla</th>
-                <th className="px-4 py-2 text-left font-medium">Acción</th>
-                <th className="px-4 py-2 text-left font-medium">Registro</th>
-                <th className="px-4 py-2 text-left font-medium">Detalles</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((log: Record<string, unknown>) => {
-                const accionInfo = ACCIONES_LABELS[log.accion as string] ?? {
-                  label: log.accion as string,
-                  color: '',
-                };
-                const usuarioNombre =
-                  (log.usuarios as Record<string, unknown>)?.nombre &&
-                  (log.usuarios as Record<string, unknown>)?.apellidos
-                    ? `${(log.usuarios as Record<string, unknown>).nombre} ${(log.usuarios as Record<string, unknown>).apellidos}`
-                    : log.usuario_id
-                      ? 'Usuario sin nombre'
-                      : 'Sistema';
+        <div className="border-border bg-card rounded-lg border">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-border bg-muted/20 border-b">
+                  <th className="px-4 py-2 text-left font-medium">Fecha</th>
+                  <th className="px-4 py-2 text-left font-medium">Usuario</th>
+                  <th className="px-4 py-2 text-left font-medium">Tabla</th>
+                  <th className="px-4 py-2 text-left font-medium">Acción</th>
+                  <th className="px-4 py-2 text-left font-medium">Registro</th>
+                  <th className="px-4 py-2 text-left font-medium">Detalles</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log: Record<string, unknown>) => {
+                  const accionInfo = ACCIONES_LABELS[log.accion as string] ?? {
+                    label: log.accion as string,
+                    color: '',
+                  };
+                  const usuarioNombre =
+                    (log.usuarios as Record<string, unknown>)?.nombre &&
+                    (log.usuarios as Record<string, unknown>)?.apellidos
+                      ? `${(log.usuarios as Record<string, unknown>).nombre} ${(log.usuarios as Record<string, unknown>).apellidos}`
+                      : log.usuario_id
+                        ? 'Usuario sin nombre'
+                        : 'Sistema';
 
-                const detalles = getDatosResumen(
-                  log.accion === 'eliminar'
-                    ? (log.datos_anteriores as Record<string, unknown>)
-                    : (log.datos_nuevos as Record<string, unknown>),
-                  log.accion as string
-                );
+                  const detalles = getDatosResumen(
+                    log.accion === 'eliminar'
+                      ? (log.datos_anteriores as Record<string, unknown>)
+                      : (log.datos_nuevos as Record<string, unknown>),
+                    log.accion as string
+                  );
 
-                return (
-                  <tr key={log.id as string} className="border-border border-b last:border-0">
-                    <td className="text-muted-foreground px-4 py-2 text-xs whitespace-nowrap">
-                      {formatDate(log.created_at as string)}
-                    </td>
-                    <td className="px-4 py-2 text-sm">
-                      <div className="flex items-center gap-1">
-                        <User className="size-3" />
-                        {usuarioNombre}
-                      </div>
-                    </td>
-                    <td className="px-4 py-2">
-                      <span className="bg-secondary/10 rounded px-2 py-0.5 text-xs font-medium">
-                        {getTablaLabel(log.tabla as string)}
-                      </span>
-                    </td>
-                    <td className={`px-4 py-2 text-xs font-medium ${accionInfo.color}`}>
-                      {accionInfo.label}
-                    </td>
-                    <td className="text-muted-foreground px-4 py-2 font-mono text-xs">
-                      {(log.registro_id as string)?.slice(0, 8)}...
-                    </td>
-                    <td className="text-muted-foreground px-4 py-2 text-xs">{detalles ?? '—'}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <tr key={log.id as string} className="border-border border-b last:border-0">
+                      <td className="text-muted-foreground px-4 py-2 text-xs whitespace-nowrap">
+                        {formatDate(log.created_at as string)}
+                      </td>
+                      <td className="px-4 py-2 text-sm">
+                        <div className="flex items-center gap-1">
+                          <User className="size-3" />
+                          {usuarioNombre}
+                        </div>
+                      </td>
+                      <td className="px-4 py-2">
+                        <span className="bg-secondary/10 rounded px-2 py-0.5 text-xs font-medium">
+                          {getTablaLabel(log.tabla as string)}
+                        </span>
+                      </td>
+                      <td className={`px-4 py-2 text-xs font-medium ${accionInfo.color}`}>
+                        {accionInfo.label}
+                      </td>
+                      <td className="text-muted-foreground px-4 py-2 font-mono text-xs">
+                        {(log.registro_id as string)?.slice(0, 8)}...
+                      </td>
+                      <td className="text-muted-foreground px-4 py-2 text-xs">{detalles ?? '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

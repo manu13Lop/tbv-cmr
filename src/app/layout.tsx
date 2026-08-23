@@ -1,28 +1,27 @@
-import type { Metadata, Viewport } from "next";
-import "./globals.css";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { Sidebar } from "@/components/sidebar";
-import { Breadcrumb } from "@/components/breadcrumb";
+import type { Metadata, Viewport } from 'next';
+import './globals.css';
+import { ThemeProvider } from '@/components/providers/theme-provider';
+import { Sidebar } from '@/components/sidebar';
+import { Breadcrumb } from '@/components/breadcrumb';
 
 export const metadata: Metadata = {
-  title: "TBV - Triana Balonmano Vivero",
-  description: "Plataforma de gestión del club",
+  title: 'TBV - Triana Balonmano Vivero',
+  description: 'Plataforma de gestión del club',
   icons: {
-    icon: "/logo.jpg",
+    icon: '/logo.jpg',
   },
-  manifest: "/manifest.json",
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "TBV",
+    statusBarStyle: 'default',
+    title: 'TBV',
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#9b1b30",
-  width: "device-width",
+  themeColor: '#9b1b30',
+  width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -35,8 +34,8 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-          <body>
-         <ThemeProvider
+      <body>
+        <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
