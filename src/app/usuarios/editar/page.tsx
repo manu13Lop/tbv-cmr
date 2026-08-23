@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server';
 import { getUsuarioActual } from '@/lib/auth-helpers';
 import { redirect, notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { FormSubmitButton } from '@/components/form-submit-button';
 import { ArrowLeft, Save, Key, Shield } from 'lucide-react';
@@ -21,6 +22,13 @@ export default async function EditarUsuarioPage({
   const usuarioActual = await getUsuarioActual();
   if (!usuarioActual || !usuarioActual.esMaster) {
     redirect('/');
+  }
+
+  const cookieStore = await cookies();
+  const nuevaPassword =
+    msg === 'password_reseteado' ? cookieStore.get('reset_password')?.value : null;
+  if (nuevaPassword) {
+    cookieStore.delete('reset_password');
   }
 
   const supabase = await createClient();
@@ -70,7 +78,19 @@ export default async function EditarUsuarioPage({
       )}
       {msg === 'password_reseteado' && (
         <div className="border-primary bg-primary/10 text-primary mb-4 rounded-md border p-3 text-sm">
-          Contraseña reseteada. Nueva password generada aleatoriamente.
+          <p className="mb-2">Contraseña reseteada correctamente.</p>
+          {nuevaPassword ? (
+            <div className="flex items-center gap-2">
+              <span className="bg-background border-border rounded border px-2 py-1 font-mono text-sm select-all">
+                {nuevaPassword}
+              </span>
+              <span className="text-muted-foreground text-xs">(copia esta contraseña ahora)</span>
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-xs">
+              La contraseña se ha generado. Si no la ves,contacta al administrador del sistema.
+            </p>
+          )}
         </div>
       )}
       {error === '1' && (

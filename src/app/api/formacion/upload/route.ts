@@ -1,8 +1,12 @@
 import { createClient } from '@/lib/supabase-server';
 import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { NextRequest, NextResponse } from 'next/server';
+import { csrfProtected } from '@/lib/csrf';
 
 export async function POST(request: NextRequest) {
+  const csrfError = csrfProtected(request);
+  if (csrfError) return csrfError;
+
   const usuario = await getUsuarioActual();
   if (!usuario || !tienePermiso(usuario.permisos, 'formacion.editar')) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 403 });

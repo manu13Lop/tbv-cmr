@@ -1,42 +1,61 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase-client"
-import { Button } from "@/components/button"
-import Image from "next/image"
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase-client';
+import { Button } from '@/components/button';
+import Image from 'next/image';
+
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 60_000;
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const attemptsRef = useRef(0);
+  const lockedUntilRef = useRef<number | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+    e.preventDefault();
+    setError(null);
 
-    const supabase = createClient()
+    if (lockedUntilRef.current !== null && Date.now() < lockedUntilRef.current) {
+      const secondsLeft = Math.ceil((lockedUntilRef.current - Date.now()) / 1000);
+      setError(`Demasiados intentos. Espera ${secondsLeft}s.`);
+      return;
+    }
+
+    setLoading(true);
+
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
+    });
 
-    setLoading(false)
+    setLoading(false);
 
     if (error) {
-      setError("Email o contraseña incorrectos.")
-      return
+      attemptsRef.current += 1;
+
+      if (attemptsRef.current >= MAX_ATTEMPTS) {
+        lockedUntilRef.current = Date.now() + LOCKOUT_MS;
+        setError('Demasiados intentos fallidos. Espera 60 segundos.');
+      } else {
+        setError(`Email o contraseña incorrectos. (${attemptsRef.current}/${MAX_ATTEMPTS})`);
+      }
+      return;
     }
 
-    router.push("/")
-    router.refresh()
-  }
+    router.push('/');
+    router.refresh();
+  };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4">
+    <main className="bg-background flex min-h-screen flex-col items-center justify-center gap-6 px-4">
       <div className="flex flex-col items-center gap-2">
         <Image
           src="/logo.jpg"
@@ -46,14 +65,12 @@ export default function LoginPage() {
           className="rounded-full"
           priority
         />
-        <p className="text-sm text-muted-foreground">
-          Triana Balonmano Vivero
-        </p>
+        <p className="text-muted-foreground text-sm">Triana Balonmano Vivero</p>
       </div>
 
       <form
         onSubmit={handleLogin}
-        className="w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-sm flex flex-col gap-4"
+        className="border-border bg-card flex w-full max-w-sm flex-col gap-4 rounded-lg border p-6 shadow-sm"
       >
         <div className="flex flex-col gap-1.5">
           <label htmlFor="email" className="text-sm font-medium">
@@ -65,8 +82,9 @@ export default function LoginPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="border-border bg-background focus-visible:ring-ring/50 h-9 rounded-md border px-3 text-sm outline-none focus-visible:ring-3"
             placeholder="entrenador@tbv.es"
+            autoComplete="username"
           />
         </div>
 
@@ -78,21 +96,21 @@ export default function LoginPage() {
             id="password"
             type="password"
             required
+            minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-9 rounded-md border border-border bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="border-border bg-background focus-visible:ring-ring/50 h-9 rounded-md border px-3 text-sm outline-none focus-visible:ring-3"
             placeholder="••••••••"
+            autoComplete="current-password"
           />
         </div>
 
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
+        {error && <p className="text-destructive text-sm">{error}</p>}
 
-        <Button type="submit" disabled={loading} className="w-full mt-2">
-          {loading ? "Entrando..." : "Iniciar sesión"}
+        <Button type="submit" disabled={loading} className="mt-2 w-full">
+          {loading ? 'Entrando...' : 'Iniciar sesión'}
         </Button>
       </form>
     </main>
-  )
+  );
 }

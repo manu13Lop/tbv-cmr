@@ -1,5 +1,6 @@
-import { createClient } from "@/lib/supabase-server"
-import { NextResponse } from "next/server"
+import { createClient } from '@/lib/supabase-server';
+import { NextRequest, NextResponse } from 'next/server';
+import { csrfProtected } from '@/lib/csrf';
 
 const MIGRATION_SQL = `
 CREATE TABLE IF NOT EXISTS notificaciones (
@@ -38,64 +39,72 @@ DO $$ BEGIN
     USING (auth.uid() = usuario_id);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
-`
+`;
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const csrfError = csrfProtected(request);
+  if (csrfError) return csrfError;
+
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "No autenticado" }, { status: 401 })
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
     }
 
     const { data: usuario } = await supabase
-      .from("usuarios")
-      .select("es_master")
-      .eq("id", user.id)
-      .single()
+      .from('usuarios')
+      .select('es_master')
+      .eq('id', user.id)
+      .single();
 
     if (!usuario?.es_master) {
-      return NextResponse.json({ error: "Solo usuarios master pueden ejecutar setup" }, { status: 403 })
+      return NextResponse.json(
+        { error: 'Solo usuarios master pueden ejecutar setup' },
+        { status: 403 }
+      );
     }
 
-    const { error: checkError } = await supabase
-      .from("notificaciones")
-      .select("id")
-      .limit(1)
+    const { error: checkError } = await supabase.from('notificaciones').select('id').limit(1);
 
     if (!checkError) {
       return NextResponse.json({
-        status: "already_exists",
-        message: "La tabla notificaciones ya existe. No se necesita migración."
-      })
+        status: 'already_exists',
+        message: 'La tabla notificaciones ya existe. No se necesita migración.',
+      });
     }
 
-    if (checkError.code !== "42P01") {
+    if (checkError.code !== '42P01') {
       return NextResponse.json({
-        status: "error",
+        status: 'error',
         message: `Error inesperado: ${checkError.message}`,
-        code: checkError.code
-      })
+        code: checkError.code,
+      });
     }
 
     return NextResponse.json({
-      status: "needs_manual_migration",
-      message: "La tabla notificaciones no existe. Por favor, ejecuta el SQL en el dashboard de Supabase.",
+      status: 'needs_manual_migration',
+      message:
+        'La tabla notificaciones no existe. Por favor, ejecuta el SQL en el dashboard de Supabase.',
       sql: MIGRATION_SQL,
       instructions: [
-        "1. Ve al dashboard de Supabase > SQL Editor",
+        '1. Ve al dashboard de Supabase > SQL Editor',
         "2. Pega el SQL que aparece en el campo 'sql' de esta respuesta",
         "3. Haz clic en 'Run'",
-        "4. Vuelve a ejecutar este endpoint para verificar"
-      ]
-    })
-
+        '4. Vuelve a ejecutar este endpoint para verificar',
+      ],
+    });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Error desconocido"
-    return NextResponse.json({
-      status: "error",
-      message
-    }, { status: 500 })
+    const message = err instanceof Error ? err.message : 'Error desconocido';
+    return NextResponse.json(
+      {
+        status: 'error',
+        message,
+      },
+      { status: 500 }
+    );
   }
 }

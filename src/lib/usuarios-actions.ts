@@ -5,8 +5,15 @@ import { createAdminClient } from '@/lib/supabase-admin';
 import { getUsuarioActual } from '@/lib/auth-helpers';
 import { logCambio } from '@/lib/audit';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearUsuarioSchema, actualizarUsuarioSchema } from '@/lib/validations';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUUID(value: string): boolean {
+  return UUID_RE.test(value);
+}
 
 async function requireMaster() {
   const usuarioActual = await getUsuarioActual();
@@ -64,6 +71,7 @@ export async function crearUsuario(formData: FormData) {
 }
 
 export async function cambiarRol(usuarioId: string, formData: FormData) {
+  if (!isValidUUID(usuarioId)) return;
   const usuarioActual = await requireMaster();
   if (!usuarioActual) return;
 
@@ -89,6 +97,7 @@ export async function cambiarRol(usuarioId: string, formData: FormData) {
 }
 
 export async function actualizarUsuario(usuarioId: string, formData: FormData) {
+  if (!isValidUUID(usuarioId)) return;
   const usuarioActual = await requireMaster();
   if (!usuarioActual) return;
 
@@ -128,23 +137,33 @@ export async function actualizarUsuario(usuarioId: string, formData: FormData) {
 }
 
 export async function resetearPassword(usuarioId: string) {
+  if (!isValidUUID(usuarioId)) return;
   const usuarioActual = await requireMaster();
   if (!usuarioActual) return;
 
   const admin = createAdminClient();
-  const password = crypto.randomUUID().slice(0, 10);
+  const password = crypto.randomUUID().slice(0, 12);
   const { error: errorAuth } = await admin.auth.admin.updateUserById(usuarioId, { password });
   if (errorAuth) {
     return redirect(`/usuarios/editar?id=${encodeURIComponent(usuarioId)}&error=1`);
   }
 
   await logCambio('usuarios', usuarioId, 'actualizar', null, { reset_password: true });
-  redirect(
-    `/usuarios/editar?id=${encodeURIComponent(usuarioId)}&msg=password_reseteado&nueva_password=${encodeURIComponent(password)}`
-  );
+
+  const cookieStore = await cookies();
+  cookieStore.set('reset_password', password, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60,
+  });
+
+  redirect(`/usuarios/editar?id=${encodeURIComponent(usuarioId)}&msg=password_reseteado`);
 }
 
 export async function eliminarUsuario(usuarioId: string) {
+  if (!isValidUUID(usuarioId)) return;
   const usuarioActual = await requireMaster();
   if (!usuarioActual) return;
 
@@ -168,6 +187,7 @@ export async function eliminarUsuario(usuarioId: string) {
 }
 
 export async function togglePermisoUsuario(usuarioId: string, formData: FormData) {
+  if (!isValidUUID(usuarioId)) return;
   const usuarioActual = await requireMaster();
   if (!usuarioActual) return;
 
@@ -229,6 +249,7 @@ export async function crearRol(formData: FormData) {
 }
 
 export async function actualizarPermisosRol(rolId: string, formData: FormData) {
+  if (!isValidUUID(rolId)) return;
   const usuarioActual = await requireMaster();
   if (!usuarioActual) return;
 
@@ -263,6 +284,7 @@ export async function actualizarPermisosRol(rolId: string, formData: FormData) {
 }
 
 export async function eliminarPermiso(permisoId: string) {
+  if (!isValidUUID(permisoId)) return;
   const usuarioActual = await requireMaster();
   if (!usuarioActual) return;
 
