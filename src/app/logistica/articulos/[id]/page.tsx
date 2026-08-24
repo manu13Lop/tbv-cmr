@@ -4,6 +4,9 @@ import { ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
 import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { FormSubmitButton } from '@/components/form-submit-button';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('logistica');
 
 async function actualizarArticuloDetalle(id: string, formData: FormData) {
   'use server';
@@ -43,7 +46,7 @@ async function actualizarArticuloDetalle(id: string, formData: FormData) {
     .eq('id', id);
 
   if (articuloError) {
-    console.error(articuloError);
+    log.error({ err: articuloError }, 'Error updating articulo detalle');
     redirect(`/logistica/articulos/${id}`);
   }
 
@@ -57,7 +60,7 @@ async function actualizarArticuloDetalle(id: string, formData: FormData) {
       })
       .eq('id', stockMinimoId);
 
-    if (minimoError) console.error(minimoError);
+    if (minimoError) log.error({ err: minimoError }, 'Error updating stock minimo');
   } else {
     const { error: insertError } = await supabase.from('logistica_stock_minimos').insert({
       articulo_id: id,
@@ -66,7 +69,7 @@ async function actualizarArticuloDetalle(id: string, formData: FormData) {
       observaciones: observaciones || null,
     });
 
-    if (insertError) console.error(insertError);
+    if (insertError) log.error({ err: insertError }, 'Error creating stock minimo');
   }
 
   redirect(`/logistica/articulos/${id}`);
@@ -115,7 +118,7 @@ async function crearMovimientoDesdeDetalle(id: string, formData: FormData) {
     usuario_nombre_snapshot: usuario.nombreCompleto,
   });
 
-  if (error) console.error(error);
+  if (error) log.error({ err: error }, 'Error creating movimiento desde detalle');
 
   redirect(`/logistica/articulos/${id}`);
 }

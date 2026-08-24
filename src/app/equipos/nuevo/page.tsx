@@ -8,6 +8,9 @@ import { crearEquipoSchema } from '@/lib/validations';
 import { InputField } from '@/components/ui';
 import { AsignarEntrenadorEquipo } from '@/components/asignar-entrenador-equipo';
 import { logCambio } from '@/lib/audit';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('equipos');
 
 async function crearEquipo(formData: FormData) {
   'use server';
@@ -32,7 +35,7 @@ async function crearEquipo(formData: FormData) {
     .single();
 
   if (error || !equipo) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating equipo');
     return redirect(`/equipos/nuevo?error=${encodeURIComponent('Error al crear el equipo')}`);
   }
 
@@ -56,7 +59,12 @@ async function crearEquipo(formData: FormData) {
   redirect('/equipos');
 }
 
-export default async function NuevoEquipoPage() {
+export default async function NuevoEquipoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const supabase = await createClient();
 
   const { data: entrenadores } = await supabase
@@ -76,6 +84,12 @@ export default async function NuevoEquipoPage() {
       </Link>
 
       <h1 className="text-primary mb-6 text-2xl font-bold">Nuevo equipo</h1>
+
+      {error && (
+        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
+          {decodeURIComponent(error)}
+        </div>
+      )}
 
       <form action={crearEquipo} className="max-w-lg space-y-4">
         <InputField label="Nombre" name="nombre" required />

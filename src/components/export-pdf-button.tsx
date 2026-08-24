@@ -1,21 +1,21 @@
-"use client"
+'use client';
 
-import { FileText } from "lucide-react"
-import { Button } from "@/components/button"
+import { FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type ColumnDef = {
-  header: string
-  key: string
-}
+  header: string;
+  key: string;
+};
 
 type ExportPDFButtonProps = {
-  filename: string
-  title: string
-  columns: ColumnDef[]
-  rows: Record<string, string | number | null>[]
-  subtitle?: string
-  label?: string
-}
+  filename: string;
+  title: string;
+  columns: ColumnDef[];
+  rows: Record<string, string | number | null>[];
+  subtitle?: string;
+  label?: string;
+};
 
 export function ExportPDFButton({
   filename,
@@ -26,14 +26,14 @@ export function ExportPDFButton({
   label,
 }: ExportPDFButtonProps) {
   const handleExport = async () => {
-    const { exportToPDF } = await import("@/lib/export-pdf")
-    exportToPDF({ filename, title, columns, rows, subtitle })
-  }
+    const { exportToPDF } = await import('@/lib/export-pdf');
+    exportToPDF({ filename, title, columns, rows, subtitle });
+  };
 
   return (
     <Button variant="secondary" onClick={handleExport}>
       <FileText className="size-4" />
-      {label || "Exportar PDF"}
+      {label || 'Exportar PDF'}
     </Button>
-  )
+  );
 }

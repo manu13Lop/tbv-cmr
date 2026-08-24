@@ -8,6 +8,9 @@ import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearReconocimientoSchema } from '@/lib/validations';
 import { InputField, TextareaField } from '@/components/ui';
 import { notificarUsuariosConPermiso } from '@/lib/notifications';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('sanitario');
 
 async function crearConvocatoria(formData: FormData) {
   'use server';
@@ -40,7 +43,7 @@ async function crearConvocatoria(formData: FormData) {
     .single();
 
   if (error || !convocatoria) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating convocatoria reconocimiento');
     return;
   }
 
@@ -65,7 +68,7 @@ async function crearConvocatoria(formData: FormData) {
       `/sanitario/reconocimientos/${convocatoria.id}`
     );
   } catch (err) {
-    console.error('Error creando notificaciones:', err);
+    log.error({ err }, 'Error creando notificaciones');
   }
 
   redirect(`/sanitario/reconocimientos/${convocatoria.id}`);

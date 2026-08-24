@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase-server';
 import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/button';
+import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus } from 'lucide-react';
 
 async function actualizarFicha(id: string, formData: FormData) {

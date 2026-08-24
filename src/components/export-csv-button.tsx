@@ -1,8 +1,8 @@
-"use client"
+'use client';
 
-import { Download } from "lucide-react"
-import { exportToCSV } from "@/lib/export-csv"
-import { Button } from "@/components/button"
+import { Download } from 'lucide-react';
+import { exportToCSV } from '@/lib/export-csv';
+import { Button } from '@/components/ui/button';
 
 export function ExportCSVButton({
   filename,
@@ -10,18 +10,15 @@ export function ExportCSVButton({
   rows,
   label,
 }: {
-  filename: string
-  headers: string[]
-  rows: (string | number | null)[][]
-  label?: string
+  filename: string;
+  headers: string[];
+  rows: (string | number | null)[][];
+  label?: string;
 }) {
   return (
-    <Button
-      variant="outline"
-      onClick={() => exportToCSV(filename, headers, rows)}
-    >
+    <Button variant="outline" onClick={() => exportToCSV(filename, headers, rows)}>
       <Download className="size-4" />
-      {label || "Exportar CSV"}
+      {label || 'Exportar CSV'}
     </Button>
-  )
+  );
 }

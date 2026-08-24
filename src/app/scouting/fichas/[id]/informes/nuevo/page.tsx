@@ -6,6 +6,9 @@ import { FormSubmitButton } from '@/components/form-submit-button';
 import { ArrowLeft } from 'lucide-react';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearInformeScoutingSchema } from '@/lib/validations';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('scouting');
 
 interface FichaData {
   id: string;
@@ -75,7 +78,7 @@ async function crearInforme(fichaId: string, formData: FormData) {
     .single();
 
   if (error || !informe) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating informe ficha');
     return redirect(`/scouting/fichas/${fichaId}`);
   }
 

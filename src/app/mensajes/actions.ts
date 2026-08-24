@@ -7,6 +7,9 @@ import { resend, EMAIL_FROM } from '@/lib/resend';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { enviarMensajeSchema } from '@/lib/validations';
 import { notificarUsuariosConPermiso } from '@/lib/notifications';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('mensajes-actions');
 
 export async function enviarMensajeAction(formData: FormData) {
   const usuario = await getUsuarioActual();
@@ -58,7 +61,7 @@ export async function enviarMensajeAction(formData: FormData) {
     .single();
 
   if (errorMensaje || !mensaje) {
-    console.error(errorMensaje);
+    log.error({ err: errorMensaje }, 'Error creating mensaje');
     redirect('/mensajes/nuevo?error=error_creacion');
   }
 
@@ -109,7 +112,7 @@ export async function enviarMensajeAction(formData: FormData) {
     .select('id, email, nombre, token_confirmacion');
 
   if (errorDestinatarios || !destinatariosInsertados) {
-    console.error(errorDestinatarios);
+    log.error({ err: errorDestinatarios }, 'Error creating destinatarios mensaje');
     redirect(`/mensajes/${mensaje.id}?aviso=error_destinatarios`);
   }
 
@@ -144,10 +147,10 @@ export async function enviarMensajeAction(formData: FormData) {
     try {
       const { error: errorEnvio } = await resend.batch.send(lote);
       if (errorEnvio) {
-        console.error('Error enviando lote de emails:', errorEnvio);
+        log.error({ err: errorEnvio }, 'Error enviando lote de emails');
       }
     } catch (err) {
-      console.error('Excepción enviando lote de emails:', err);
+      log.error({ err }, 'Excepción enviando lote de emails');
     }
   }
 
@@ -168,7 +171,7 @@ export async function enviarMensajeAction(formData: FormData) {
       `/mensajes/${mensaje.id}`
     );
   } catch (err) {
-    console.error('Error creando notificaciones:', err);
+    log.error({ err }, 'Error creando notificaciones');
   }
 
   redirect(`/mensajes/${mensaje.id}`);

@@ -79,10 +79,13 @@ async function desasignarEquipo(asignacionId: string, entrenadorId: string) {
 
 export default async function EntrenadorDetallePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { id } = await params;
+  const { error } = await searchParams;
   const usuario = await getUsuarioActual();
   const puedeEditar = tienePermiso(usuario?.permisos, 'equipos.editar');
 
@@ -135,6 +138,12 @@ export default async function EntrenadorDetallePage({
       <h1 className="text-primary mb-6 text-2xl font-bold">
         {entrenador.nombre} {entrenador.apellidos}
       </h1>
+
+      {error && (
+        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
+          {decodeURIComponent(error)}
+        </div>
+      )}
 
       {/* Datos personales */}
       <details className="border-border bg-card mb-6 rounded-lg border" open>

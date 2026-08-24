@@ -1,12 +1,15 @@
 import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Button } from '@/components/button';
+import { Button } from '@/components/ui/button';
 import { Plus, Copy } from 'lucide-react';
 import { ConvocatoriasView } from '@/components/convocatorias-view';
 import { FilterBar, FilterOption } from '@/components/filter-bar';
 import { SelectField } from '@/components/ui';
 import { Suspense } from 'react';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('convocatorias');
 
 async function duplicarEventos(formData: FormData) {
   'use server';
@@ -52,7 +55,7 @@ async function duplicarEventos(formData: FormData) {
     .select('id, equipo_id');
 
   if (error || !eventosCreados) {
-    console.error(error);
+    log.error({ err: error }, 'Error duplicating eventos');
     redirect('/convocatorias?duplicado=error');
   }
 

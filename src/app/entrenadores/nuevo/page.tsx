@@ -8,6 +8,9 @@ import { logCambio } from '@/lib/audit';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { AsignarEquipoEntrenador } from '@/components/asignar-equipo-entrenador';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('entrenadores');
 
 async function crearEntrenador(formData: FormData) {
   'use server';
@@ -35,7 +38,7 @@ async function crearEntrenador(formData: FormData) {
     .single();
 
   if (error || !entrenador) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating entrenador');
     return redirect(
       `/entrenadores/nuevo?error=${encodeURIComponent('Error al crear el entrenador')}`
     );
@@ -66,7 +69,12 @@ async function crearEntrenador(formData: FormData) {
   redirect('/entrenadores');
 }
 
-export default async function NuevoEntrenadorPage() {
+export default async function NuevoEntrenadorPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const supabase = await createClient();
 
   const { data: equipos } = await supabase
@@ -86,6 +94,12 @@ export default async function NuevoEntrenadorPage() {
       </Link>
 
       <h1 className="text-primary mb-6 text-2xl font-bold">Nuevo entrenador</h1>
+
+      {error && (
+        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
+          {decodeURIComponent(error)}
+        </div>
+      )}
 
       <form action={crearEntrenador} className="max-w-lg space-y-4">
         <div className="grid grid-cols-2 gap-4">

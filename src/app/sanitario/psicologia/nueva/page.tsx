@@ -7,6 +7,9 @@ import { ArrowLeft } from 'lucide-react';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearSesionPsicologiaSchema } from '@/lib/validations';
 import { InputField, SelectField, TextareaField } from '@/components/ui';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('sanitario');
 
 async function crearSesion(formData: FormData) {
   'use server';
@@ -48,7 +51,7 @@ async function crearSesion(formData: FormData) {
     .single();
 
   if (error || !sesion) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating sesion psicologia');
     return redirect('/sanitario/psicologia');
   }
 

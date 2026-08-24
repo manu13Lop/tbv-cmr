@@ -8,6 +8,9 @@ import { ImageUpload } from '@/components/image-upload';
 import { optimizeImage, getImageExtension } from '@/lib/image-utils';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('entrenadores');
 
 async function crearEjercicio(formData: FormData) {
   'use server';
@@ -54,7 +57,7 @@ async function crearEjercicio(formData: FormData) {
   });
 
   if (error) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating ejercicio');
     return redirect(
       `/entrenadores/ejercicios/nuevo?error=${encodeURIComponent('Error al crear el ejercicio')}`
     );

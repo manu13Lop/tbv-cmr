@@ -7,6 +7,9 @@ import { FormSubmitButton } from '@/components/form-submit-button';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearMovimientoSchema } from '@/lib/validations';
 import { InputField, SelectField, TextareaField } from '@/components/ui';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('logistica');
 
 async function crearMovimiento(formData: FormData) {
   'use server';
@@ -52,7 +55,7 @@ async function crearMovimiento(formData: FormData) {
   });
 
   if (error) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating movimiento logistica');
   }
 
   redirect('/logistica/movimientos');

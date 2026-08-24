@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
-import { Button } from '@/components/button';
+import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft } from 'lucide-react';
 import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';

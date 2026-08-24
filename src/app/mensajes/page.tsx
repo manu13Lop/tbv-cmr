@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { ArrowLeft, Plus, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
 import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
-import { Button } from '@/components/button';
+import { Button } from '@/components/ui/button';
 import { PaginationWrapper as Pagination } from '@/components/pagination-wrapper';
 
 interface Mensaje {

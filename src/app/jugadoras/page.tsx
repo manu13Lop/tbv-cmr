@@ -2,13 +2,16 @@ import { createClient } from '@/lib/supabase-server';
 import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/button';
+import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft } from 'lucide-react';
 import { ExportCSVButton } from '@/components/export-csv-button';
 import { ExportPDFButton } from '@/components/export-pdf-button';
 import { formatDateForCSV } from '@/lib/export-csv';
 import { PaginationWrapper as Pagination } from '@/components/pagination-wrapper';
 import { InputField, SelectField } from '@/components/ui';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('jugadoras');
 
 const ITEMS_PER_PAGE = 15;
 
@@ -87,7 +90,7 @@ export default async function JugadorasPage({
   const { data: jugadoras, count, error } = await query;
 
   if (error) {
-    console.error('Error fetching jugadoras:', error);
+    log.error({ err: error }, 'Error fetching jugadoras');
   }
 
   const totalPages = Math.ceil((count ?? 0) / ITEMS_PER_PAGE);

@@ -1,59 +1,54 @@
-"use client"
+'use client';
 
-import { useActionState } from "react"
-import { Button } from "@/components/button"
+import { useActionState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   actualizarMovimientoAction,
   type MovimientoActionState,
-} from "@/app/logistica/movimientos/[id]/actions"
+} from '@/app/logistica/movimientos/[id]/actions';
 
 type Props = {
   movimiento: {
-    id: string
-    articulo_id: string
-    tipo: string
-    cantidad: number
-    motivo: string | null
-    equipo_id: string | null
-  }
-  articulos: { id: string; nombre: string; unidad: string }[]
-  equipos: { id: string; nombre: string }[]
-}
+    id: string;
+    articulo_id: string;
+    tipo: string;
+    cantidad: number;
+    motivo: string | null;
+    equipo_id: string | null;
+  };
+  articulos: { id: string; nombre: string; unidad: string }[];
+  equipos: { id: string; nombre: string }[];
+};
 
-const initialState: MovimientoActionState = { error: null, pendingConfirm: false }
+const initialState: MovimientoActionState = { error: null, pendingConfirm: false };
 
 export function EditarMovimientoForm({ movimiento, articulos, equipos }: Props) {
-  const [state, formAction, isPending] = useActionState(
-    actualizarMovimientoAction,
-    initialState
-  )
+  const [state, formAction, isPending] = useActionState(actualizarMovimientoAction, initialState);
 
   return (
-    <form action={formAction} className="mb-8 rounded-xl border border-border bg-card p-4">
-      <h2 className="mb-4 text-lg font-bold text-primary">Editar movimiento</h2>
+    <form action={formAction} className="border-border bg-card mb-8 rounded-xl border p-4">
+      <h2 className="text-primary mb-4 text-lg font-bold">Editar movimiento</h2>
 
       <input type="hidden" name="id" value={movimiento.id} />
 
-      {state.error === "stock_negativo" && (
-        <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-3 text-sm text-destructive">
-          <p className="font-medium">
-            Este movimiento dejaría el stock del artículo en negativo.
-          </p>
-          <p className="mt-1 text-destructive/90">
-            Revisa la cantidad o el tipo. Si aun así quieres continuar, pulsa
-            &quot;Confirmar y guardar de todas formas&quot;.
+      {state.error === 'stock_negativo' && (
+        <div className="border-destructive/40 bg-destructive/10 text-destructive mb-4 rounded-lg border px-3 py-3 text-sm">
+          <p className="font-medium">Este movimiento dejaría el stock del artículo en negativo.</p>
+          <p className="text-destructive/90 mt-1">
+            Revisa la cantidad o el tipo. Si aun así quieres continuar, pulsa &quot;Confirmar y
+            guardar de todas formas&quot;.
           </p>
         </div>
       )}
 
-      {state.error === "datos_invalidos" && (
-        <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      {state.error === 'datos_invalidos' && (
+        <div className="border-destructive/40 bg-destructive/10 text-destructive mb-4 rounded-lg border px-3 py-2 text-sm">
           Revisa los campos, hay datos obligatorios sin completar.
         </div>
       )}
 
-      {state.error === "error_guardado" && (
-        <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      {state.error === 'error_guardado' && (
+        <div className="border-destructive/40 bg-destructive/10 text-destructive mb-4 rounded-lg border px-3 py-2 text-sm">
           No se ha podido guardar el movimiento. Inténtalo de nuevo.
         </div>
       )}
@@ -64,7 +59,7 @@ export function EditarMovimientoForm({ movimiento, articulos, equipos }: Props) 
           <select
             name="articulo_id"
             defaultValue={movimiento.articulo_id}
-            className="w-full rounded-md border border-border bg-background p-2 text-sm"
+            className="border-border bg-background w-full rounded-md border p-2 text-sm"
           >
             {articulos.map((articulo) => (
               <option key={articulo.id} value={articulo.id}>
@@ -79,7 +74,7 @@ export function EditarMovimientoForm({ movimiento, articulos, equipos }: Props) 
           <select
             name="tipo"
             defaultValue={movimiento.tipo}
-            className="w-full rounded-md border border-border bg-background p-2 text-sm"
+            className="border-border bg-background w-full rounded-md border p-2 text-sm"
           >
             <option value="entrada">Entrada</option>
             <option value="salida">Salida</option>
@@ -95,7 +90,7 @@ export function EditarMovimientoForm({ movimiento, articulos, equipos }: Props) 
             min={1}
             defaultValue={movimiento.cantidad}
             required
-            className="w-full rounded-md border border-border bg-background p-2 text-sm"
+            className="border-border bg-background w-full rounded-md border p-2 text-sm"
           />
         </div>
 
@@ -103,8 +98,8 @@ export function EditarMovimientoForm({ movimiento, articulos, equipos }: Props) 
           <label className="mb-1 block text-sm font-medium">Equipo</label>
           <select
             name="equipo_id"
-            defaultValue={movimiento.equipo_id ?? ""}
-            className="w-full rounded-md border border-border bg-background p-2 text-sm"
+            defaultValue={movimiento.equipo_id ?? ''}
+            className="border-border bg-background w-full rounded-md border p-2 text-sm"
           >
             <option value="">Sin equipo específico</option>
             {equipos.map((equipo) => (
@@ -120,15 +115,15 @@ export function EditarMovimientoForm({ movimiento, articulos, equipos }: Props) 
           <textarea
             name="motivo"
             rows={3}
-            defaultValue={movimiento.motivo ?? ""}
-            className="w-full rounded-md border border-border bg-background p-2 text-sm"
+            defaultValue={movimiento.motivo ?? ''}
+            className="border-border bg-background w-full rounded-md border p-2 text-sm"
           />
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3">
         <Button type="submit" name="forzar" value="false" disabled={isPending}>
-          {isPending ? "Guardando..." : "Guardar cambios"}
+          {isPending ? 'Guardando...' : 'Guardar cambios'}
         </Button>
 
         {state.pendingConfirm && (
@@ -144,5 +139,5 @@ export function EditarMovimientoForm({ movimiento, articulos, equipos }: Props) 
         )}
       </div>
     </form>
-  )
+  );
 }

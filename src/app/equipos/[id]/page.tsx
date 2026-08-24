@@ -8,6 +8,9 @@ import { validateFormData, getFirstError } from '@/lib/validate';
 import { actualizarEquipoSchema } from '@/lib/validations';
 import { logCambio } from '@/lib/audit';
 import { InputField } from '@/components/ui';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('equipos');
 
 async function actualizarEquipo(id: string, formData: FormData) {
   'use server';
@@ -36,7 +39,7 @@ async function actualizarEquipo(id: string, formData: FormData) {
     .eq('id', id);
 
   if (error) {
-    console.error(error);
+    log.error({ err: error }, 'Error updating equipo');
     return;
   }
 
@@ -50,8 +53,15 @@ async function actualizarEquipo(id: string, formData: FormData) {
   redirect('/equipos');
 }
 
-export default async function EquipoDetallePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EquipoDetallePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { id } = await params;
+  const { error } = await searchParams;
 
   const usuario = await getUsuarioActual();
   if (!usuario || !tienePermiso(usuario.permisos, 'equipos.leer')) {
@@ -109,6 +119,12 @@ export default async function EquipoDetallePage({ params }: { params: Promise<{ 
       </Link>
 
       <h1 className="text-primary mb-6 text-2xl font-bold">{equipo.nombre}</h1>
+
+      {error && (
+        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
+          {decodeURIComponent(error)}
+        </div>
+      )}
 
       <form action={updateAction} className="max-w-lg space-y-4">
         <InputField

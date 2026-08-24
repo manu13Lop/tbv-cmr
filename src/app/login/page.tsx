@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
-import { Button } from '@/components/button';
+import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 
 const MAX_ATTEMPTS = 5;

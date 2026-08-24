@@ -6,6 +6,9 @@ import { ArrowLeft } from 'lucide-react';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearJugadoraSchema } from '@/lib/validations';
 import { InputField, SelectField } from '@/components/ui';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('jugadoras');
 
 async function crearJugadora(formData: FormData) {
   'use server';
@@ -45,7 +48,7 @@ async function crearJugadora(formData: FormData) {
   });
 
   if (error) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating jugadora');
     return;
   }
 
@@ -59,7 +62,13 @@ function TallaSelect({ name, label }: { name: string; label: string }) {
   return <SelectField label={label} name={name} options={tallaSelectOptions} />;
 }
 
-export default function NuevaJugadoraPage() {
+export default async function NuevaJugadoraPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
+
   return (
     <div className="p-6">
       <Link
@@ -71,6 +80,12 @@ export default function NuevaJugadoraPage() {
       </Link>
 
       <h1 className="text-primary mb-6 text-2xl font-bold">Nueva jugadora</h1>
+
+      {error && (
+        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
+          {decodeURIComponent(error)}
+        </div>
+      )}
 
       <form action={crearJugadora} className="max-w-lg space-y-4">
         <InputField label="Nombre" name="nombre" required />

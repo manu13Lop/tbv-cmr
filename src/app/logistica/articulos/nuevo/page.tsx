@@ -7,6 +7,9 @@ import { FormSubmitButton } from '@/components/form-submit-button';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearArticuloSchema } from '@/lib/validations';
 import { InputField, SelectField, TextareaField } from '@/components/ui';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('logistica');
 
 async function crearArticulo(formData: FormData) {
   'use server';
@@ -50,7 +53,7 @@ async function crearArticulo(formData: FormData) {
     .single();
 
   if (articuloError || !articulo) {
-    console.error(articuloError);
+    log.error({ err: articuloError }, 'Error creating articulo logistica');
     redirect('/logistica/articulos/nuevo');
   }
 
@@ -62,7 +65,7 @@ async function crearArticulo(formData: FormData) {
   });
 
   if (minimoError) {
-    console.error(minimoError);
+    log.error({ err: minimoError }, 'Error creating stock minimo');
   }
 
   redirect(`/logistica/articulos/${articulo.id}`);

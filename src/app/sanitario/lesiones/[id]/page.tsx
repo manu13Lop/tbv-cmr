@@ -7,6 +7,9 @@ import { ArrowLeft } from 'lucide-react';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { seguimientoLesionSchema } from '@/lib/validations';
 import { TimelineLesion } from '@/components/sanitario/timeline-lesion';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('sanitario');
 
 async function añadirSeguimiento(lesionId: string, formData: FormData) {
   'use server';
@@ -37,7 +40,7 @@ async function añadirSeguimiento(lesionId: string, formData: FormData) {
   });
 
   if (error) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating seguimiento lesion');
     return;
   }
 
@@ -66,8 +69,15 @@ const gravedadColor: Record<string, string> = {
   grave: 'text-destructive',
 };
 
-export default async function LesionDetallePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function LesionDetallePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { id } = await params;
+  const { error } = await searchParams;
 
   const usuario = await getUsuarioActual();
   if (!usuario || !tienePermiso(usuario.permisos, 'sanitario.leer')) {
@@ -128,6 +138,12 @@ export default async function LesionDetallePage({ params }: { params: Promise<{ 
           {lesion.estado === 'activa' ? 'Lesión activa' : 'Dada de alta'}
         </span>
       </div>
+
+      {error && (
+        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
+          {decodeURIComponent(error)}
+        </div>
+      )}
 
       {lesion.diagnostico_inicial && (
         <div className="border-border bg-card mb-6 rounded-lg border p-4">

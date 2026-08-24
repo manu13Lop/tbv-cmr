@@ -5,6 +5,9 @@ import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearEventoSchema } from '@/lib/validations';
 import { InputField, SelectField } from '@/components/ui';
 import { notificarUsuariosConPermiso } from '@/lib/notifications';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('convocatorias');
 
 async function crearEvento(formData: FormData) {
   'use server';
@@ -32,7 +35,7 @@ async function crearEvento(formData: FormData) {
     .single();
 
   if (error || !evento) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating evento');
     return;
   }
 
@@ -48,13 +51,18 @@ async function crearEvento(formData: FormData) {
       `/convocatorias/${evento.id}`
     );
   } catch (err) {
-    console.error('Error creando notificaciones:', err);
+    log.error({ err }, 'Error creando notificaciones');
   }
 
   redirect(`/convocatorias/${evento.id}`);
 }
 
-export default async function NuevoEventoPage() {
+export default async function NuevoEventoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const supabase = await createClient();
 
   const { data: equipos } = await supabase
@@ -65,6 +73,12 @@ export default async function NuevoEventoPage() {
   return (
     <div className="p-6">
       <h1 className="text-primary mb-6 text-2xl font-bold">Nuevo evento</h1>
+
+      {error && (
+        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
+          {decodeURIComponent(error)}
+        </div>
+      )}
 
       <form action={crearEvento} className="max-w-lg space-y-4">
         <SelectField

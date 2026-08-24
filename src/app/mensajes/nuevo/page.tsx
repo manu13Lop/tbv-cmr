@@ -38,15 +38,9 @@ export default async function NuevoMensajePage({
 
       <h1 className="text-primary mb-6 text-2xl font-bold">Nuevo mensaje</h1>
 
-      {error === 'datos_invalidos' && (
-        <div className="border-destructive/40 bg-destructive/10 text-destructive mb-4 rounded-lg border px-3 py-2 text-sm">
-          Revisa los campos, todos son obligatorios.
-        </div>
-      )}
-
-      {error === 'error_creacion' && (
-        <div className="border-destructive/40 bg-destructive/10 text-destructive mb-4 rounded-lg border px-3 py-2 text-sm">
-          No se ha podido crear el mensaje. Inténtalo de nuevo.
+      {error && (
+        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
+          {decodeURIComponent(error)}
         </div>
       )}
 

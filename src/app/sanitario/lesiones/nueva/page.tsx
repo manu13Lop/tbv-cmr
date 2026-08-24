@@ -8,6 +8,9 @@ import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearLesionSchema } from '@/lib/validations';
 import { InputField, SelectField, TextareaField } from '@/components/ui';
 import { notificarUsuariosConPermiso } from '@/lib/notifications';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('sanitario');
 
 async function crearLesion(formData: FormData) {
   'use server';
@@ -43,7 +46,7 @@ async function crearLesion(formData: FormData) {
     .single();
 
   if (error || !lesion) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating lesion');
     return;
   }
 
@@ -62,13 +65,18 @@ async function crearLesion(formData: FormData) {
       `/sanitario/lesiones/${lesion.id}`
     );
   } catch (err) {
-    console.error('Error creando notificaciones:', err);
+    log.error({ err }, 'Error creando notificaciones');
   }
 
   redirect(`/sanitario/lesiones/${lesion.id}`);
 }
 
-export default async function NuevaLesionPage() {
+export default async function NuevaLesionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const usuario = await getUsuarioActual();
   if (!usuario || !tienePermiso(usuario.permisos, 'sanitario.editar')) {
     redirect('/sanitario');
@@ -93,6 +101,12 @@ export default async function NuevaLesionPage() {
       </Link>
 
       <h1 className="text-primary mb-6 text-2xl font-bold">Registrar lesión</h1>
+
+      {error && (
+        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
+          {decodeURIComponent(error)}
+        </div>
+      )}
 
       <form action={crearLesion} className="max-w-lg space-y-4">
         <SelectField

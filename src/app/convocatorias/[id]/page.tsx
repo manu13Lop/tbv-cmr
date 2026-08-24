@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase-server';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { FormSubmitButton } from '@/components/form-submit-button';
 import { generarICS, generarLinkGoogleCalendar } from '@/lib/ics';
 import { Resend } from 'resend';
@@ -305,10 +304,10 @@ export default async function ConvocatoriaDetallePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ envio?: string; n?: string }>;
+  searchParams: Promise<{ envio?: string; n?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { envio, n } = await searchParams;
+  const { envio, n, error } = await searchParams;
   const supabase = await createClient();
 
   const { data: evento } = await supabase
@@ -421,6 +420,11 @@ export default async function ConvocatoriaDetallePage({
       {envio === 'vacio' && (
         <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
           No hay jugadoras marcadas para enviar la convocatoria.
+        </div>
+      )}
+      {error && (
+        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
+          {decodeURIComponent(error)}
         </div>
       )}
 

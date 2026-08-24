@@ -165,10 +165,10 @@ export default async function JugadoraDetallePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ guardado?: string }>;
+  searchParams: Promise<{ guardado?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { guardado } = await searchParams;
+  const { guardado, error } = await searchParams;
 
   const usuario = await getUsuarioActual();
   if (!usuario || !tienePermiso(usuario.permisos, 'jugadoras.leer')) {
@@ -219,6 +219,11 @@ export default async function JugadoraDetallePage({
       {guardado === '1' && (
         <div className="border-primary bg-primary/10 text-primary mb-4 rounded-md border p-3 text-sm">
           Cambios guardados correctamente.
+        </div>
+      )}
+      {error && (
+        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
+          {decodeURIComponent(error)}
         </div>
       )}
 

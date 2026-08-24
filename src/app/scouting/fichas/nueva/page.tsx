@@ -7,6 +7,9 @@ import { ArrowLeft } from 'lucide-react';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearFichaScoutingSchema } from '@/lib/validations';
 import { InputField, SelectField, TextareaField } from '@/components/ui';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('scouting');
 
 async function crearFicha(formData: FormData) {
   'use server';
@@ -41,7 +44,7 @@ async function crearFicha(formData: FormData) {
     .single();
 
   if (error || !ficha) {
-    console.error(error);
+    log.error({ err: error }, 'Error creating ficha scouting');
     return redirect('/scouting');
   }
 

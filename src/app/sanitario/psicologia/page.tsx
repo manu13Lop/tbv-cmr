@@ -3,7 +3,7 @@ import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Plus } from 'lucide-react';
-import { Button } from '@/components/button';
+import { Button } from '@/components/ui/button';
 
 export default async function PsicologiaPage() {
   const usuario = await getUsuarioActual();

@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase-server';
 import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/button';
+import { Button } from '@/components/ui/button';
 import { Plus, ArrowLeft, Settings } from 'lucide-react';
 import { PaginationWrapper as Pagination } from '@/components/pagination-wrapper';
 import { ExportCSVButton } from '@/components/export-csv-button';

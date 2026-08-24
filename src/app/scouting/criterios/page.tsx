@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase-server';
 import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/button';
+import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
 async function crearCriterio(formData: FormData) {
