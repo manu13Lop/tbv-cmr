@@ -1,6 +1,7 @@
 'use client';
 
 import { useFormStatus } from 'react-dom';
+import { useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -16,12 +17,22 @@ export function FormSubmitButton({
   ...props
 }: FormSubmitButtonProps) {
   const { pending } = useFormStatus();
+  const submittedRef = useRef(false);
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (pending || submittedRef.current) {
+      e.preventDefault();
+      return;
+    }
+    submittedRef.current = true;
+  };
 
   return (
     <Button
       type="submit"
       disabled={pending}
-      className={cn(className, pending && 'cursor-not-allowed opacity-70')}
+      className={cn(className, pending && 'opacity-70')}
+      onClick={handleClick}
       {...props}
     >
       {pending ? (
