@@ -1,9 +1,9 @@
 'use server';
 
-import { createServerClient } from '@supabase/ssr';
 import { rateLimiters } from '@/lib/rate-limit';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
 
 export async function loginAction(formData: FormData) {
   const email = formData.get('email') as string;
@@ -44,7 +44,8 @@ export async function loginAction(formData: FormData) {
   });
 
   if (error) {
-    return { error: 'Email o contraseña incorrectos.' };
+    console.error('[LOGIN ERROR]', error.message, error.status);
+    return { error: 'Email o contrasena incorrectos.' };
   }
 
   redirect('/');
