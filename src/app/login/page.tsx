@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase-client';
+import { loginAction } from './actions';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 
@@ -30,22 +30,22 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const formData = new FormData();
+    formData.set('email', email);
+    formData.set('password', password);
+
+    const result = await loginAction(formData);
 
     setLoading(false);
 
-    if (error) {
+    if (result?.error) {
       attemptsRef.current += 1;
 
       if (attemptsRef.current >= MAX_ATTEMPTS) {
         lockedUntilRef.current = Date.now() + LOCKOUT_MS;
         setError('Demasiados intentos fallidos. Espera 60 segundos.');
       } else {
-        setError(`Email o contraseña incorrectos. (${attemptsRef.current}/${MAX_ATTEMPTS})`);
+        setError(`${result.error} (${attemptsRef.current}/${MAX_ATTEMPTS})`);
       }
       return;
     }
