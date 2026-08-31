@@ -17,51 +17,44 @@ export async function loginAction(formData: FormData) {
     return { error: `Demasiados intentos. Intenta de nuevo en ${minutos} minuto(s).` };
   }
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`,
-    {
+  let res: Response;
+  let data: Record<string, unknown>;
+
+  try {
+    res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       },
       body: JSON.stringify({ email, password }),
-    }
-  );
-
-  const data = await res.json();
+    });
+    data = await res.json();
+  } catch (fetchError) {
+    console.error('[LOGIN] Fetch failed:', fetchError);
+    return { error: 'No se pudo conectar con el servidor de autenticación.' };
+  }
 
   if (!res.ok || data.error) {
+    console.error('[LOGIN] Auth error:', res.status, data);
     return { error: 'Email o contraseña incorrectos.' };
   }
 
   const cookieStore = await cookies();
-  cookieStore.set('sb-access-token', data.access_token, {
+  cookieStore.set('sb-access-token', data.access_token as string, {
     path: '/',
     httpOnly: true,
     secure: true,
     sameSite: 'lax',
-    maxAge: data.expires_in,
+    maxAge: data.expires_in as number,
   });
-  cookieStore.set('sb-refresh-token', data.refresh_token, {
+  cookieStore.set('sb-refresh-token', data.refresh_token as string, {
     path: '/',
     httpOnly: true,
     secure: true,
     sameSite: 'lax',
-    maxAge: data.expires_in * 4,
+    maxAge: (data.expires_in as number) * 4,
   });
-
-  const admin = createAdminClient();
-  const { data: userData } = await admin.auth.getUser(data.access_token);
-
-  if (userData?.user) {
-    cookieStore.set('x-user-id', userData.user.id, {
-      path: '/',
-      httpOnly: false,
-      sameSite: 'lax',
-      maxAge: data.expires_in,
-    });
-  }
 
   redirect('/');
 }
