@@ -78,10 +78,16 @@ export default async function CriteriosScoutingPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted text-muted-foreground">
               <tr>
-                <th className="p-3 text-left font-medium">Criterio</th>
-                <th className="p-3 text-left font-medium">Clave interna</th>
-                <th className="p-3 text-left font-medium">Estado</th>
-                <th className="p-3 text-left font-medium"></th>
+                <th scope="col" className="p-3 text-left font-medium">
+                  Criterio
+                </th>
+                <th scope="col" className="p-3 text-left font-medium">
+                  Clave interna
+                </th>
+                <th scope="col" className="p-3 text-left font-medium">
+                  Estado
+                </th>
+                <th scope="col" className="p-3 text-left font-medium"></th>
               </tr>
             </thead>
             <tbody>

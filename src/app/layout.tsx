@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from 'next';
+import { Suspense } from 'react';
 import './globals.css';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Sidebar } from '@/components/sidebar';
 import { Breadcrumb } from '@/components/breadcrumb';
+import { Toaster } from 'sonner';
+import { ToastHandler } from '@/components/toast-handler';
 
 export const metadata: Metadata = {
   title: 'TBV - Triana Balonmano Vivero',
@@ -48,6 +51,10 @@ export default function RootLayout({
               {children}
             </main>
           </div>
+          <Toaster richColors position="top-right" />
+          <Suspense>
+            <ToastHandler />
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>

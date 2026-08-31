@@ -67,11 +67,21 @@ export default async function PsicologiaPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted text-muted-foreground">
                 <tr>
-                  <th className="p-3 text-left font-medium">Tipo</th>
-                  <th className="p-3 text-left font-medium">Destino</th>
-                  <th className="p-3 text-left font-medium">Tema</th>
-                  <th className="p-3 text-left font-medium">Fecha</th>
-                  <th className="p-3 text-left font-medium">Estado</th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Tipo
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Destino
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Tema
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Fecha
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Estado
+                  </th>
                 </tr>
               </thead>
               <tbody>

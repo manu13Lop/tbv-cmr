@@ -1,60 +1,73 @@
-import { Ratelimit } from "@upstash/ratelimit"
-import { Redis } from "@upstash/redis"
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+
+if (!process.env.UPSTASH_REDIS_REST_URL && process.env.NODE_ENV === 'production') {
+  console.warn(
+    '[rate-limit] UPSTASH_REDIS_REST_URL no configurado en producción. ' +
+      'El rate limiting in-memory NO funciona en serverless (Vercel/Netlify). ' +
+      'Configura UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN.'
+  );
+}
 
 const redis = process.env.UPSTASH_REDIS_REST_URL
   ? new Redis({
       url: process.env.UPSTASH_REDIS_REST_URL,
       token: process.env.UPSTASH_REDIS_REST_TOKEN!,
     })
-  : null
+  : null;
 
-const ipStore = new Map<string, { count: number; resetAt: number }>()
+const ipStore = new Map<string, { count: number; resetAt: number }>();
 
 export function checkInMemoryRateLimit(
   identifier: string,
   maxRequests: number,
   windowMs: number
 ): { allowed: boolean; remaining: number; resetAt: number } {
-  const now = Date.now()
-  const record = ipStore.get(identifier)
+  const now = Date.now();
+  const record = ipStore.get(identifier);
 
   if (!record || now > record.resetAt) {
-    ipStore.set(identifier, { count: 1, resetAt: now + windowMs })
-    return { allowed: true, remaining: maxRequests - 1, resetAt: now + windowMs }
+    ipStore.set(identifier, { count: 1, resetAt: now + windowMs });
+    return { allowed: true, remaining: maxRequests - 1, resetAt: now + windowMs };
   }
 
   if (record.count >= maxRequests) {
-    return { allowed: false, remaining: 0, resetAt: record.resetAt }
+    return { allowed: false, remaining: 0, resetAt: record.resetAt };
   }
 
-  record.count++
-  return { allowed: true, remaining: maxRequests - record.count, resetAt: record.resetAt }
+  record.count++;
+  return { allowed: true, remaining: maxRequests - record.count, resetAt: record.resetAt };
 }
 
 const upstashLimiters = redis
   ? {
       login: new Ratelimit({
         redis,
-        limiter: Ratelimit.slidingWindow(5, "15 m"),
+        limiter: Ratelimit.slidingWindow(5, '15 m'),
         analytics: true,
       }),
       crearUsuario: new Ratelimit({
         redis,
-        limiter: Ratelimit.slidingWindow(3, "1 h"),
+        limiter: Ratelimit.slidingWindow(3, '1 h'),
         analytics: true,
       }),
       resetPassword: new Ratelimit({
         redis,
-        limiter: Ratelimit.slidingWindow(2, "1 h"),
+        limiter: Ratelimit.slidingWindow(2, '1 h'),
         analytics: true,
       }),
       contacto: new Ratelimit({
         redis,
-        limiter: Ratelimit.slidingWindow(10, "1 h"),
+        limiter: Ratelimit.slidingWindow(10, '1 h'),
+        analytics: true,
+      }),
+      enviarConvocatoria: new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(5, '1 h'),
         analytics: true,
       }),
     }
-  : null
+  : null;
 
 export const rateLimiters = {
   login: (identifier: string) =>
@@ -92,4 +105,13 @@ export const rateLimiters = {
           resetAt: Date.now() + (r.reset - Date.now()),
         }))
       : Promise.resolve(checkInMemoryRateLimit(identifier, 10, 60 * 60 * 1000)),
-}
+
+  enviarConvocatoria: (identifier: string) =>
+    upstashLimiters
+      ? upstashLimiters.enviarConvocatoria.limit(identifier).then((r) => ({
+          allowed: r.success,
+          remaining: r.remaining,
+          resetAt: Date.now() + (r.reset - Date.now()),
+        }))
+      : Promise.resolve(checkInMemoryRateLimit(identifier, 5, 60 * 60 * 1000)),
+};

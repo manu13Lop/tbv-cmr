@@ -8,6 +8,8 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { crearUsuarioSchema, actualizarUsuarioSchema } from '@/lib/validations';
+import { rateLimiters } from '@/lib/rate-limit';
+import { clearRolesCache } from '@/lib/roles';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -24,6 +26,11 @@ async function requireMaster() {
 export async function crearUsuario(formData: FormData) {
   const usuarioActual = await requireMaster();
   if (!usuarioActual) return;
+
+  const rateLimit = await rateLimiters.crearUsuario(usuarioActual.id);
+  if (!rateLimit.allowed) {
+    return redirect('/usuarios?error=rate_limit');
+  }
 
   const validation = validateFormData(crearUsuarioSchema, formData);
   if (!validation.success) {
@@ -141,6 +148,11 @@ export async function resetearPassword(usuarioId: string) {
   const usuarioActual = await requireMaster();
   if (!usuarioActual) return;
 
+  const rateLimit = await rateLimiters.resetPassword(usuarioActual.id);
+  if (!rateLimit.allowed) {
+    return redirect(`/usuarios/editar?id=${encodeURIComponent(usuarioId)}&error=rate_limit`);
+  }
+
   const admin = createAdminClient();
   const password = crypto.randomUUID().slice(0, 12);
   const { error: errorAuth } = await admin.auth.admin.updateUserById(usuarioId, { password });
@@ -245,6 +257,7 @@ export async function crearRol(formData: FormData) {
 
   const { data: rol } = await admin.from('roles').insert({ nombre }).select('id').single();
   await logCambio('roles', rol?.id ?? null, 'crear', null, { nombre });
+  clearRolesCache();
   redirect('/usuarios?seccion=permisos');
 }
 
@@ -280,6 +293,7 @@ export async function actualizarPermisosRol(rolId: string, formData: FormData) {
     }
   }
 
+  clearRolesCache();
   redirect(`/usuarios?seccion=permisos&editar_rol=${rolId}`);
 }
 
@@ -296,5 +310,6 @@ export async function eliminarPermiso(permisoId: string) {
     .single();
   await admin.from('permisos').delete().eq('id', permisoId);
   await logCambio('permisos', permisoId, 'eliminar', { nombre: permiso?.nombre }, null);
+  clearRolesCache();
   redirect('/usuarios?seccion=permisos');
 }

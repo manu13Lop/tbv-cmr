@@ -143,10 +143,18 @@ export default async function FisioterapiaPage({
             <table className="w-full text-sm">
               <thead className="bg-muted text-muted-foreground">
                 <tr>
-                  <th className="p-3 text-left font-medium">Jugadora</th>
-                  <th className="p-3 text-left font-medium">Tipo</th>
-                  <th className="p-3 text-left font-medium">Fecha</th>
-                  <th className="p-3 text-left font-medium">Gravedad</th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Jugadora
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Tipo
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Fecha
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Gravedad
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -183,10 +191,18 @@ export default async function FisioterapiaPage({
             <table className="w-full text-sm">
               <thead className="bg-muted text-muted-foreground">
                 <tr>
-                  <th className="p-3 text-left font-medium">Jugadora</th>
-                  <th className="p-3 text-left font-medium">Tipo</th>
-                  <th className="p-3 text-left font-medium">Fecha</th>
-                  <th className="p-3 text-left font-medium">Estado</th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Jugadora
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Tipo
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Fecha
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Estado
+                  </th>
                 </tr>
               </thead>
               <tbody>

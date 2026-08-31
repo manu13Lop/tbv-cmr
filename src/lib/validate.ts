@@ -45,10 +45,10 @@ export function validateFormData<T>(
   for (const [key, value] of Object.entries(raw)) {
     const match = key.match(/^videos\[(\d+)\]\[(\w+)\]$/);
     if (match) {
-      const idx = parseInt(match[1], 10);
+      const idx = parseInt(match[1]!, 10);
       const field = match[2] as 'url' | 'descripcion';
       if (!videos[idx]) videos[idx] = {};
-      videos[idx][field] = String(value);
+      videos[idx]![field] = String(value);
     }
   }
   if (videos.length > 0 && videos.some((v) => v.url || v.descripcion)) {
@@ -77,6 +77,6 @@ export function validateFormData<T>(
 }
 
 export function getFirstError(errors: Record<string, string[]>): string {
-  const firstKey = Object.keys(errors)[0];
+  const firstKey = Object.keys(errors)[0]!;
   return errors[firstKey]?.[0] || 'Error de validación';
 }

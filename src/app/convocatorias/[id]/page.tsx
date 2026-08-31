@@ -1,16 +1,23 @@
 import { createClient } from '@/lib/supabase-server';
+import { getUsuarioActual } from '@/lib/auth-helpers';
 import { notFound, redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import { FormSubmitButton } from '@/components/form-submit-button';
 import { generarICS, generarLinkGoogleCalendar } from '@/lib/ics';
-import { Resend } from 'resend';
+import { resend, EMAIL_FROM } from '@/lib/resend';
 import { ArrowLeft } from 'lucide-react';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { actualizarEventoSchema } from '@/lib/validations';
 import { ConfirmActionButton } from '@/components/confirm-action-button';
+import { rateLimiters } from '@/lib/rate-limit';
 
 async function actualizarEvento(eventoId: string, formData: FormData) {
   'use server';
+  const usuario = await getUsuarioActual();
+  if (!usuario?.esMaster && !usuario?.permisos.includes('convocatorias.editar')) {
+    return redirect(`/convocatorias/${eventoId}?error=Sin permisos`);
+  }
 
   const validation = validateFormData(actualizarEventoSchema, formData);
   if (!validation.success) {
@@ -41,6 +48,10 @@ async function actualizarEvento(eventoId: string, formData: FormData) {
 
 async function eliminarEvento(eventoId: string) {
   'use server';
+  const usuario = await getUsuarioActual();
+  if (!usuario?.esMaster && !usuario?.permisos.includes('convocatorias.editar')) {
+    return redirect(`/convocatorias/${eventoId}?error=Sin permisos`);
+  }
   const supabase = await createClient();
   await supabase.from('convocatorias').delete().eq('evento_id', eventoId);
   const { error } = await supabase.from('eventos').delete().eq('id', eventoId);
@@ -58,6 +69,10 @@ async function toggleCampo(
   valorActual: boolean | null
 ) {
   'use server';
+  const usuario = await getUsuarioActual();
+  if (!usuario?.esMaster && !usuario?.permisos.includes('convocatorias.editar')) {
+    return redirect(`/convocatorias/${eventoId}?error=Sin permisos`);
+  }
   const supabase = await createClient();
 
   const { data: existente } = await supabase
@@ -91,6 +106,10 @@ async function toggleCampo(
 
 async function marcarTodas(eventoId: string, jugadoraIds: string[], valor: boolean) {
   'use server';
+  const usuario = await getUsuarioActual();
+  if (!usuario?.esMaster && !usuario?.permisos.includes('convocatorias.editar')) {
+    return redirect(`/convocatorias/${eventoId}?error=Sin permisos`);
+  }
   const supabase = await createClient();
 
   for (const jid of jugadoraIds) {
@@ -118,6 +137,15 @@ async function marcarTodas(eventoId: string, jugadoraIds: string[], valor: boole
 async function enviarConvocatoria(eventoId: string) {
   'use server';
   const supabase = await createClient();
+
+  const hdrs = await headers();
+  const userId = hdrs.get('x-user-id');
+  if (userId) {
+    const rateLimit = await rateLimiters.enviarConvocatoria(userId);
+    if (!rateLimit.allowed) {
+      redirect(`/convocatorias/${eventoId}?error=rate_limit`);
+    }
+  }
 
   const { data: evento } = await supabase
     .from('eventos')
@@ -171,7 +199,6 @@ async function enviarConvocatoria(eventoId: string) {
     minute: '2-digit',
   });
 
-  const resend = new Resend(process.env.RESEND_API_KEY as string);
   let enviados = 0;
 
   for (const c of convocatorias) {
@@ -200,7 +227,7 @@ async function enviarConvocatoria(eventoId: string) {
     `;
 
     await resend.emails.send({
-      from: 'Triana Balonmano Vivero <onboarding@resend.dev>',
+      from: EMAIL_FROM,
       to: jug.email as string,
       subject: `Convocatoria: ${titulo} - ${fechaFormateada}`,
       html: htmlBody,
@@ -226,6 +253,10 @@ async function enviarConvocatoria(eventoId: string) {
 
 async function guardarSesionEntrenamiento(eventoId: string, formData: FormData) {
   'use server';
+  const usuario = await getUsuarioActual();
+  if (!usuario?.esMaster && !usuario?.permisos.includes('convocatorias.editar')) {
+    return redirect(`/convocatorias/${eventoId}?error=Sin permisos`);
+  }
 
   const ejercicioIds = formData.getAll('ejercicio_ids') as string[];
   const objetivoPrincipal = (formData.get('objetivo_principal') as string) || '';
@@ -233,6 +264,12 @@ async function guardarSesionEntrenamiento(eventoId: string, formData: FormData) 
   const objetivoSecundarioB = (formData.get('objetivo_secundario_b') as string) || '';
   const observaciones = (formData.get('observaciones_entrenador') as string) || '';
   const valoracion = (formData.get('valoracion_entrenamiento') as string) || '';
+
+  if (ejercicioIds.length > 10) {
+    redirect(
+      `/convocatorias/${eventoId}?error=${encodeURIComponent('Máximo 10 ejercicios por sesión')}`
+    );
+  }
 
   const supabase = await createClient();
 
@@ -352,8 +389,8 @@ export default async function ConvocatoriaDetallePage({
   // Todos los ejercicios disponibles (biblioteca compartida)
   const { data: todosEjercicios } = await supabase
     .from('ejercicios')
-    .select('id, categoria, titulo, imagen_url, objetivo_principal')
-    .order('categoria')
+    .select('id, seccion_principal, titulo, imagen_url, objetivo_principal')
+    .order('seccion_principal')
     .order('titulo');
 
   const equipoInfo = evento.equipos as unknown as Record<string, unknown>;
@@ -499,124 +536,180 @@ export default async function ConvocatoriaDetallePage({
           Este equipo no tiene jugadoras asignadas todavía.
         </div>
       ) : (
-        <>
-          <div className="mb-3 flex gap-2">
-            <form action={marcarTodasSiAction}>
-              <button
-                type="submit"
-                className="border-border hover:bg-muted rounded-md border px-3 py-1.5 text-xs"
-              >
-                Marcar todas
-              </button>
-            </form>
-            <form action={marcarTodasNoAction}>
-              <button
-                type="submit"
-                className="border-border hover:bg-muted rounded-md border px-3 py-1.5 text-xs"
-              >
-                Desmarcar todas
-              </button>
-            </form>
-          </div>
+        (() => {
+          const totalJug = jugadorasEquipo.length;
+          const convocadas = jugadorasEquipo.filter((je: Record<string, unknown>) => {
+            const jug = je.jugadoras as unknown as Record<string, unknown>;
+            const conv = mapaConvocatorias.get(jug.id as string);
+            return conv?.convocada;
+          }).length;
+          const confirmadas = jugadorasEquipo.filter((je: Record<string, unknown>) => {
+            const jug = je.jugadoras as unknown as Record<string, unknown>;
+            const conv = mapaConvocatorias.get(jug.id as string);
+            return conv?.convocada && conv?.confirmada;
+          }).length;
+          const asistieron = jugadorasEquipo.filter((je: Record<string, unknown>) => {
+            const jug = je.jugadoras as unknown as Record<string, unknown>;
+            const conv = mapaConvocatorias.get(jug.id as string);
+            return conv?.asistio;
+          }).length;
 
-          <div className="border-border mb-6 rounded-lg border">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted text-muted-foreground">
-                  <tr>
-                    <th className="p-3 text-left font-medium">Dorsal</th>
-                    <th className="p-3 text-left font-medium">Jugadora</th>
-                    <th className="p-3 text-center font-medium">Enviar convocatoria</th>
-                    <th className="p-3 text-center font-medium">Confirmada</th>
-                    <th className="p-3 text-center font-medium">Asistió</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {jugadorasEquipo.map((je: Record<string, unknown>) => {
-                    const jug = je.jugadoras as unknown as Record<string, unknown>;
-                    const conv = mapaConvocatorias.get(jug.id as string);
+          return (
+            <>
+              <div className="mb-4 grid grid-cols-4 gap-3">
+                <div className="border-border bg-muted/50 rounded-lg border p-3 text-center">
+                  <p className="text-lg font-bold">
+                    {convocadas}
+                    <span className="text-muted-foreground text-xs font-normal">/{totalJug}</span>
+                  </p>
+                  <p className="text-muted-foreground text-xs">Convocadas</p>
+                </div>
+                <div className="border-border bg-muted/50 rounded-lg border p-3 text-center">
+                  <p className="text-lg font-bold text-blue-600">
+                    {confirmadas}
+                    <span className="text-muted-foreground text-xs font-normal">/{convocadas}</span>
+                  </p>
+                  <p className="text-muted-foreground text-xs">Confirmadas</p>
+                </div>
+                <div className="border-border bg-muted/50 rounded-lg border p-3 text-center">
+                  <p className="text-lg font-bold text-green-600">{asistieron}</p>
+                  <p className="text-muted-foreground text-xs">Asistieron</p>
+                </div>
+                <div className="border-border bg-muted/50 rounded-lg border p-3 text-center">
+                  <p className="text-lg font-bold">{totalJug - convocadas}</p>
+                  <p className="text-muted-foreground text-xs">No convocadas</p>
+                </div>
+              </div>
 
-                    const actionConvocada = toggleCampo.bind(
-                      null,
-                      id,
-                      jug.id as string,
-                      'convocada',
-                      conv?.convocada ?? false
-                    );
-                    const actionConfirmada = toggleCampo.bind(
-                      null,
-                      id,
-                      jug.id as string,
-                      'confirmada',
-                      conv?.confirmada ?? false
-                    );
-                    const actionAsistio = toggleCampo.bind(
-                      null,
-                      id,
-                      jug.id as string,
-                      'asistio',
-                      conv?.asistio ?? false
-                    );
+              <div className="mb-3 flex gap-2">
+                <form action={marcarTodasSiAction}>
+                  <button
+                    type="submit"
+                    className="border-border hover:bg-muted rounded-md border px-3 py-1.5 text-xs"
+                  >
+                    Marcar todas
+                  </button>
+                </form>
+                <form action={marcarTodasNoAction}>
+                  <button
+                    type="submit"
+                    className="border-border hover:bg-muted rounded-md border px-3 py-1.5 text-xs"
+                  >
+                    Desmarcar todas
+                  </button>
+                </form>
+              </div>
 
-                    return (
-                      <tr key={jug.id as string} className="border-border border-t">
-                        <td className="p-3">{(je.dorsal as string) ?? '-'}</td>
-                        <td className="p-3 font-medium">
-                          {jug.nombre as string} {jug.apellidos as string}
-                          {!jug.email && (
-                            <span className="text-destructive ml-2 text-xs">(sin email)</span>
-                          )}
-                        </td>
-                        <td className="p-3 text-center">
-                          <form action={actionConvocada}>
-                            <button
-                              type="submit"
-                              className={
-                                conv?.convocada
-                                  ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
-                                  : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
-                              }
-                            >
-                              {conv?.convocada ? 'Sí' : 'No'}
-                            </button>
-                          </form>
-                        </td>
-                        <td className="p-3 text-center">
-                          <form action={actionConfirmada}>
-                            <button
-                              type="submit"
-                              className={
-                                conv?.confirmada
-                                  ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
-                                  : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
-                              }
-                            >
-                              {conv?.confirmada ? 'Sí' : 'No'}
-                            </button>
-                          </form>
-                        </td>
-                        <td className="p-3 text-center">
-                          <form action={actionAsistio}>
-                            <button
-                              type="submit"
-                              className={
-                                conv?.asistio
-                                  ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
-                                  : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
-                              }
-                            >
-                              {conv?.asistio ? 'Sí' : 'No'}
-                            </button>
-                          </form>
-                        </td>
+              <div className="border-border mb-6 rounded-lg border">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted text-muted-foreground">
+                      <tr>
+                        <th scope="col" className="p-3 text-left font-medium">
+                          Dorsal
+                        </th>
+                        <th scope="col" className="p-3 text-left font-medium">
+                          Jugadora
+                        </th>
+                        <th scope="col" className="p-3 text-center font-medium">
+                          Enviar convocatoria
+                        </th>
+                        <th scope="col" className="p-3 text-center font-medium">
+                          Confirmada
+                        </th>
+                        <th scope="col" className="p-3 text-center font-medium">
+                          Asistió
+                        </th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
+                    </thead>
+                    <tbody>
+                      {jugadorasEquipo.map((je: Record<string, unknown>) => {
+                        const jug = je.jugadoras as unknown as Record<string, unknown>;
+                        const conv = mapaConvocatorias.get(jug.id as string);
+
+                        const actionConvocada = toggleCampo.bind(
+                          null,
+                          id,
+                          jug.id as string,
+                          'convocada',
+                          conv?.convocada ?? false
+                        );
+                        const actionConfirmada = toggleCampo.bind(
+                          null,
+                          id,
+                          jug.id as string,
+                          'confirmada',
+                          conv?.confirmada ?? false
+                        );
+                        const actionAsistio = toggleCampo.bind(
+                          null,
+                          id,
+                          jug.id as string,
+                          'asistio',
+                          conv?.asistio ?? false
+                        );
+
+                        return (
+                          <tr key={jug.id as string} className="border-border border-t">
+                            <td className="p-3">{(je.dorsal as string) ?? '-'}</td>
+                            <td className="p-3 font-medium">
+                              {jug.nombre as string} {jug.apellidos as string}
+                              {!jug.email && (
+                                <span className="text-destructive ml-2 text-xs">(sin email)</span>
+                              )}
+                            </td>
+                            <td className="p-3 text-center">
+                              <form action={actionConvocada}>
+                                <button
+                                  type="submit"
+                                  className={
+                                    conv?.convocada
+                                      ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
+                                      : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
+                                  }
+                                >
+                                  {conv?.convocada ? 'Sí' : 'No'}
+                                </button>
+                              </form>
+                            </td>
+                            <td className="p-3 text-center">
+                              <form action={actionConfirmada}>
+                                <button
+                                  type="submit"
+                                  className={
+                                    conv?.confirmada
+                                      ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
+                                      : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
+                                  }
+                                >
+                                  {conv?.confirmada ? 'Sí' : 'No'}
+                                </button>
+                              </form>
+                            </td>
+                            <td className="p-3 text-center">
+                              <form action={actionAsistio}>
+                                <button
+                                  type="submit"
+                                  className={
+                                    conv?.asistio
+                                      ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-xs'
+                                      : 'border-border text-muted-foreground rounded-md border px-3 py-1 text-xs'
+                                  }
+                                >
+                                  {conv?.asistio ? 'Sí' : 'No'}
+                                </button>
+                              </form>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          );
+        })()
       )}
 
       {/* Planificación de entrenamiento (solo si tipo = entrenamiento) */}
@@ -665,41 +758,64 @@ export default async function ConvocatoriaDetallePage({
             {/* Selección de ejercicios */}
             <div>
               <label className="mb-2 block text-sm font-medium">
-                Ejercicios de la sesión ({ejercicioIdsSeleccionados.length} seleccionados)
+                Ejercicios de la sesión ({ejercicioIdsSeleccionados.length} de 10 max.)
               </label>
               <p className="text-muted-foreground mb-3 text-xs">
                 Selecciona los ejercicios de la biblioteca compartida que se realizarán en esta
-                sesión.
+                sesión. Máximo 10 ejercicios por sesión.
               </p>
 
               {!todosEjercicios || todosEjercicios.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
                   No hay ejercicios en la biblioteca.{' '}
-                  <Link
-                    href="/entrenadores/ejercicios/nuevo"
-                    className="text-primary hover:underline"
-                  >
+                  <Link href="/ejercicios/nuevo" className="text-primary hover:underline">
                     Crear ejercicio
                   </Link>
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {(['táctico', 'técnica_individual', 'portero', 'físico'] as const).map((cat) => {
-                    const ejerciciosCat = todosEjercicios.filter((e) => e.categoria === cat);
-                    if (ejerciciosCat.length === 0) return null;
+                  {(
+                    [
+                      'dinamica_grupo',
+                      'preparacion_fisica',
+                      'calentamiento',
+                      'ataque',
+                      'defensa',
+                      'porteria',
+                      'contraataque_1a',
+                      'transicion_at_def',
+                      'transicion_def_at',
+                      'juego_combinado',
+                      'otros',
+                    ] as const
+                  ).map((seccion) => {
+                    const ejerciciosSeccion = todosEjercicios.filter(
+                      (e) => e.seccion_principal === seccion
+                    );
+                    if (ejerciciosSeccion.length === 0) return null;
                     const labels: Record<string, string> = {
-                      táctico: 'Tácticos',
-                      técnica_individual: 'Técnica Individual',
-                      portero: 'Porteros',
-                      físico: 'Físicos',
+                      dinamica_grupo: 'Dinámica de grupo',
+                      preparacion_fisica: 'Preparación física',
+                      calentamiento: 'Calentamiento',
+                      activacion: 'Activación',
+                      ataque: 'Ataque',
+                      defensa: 'Defensa',
+                      porteria: 'Portería',
+                      contraataque_1a: 'Contraataque 1ª oleada',
+                      contraataque_2a: 'Contraataque 2ª oleada',
+                      contraataque_3a: 'Contraataque 3ª oleada',
+                      transicion_at_def: 'Transición ataque→defensa',
+                      transicion_def_at: 'Transición defensa→ataque',
+                      juego_combinado: 'Juego combinado',
+                      otros: 'Otros',
                     };
                     return (
-                      <div key={cat}>
+                      <div key={seccion}>
                         <h4 className="text-muted-foreground mb-2 text-xs font-semibold uppercase">
-                          {labels[cat]}
+                          {labels[seccion] ?? seccion}
                         </h4>
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                          {ejerciciosCat.map((ej) => (
+                          {ejerciciosSeccion.map((ej) => (
                             <label
                               key={ej.id}
                               className={`flex items-center gap-3 rounded-md border p-3 text-sm transition-colors ${

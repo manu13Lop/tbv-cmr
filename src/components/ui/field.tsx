@@ -11,6 +11,7 @@ type FieldProps = {
 };
 
 export function Field({ label, name, required, error, className, children }: FieldProps) {
+  const errorId = `${name}-error`;
   return (
     <div className={cn('space-y-1', className)}>
       <label htmlFor={name} className="block text-sm font-medium">
@@ -18,7 +19,11 @@ export function Field({ label, name, required, error, className, children }: Fie
         {required && <span className="text-destructive ml-0.5">*</span>}
       </label>
       {children}
-      {error && <p className="text-destructive text-xs">{error}</p>}
+      {error && (
+        <p id={errorId} className="text-destructive text-xs" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -48,6 +53,7 @@ export function InputField({
   min,
   max,
 }: InputFieldProps) {
+  const errorId = `${name}-error`;
   return (
     <Field
       label={label}
@@ -69,6 +75,8 @@ export function InputField({
         step={step}
         min={min}
         max={max}
+        aria-invalid={!!error}
+        aria-describedby={error ? errorId : undefined}
         className="border-border bg-background w-full rounded-md border p-2 text-sm disabled:opacity-60"
       />
     </Field>

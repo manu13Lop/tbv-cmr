@@ -1,40 +1,40 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Plus, Trash2 } from "lucide-react"
+import { useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 
 type Equipo = {
-  id: string
-  nombre: string
-  categoria: string
-  temporada: string
-}
+  id: string;
+  nombre: string;
+  categoria: string;
+  temporada: string;
+};
 
 export function AsignarEquipoEntrenador({ equipos }: { equipos: Equipo[] }) {
-  const [asignaciones, setAsignaciones] = useState<{ equipoId: string; rol: string }[]>([])
+  const [asignaciones, setAsignaciones] = useState<{ equipoId: string; rol: string }[]>([]);
 
   function addAsignacion() {
-    setAsignaciones([...asignaciones, { equipoId: "", rol: "entrenador" }])
+    setAsignaciones([...asignaciones, { equipoId: '', rol: 'entrenador' }]);
   }
 
   function removeAsignacion(index: number) {
-    setAsignaciones(asignaciones.filter((_, i) => i !== index))
+    setAsignaciones(asignaciones.filter((_, i) => i !== index));
   }
 
-  function updateAsignacion(index: number, field: "equipoId" | "rol", value: string) {
-    const updated = [...asignaciones]
-    updated[index] = { ...updated[index], [field]: value }
-    setAsignaciones(updated)
+  function updateAsignacion(index: number, field: 'equipoId' | 'rol', value: string) {
+    const updated = [...asignaciones];
+    updated[index] = { ...updated[index]!, [field]: value };
+    setAsignaciones(updated);
   }
 
   return (
-    <div className="rounded-lg border border-border bg-muted/50 p-4">
+    <div className="border-border bg-muted/50 rounded-lg border p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-primary">Equipos asignados</h3>
+        <h3 className="text-primary text-sm font-medium">Equipos asignados</h3>
         <button
           type="button"
           onClick={addAsignacion}
-          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+          className="border-border bg-background text-muted-foreground hover:bg-muted inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs"
         >
           <Plus className="size-3" />
           Añadir equipo
@@ -42,7 +42,7 @@ export function AsignarEquipoEntrenador({ equipos }: { equipos: Equipo[] }) {
       </div>
 
       {asignaciones.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Sin equipos asignados. Puedes asignar equipos después desde la ficha del entrenador.
         </p>
       ) : (
@@ -54,8 +54,8 @@ export function AsignarEquipoEntrenador({ equipos }: { equipos: Equipo[] }) {
               <div className="flex-1">
                 <select
                   value={a.equipoId}
-                  onChange={(e) => updateAsignacion(i, "equipoId", e.target.value)}
-                  className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                  onChange={(e) => updateAsignacion(i, 'equipoId', e.target.value)}
+                  className="border-border bg-background w-full rounded-md border p-2 text-sm"
                 >
                   <option value="">Selecciona un equipo</option>
                   {equipos.map((eq) => (
@@ -68,8 +68,8 @@ export function AsignarEquipoEntrenador({ equipos }: { equipos: Equipo[] }) {
               <div className="w-40">
                 <select
                   value={a.rol}
-                  onChange={(e) => updateAsignacion(i, "rol", e.target.value)}
-                  className="w-full rounded-md border border-border bg-background p-2 text-sm"
+                  onChange={(e) => updateAsignacion(i, 'rol', e.target.value)}
+                  className="border-border bg-background w-full rounded-md border p-2 text-sm"
                 >
                   <option value="entrenador">Entrenador</option>
                   <option value="segundo_entrenador">2do Entrenador</option>
@@ -80,7 +80,7 @@ export function AsignarEquipoEntrenador({ equipos }: { equipos: Equipo[] }) {
               <button
                 type="button"
                 onClick={() => removeAsignacion(i)}
-                className="rounded-md p-2 text-destructive hover:bg-destructive/10"
+                className="text-destructive hover:bg-destructive/10 rounded-md p-2"
               >
                 <Trash2 className="size-4" />
               </button>
@@ -89,5 +89,5 @@ export function AsignarEquipoEntrenador({ equipos }: { equipos: Equipo[] }) {
         </div>
       )}
     </div>
-  )
+  );
 }

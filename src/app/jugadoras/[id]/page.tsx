@@ -343,11 +343,19 @@ export default async function JugadoraDetallePage({
             <table className="w-full text-sm">
               <thead className="bg-muted text-muted-foreground">
                 <tr>
-                  <th className="p-3 text-left font-medium">Equipo</th>
-                  <th className="p-3 text-left font-medium">Temporada</th>
-                  <th className="p-3 text-left font-medium">Dorsal</th>
-                  <th className="p-3 text-left font-medium">Posición</th>
-                  {puedeEditar && <th className="p-3 text-left font-medium"></th>}
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Equipo
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Temporada
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Dorsal
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Posición
+                  </th>
+                  {puedeEditar && <th scope="col" className="p-3 text-left font-medium"></th>}
                 </tr>
               </thead>
               <tbody>
@@ -439,11 +447,19 @@ export default async function JugadoraDetallePage({
             <table className="w-full text-sm">
               <thead className="bg-muted text-muted-foreground">
                 <tr>
-                  <th className="p-3 text-left font-medium">Nombre</th>
-                  <th className="p-3 text-left font-medium">Email</th>
-                  <th className="p-3 text-left font-medium">Teléfono</th>
-                  <th className="p-3 text-left font-medium">Parentesco</th>
-                  {puedeEditar && <th className="p-3 text-left font-medium"></th>}
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Nombre
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Email
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Teléfono
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Parentesco
+                  </th>
+                  {puedeEditar && <th scope="col" className="p-3 text-left font-medium"></th>}
                 </tr>
               </thead>
               <tbody>

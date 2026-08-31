@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Play, FileText } from 'lucide-react';
 import { ProgressBar } from '@/components/progress-bar';
+import { sanitizeHTML } from '@/lib/sanitize';
 
 export default async function LeccionPage({
   params,
@@ -16,7 +17,7 @@ export default async function LeccionPage({
   const { curso: cursoParam } = await searchParams;
 
   const usuario = await getUsuarioActual();
-  if (!usuario || !tienePermiso(usuario.permisos, 'scouting.leer')) {
+  if (!usuario || !tienePermiso(usuario.permisos, 'formacion.leer')) {
     redirect('/');
   }
 
@@ -130,7 +131,7 @@ export default async function LeccionPage({
         {leccion.tipo === 'texto' && leccion.contenido_texto && (
           <div
             className="prose max-w-none"
-            dangerouslySetInnerHTML={{ __html: leccion.contenido_texto }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHTML(leccion.contenido_texto) }}
           />
         )}
 

@@ -68,10 +68,18 @@ export default async function MensajeDetallePage({
           <table className="w-full text-sm">
             <thead className="bg-muted text-muted-foreground">
               <tr>
-                <th className="p-3 text-left font-medium">Nombre</th>
-                <th className="p-3 text-left font-medium">Tipo</th>
-                <th className="p-3 text-left font-medium">Email</th>
-                <th className="p-3 text-left font-medium">Estado</th>
+                <th scope="col" className="p-3 text-left font-medium">
+                  Nombre
+                </th>
+                <th scope="col" className="p-3 text-left font-medium">
+                  Tipo
+                </th>
+                <th scope="col" className="p-3 text-left font-medium">
+                  Email
+                </th>
+                <th scope="col" className="p-3 text-left font-medium">
+                  Estado
+                </th>
               </tr>
             </thead>
             <tbody>

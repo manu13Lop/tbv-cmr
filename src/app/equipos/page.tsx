@@ -109,10 +109,18 @@ export default async function EquiposPage({
             <table className="w-full text-sm">
               <thead className="bg-muted text-muted-foreground">
                 <tr>
-                  <th className="p-3 text-left font-medium">Nombre</th>
-                  <th className="p-3 text-left font-medium">Categoría</th>
-                  <th className="p-3 text-left font-medium">Temporada</th>
-                  <th className="p-3 text-left font-medium">Federada</th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Nombre
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Categoría
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Temporada
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Federada
+                  </th>
                 </tr>
               </thead>
               <tbody>

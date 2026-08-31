@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase-client';
@@ -20,6 +20,8 @@ export function SearchGlobal() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const search = useCallback(
     async (q: string) => {
@@ -122,10 +124,26 @@ export function SearchGlobal() {
         setOpen((o) => !o);
       }
       if (e.key === 'Escape') setOpen(false);
+
+      if (e.key === 'Tab' && open && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+          'input, button, [href], [tabindex]:not([tabindex="-1"])'
+        );
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [open]);
 
   if (!open) {
     return (
@@ -143,22 +161,31 @@ export function SearchGlobal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-[15vh]">
+    <div
+      ref={modalRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Búsqueda global"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-[15vh]"
+    >
       <div className="border-border bg-card w-full max-w-lg rounded-lg border shadow-2xl">
         <div className="border-border flex items-center border-b p-3">
-          <Search className="text-muted-foreground mr-2 size-4" />
+          <Search className="text-muted-foreground mr-2 size-4" aria-hidden="true" />
           <input
+            ref={inputRef}
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar jugadoras, equipos, entrenadores..."
+            aria-label="Buscar"
             className="flex-1 bg-transparent text-sm outline-none"
           />
           <button
             onClick={() => setOpen(false)}
+            aria-label="Cerrar búsqueda"
             className="text-muted-foreground hover:text-foreground ml-2"
           >
-            <X className="size-4" />
+            <X className="size-4" aria-hidden="true" />
           </button>
         </div>
 

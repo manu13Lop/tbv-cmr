@@ -1,24 +1,30 @@
-"use server"
+'use server';
 
-import { createClient } from "@/lib/supabase-server"
+import { headers } from 'next/headers';
+import { createClient } from '@/lib/supabase-server';
 
 export async function marcarComoLeida(notificacionId: string) {
-  const supabase = await createClient()
+  const hdrs = await headers();
+  const userId = hdrs.get('x-user-id');
+  if (!userId) return;
+
+  const supabase = await createClient();
   await supabase
-    .from("notificaciones")
+    .from('notificaciones')
     .update({ leida: true })
-    .eq("id", notificacionId)
+    .eq('id', notificacionId)
+    .eq('usuario_id', userId);
 }
 
 export async function marcarTodasComoLeidas() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return
+  const hdrs = await headers();
+  const userId = hdrs.get('x-user-id');
+  if (!userId) return;
+
+  const supabase = await createClient();
   await supabase
-    .from("notificaciones")
+    .from('notificaciones')
     .update({ leida: true })
-    .eq("usuario_id", user.id)
-    .eq("leida", false)
+    .eq('usuario_id', userId)
+    .eq('leida', false);
 }

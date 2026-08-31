@@ -95,10 +95,18 @@ export default async function FichaScoutingDetallePage({
             <table className="w-full text-sm">
               <thead className="bg-muted text-muted-foreground">
                 <tr>
-                  <th className="p-3 text-left font-medium">Fecha</th>
-                  <th className="p-3 text-left font-medium">Rival</th>
-                  <th className="p-3 text-left font-medium">Temporada</th>
-                  <th className="p-3 text-left font-medium">Nota global</th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Fecha
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Rival
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Temporada
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Nota global
+                  </th>
                 </tr>
               </thead>
               <tbody>

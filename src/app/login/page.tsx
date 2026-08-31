@@ -50,7 +50,8 @@ export default function LoginPage() {
       return;
     }
 
-    router.push('/');
+    const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+    router.push(returnTo ? decodeURIComponent(returnTo) : '/');
     router.refresh();
   };
 

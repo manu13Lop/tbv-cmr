@@ -376,11 +376,19 @@ export default async function ReconocimientoDetallePage({
             <table className="w-full text-sm">
               <thead className="bg-muted text-muted-foreground">
                 <tr>
-                  <th className="p-3 text-left font-medium">Jugadora</th>
-                  <th className="p-3 text-left font-medium">Resultado</th>
-                  <th className="p-3 text-left font-medium">Fecha realizado</th>
-                  <th className="p-3 text-left font-medium">Observaciones</th>
-                  {puedeEditar && <th className="p-3 text-left font-medium"></th>}
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Jugadora
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Resultado
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Fecha realizado
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Observaciones
+                  </th>
+                  {puedeEditar && <th scope="col" className="p-3 text-left font-medium"></th>}
                 </tr>
               </thead>
               <tbody>

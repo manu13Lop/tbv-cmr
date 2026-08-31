@@ -31,7 +31,7 @@ export function TimelineLesion({ seguimientos }: { seguimientos: Seguimiento[] }
   return (
     <div className="border-border relative ml-4 border-l-2 pl-6">
       {sorted.map((s) => {
-        const style = tipoColor[s.tipo_entrada] ?? tipoColor.revision;
+        const style = tipoColor[s.tipo_entrada] ?? tipoColor.revision!;
 
         return (
           <div key={s.id} className="relative mb-6 last:mb-0">

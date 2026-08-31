@@ -56,10 +56,18 @@ export default async function ReconocimientosPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted text-muted-foreground">
                 <tr>
-                  <th className="p-3 text-left font-medium">Temporada</th>
-                  <th className="p-3 text-left font-medium">Fecha</th>
-                  <th className="p-3 text-left font-medium">Lugar</th>
-                  <th className="p-3 text-left font-medium">Convocatoria enviada</th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Temporada
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Fecha
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Lugar
+                  </th>
+                  <th scope="col" className="p-3 text-left font-medium">
+                    Convocatoria enviada
+                  </th>
                 </tr>
               </thead>
               <tbody>

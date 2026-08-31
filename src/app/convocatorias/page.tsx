@@ -203,12 +203,22 @@ export default async function ConvocatoriasPage({
                 <table className="w-full text-sm">
                   <thead className="bg-muted text-muted-foreground">
                     <tr>
-                      <th className="w-10 p-3"></th>
-                      <th className="p-3 text-left font-medium">Fecha</th>
-                      <th className="p-3 text-left font-medium">Tipo</th>
-                      <th className="p-3 text-left font-medium">Equipo</th>
-                      <th className="p-3 text-left font-medium">Rival</th>
-                      <th className="p-3 text-left font-medium">Lugar</th>
+                      <th scope="col" className="w-10 p-3"></th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Fecha
+                      </th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Tipo
+                      </th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Equipo
+                      </th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Rival
+                      </th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Lugar
+                      </th>
                     </tr>
                   </thead>
                   <tbody>

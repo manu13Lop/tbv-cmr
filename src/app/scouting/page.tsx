@@ -365,13 +365,27 @@ export default async function ScoutingPage({
                 <table className="w-full text-sm">
                   <thead className="bg-muted text-muted-foreground">
                     <tr>
-                      <th className="p-3 text-left font-medium">Jugadora</th>
-                      <th className="p-3 text-left font-medium">Club actual</th>
-                      <th className="p-3 text-left font-medium">Posición</th>
-                      <th className="p-3 text-left font-medium">Edad</th>
-                      <th className="p-3 text-left font-medium">Informes</th>
-                      <th className="p-3 text-left font-medium">Última nota</th>
-                      <th className="p-3 text-left font-medium">Estado</th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Jugadora
+                      </th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Club actual
+                      </th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Posición
+                      </th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Edad
+                      </th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Informes
+                      </th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Última nota
+                      </th>
+                      <th scope="col" className="p-3 text-left font-medium">
+                        Estado
+                      </th>
                     </tr>
                   </thead>
                   <tbody>

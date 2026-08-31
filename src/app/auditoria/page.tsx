@@ -272,12 +272,24 @@ export default async function AuditoriaPage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-border bg-muted/20 border-b">
-                  <th className="px-4 py-2 text-left font-medium">Fecha</th>
-                  <th className="px-4 py-2 text-left font-medium">Usuario</th>
-                  <th className="px-4 py-2 text-left font-medium">Tabla</th>
-                  <th className="px-4 py-2 text-left font-medium">Acción</th>
-                  <th className="px-4 py-2 text-left font-medium">Registro</th>
-                  <th className="px-4 py-2 text-left font-medium">Detalles</th>
+                  <th scope="col" className="px-4 py-2 text-left font-medium">
+                    Fecha
+                  </th>
+                  <th scope="col" className="px-4 py-2 text-left font-medium">
+                    Usuario
+                  </th>
+                  <th scope="col" className="px-4 py-2 text-left font-medium">
+                    Tabla
+                  </th>
+                  <th scope="col" className="px-4 py-2 text-left font-medium">
+                    Acción
+                  </th>
+                  <th scope="col" className="px-4 py-2 text-left font-medium">
+                    Registro
+                  </th>
+                  <th scope="col" className="px-4 py-2 text-left font-medium">
+                    Detalles
+                  </th>
                 </tr>
               </thead>
               <tbody>

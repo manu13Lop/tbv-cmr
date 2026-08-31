@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase-server"
-import { createAdminClient } from "@/lib/supabase-admin"
-import { createChildLogger } from "@/lib/logger"
+import { headers } from 'next/headers';
+import { createAdminClient } from '@/lib/supabase-admin';
+import { createChildLogger } from '@/lib/logger';
 
-const log = createChildLogger("audit")
+const log = createChildLogger('audit');
 
-type AuditAccion = "crear" | "actualizar" | "eliminar" | "agregar" | "quitar"
+type AuditAccion = 'crear' | 'actualizar' | 'eliminar' | 'agregar' | 'quitar';
 
 export async function logCambio(
   tabla: string,
@@ -13,25 +13,21 @@ export async function logCambio(
   datosAnteriores?: Record<string, unknown> | null,
   datosNuevos?: Record<string, unknown> | null
 ) {
-  const admin = createAdminClient()
-
-  const { data: { user: authUser } } = await admin.auth.getUser()
-  const supabase = await createClient()
-  const { data: { user: jwtUser } } = await supabase.auth.getUser()
-
-  const userId = authUser?.id ?? jwtUser?.id ?? null
+  const admin = createAdminClient();
+  const hdrs = await headers();
+  const userId = hdrs.get('x-user-id');
 
   try {
-    await admin.from("audit_log").insert({
-      usuario_id: userId,
+    await admin.from('audit_log').insert({
+      usuario_id: userId ?? null,
       tabla,
       registro_id: registroId,
       accion,
       datos_anteriores: datosAnteriores ?? null,
       datos_nuevos: datosNuevos ?? null,
-    })
-    log.debug({ tabla, registroId, accion, userId }, "Audit log registrado")
+    });
+    log.debug({ tabla, registroId, accion, userId }, 'Audit log registrado');
   } catch (err) {
-    log.error({ err, tabla, registroId, accion }, "Error al registrar audit log")
+    log.error({ err, tabla, registroId, accion }, 'Error al registrar audit log');
   }
 }

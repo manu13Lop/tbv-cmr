@@ -1,72 +1,83 @@
-import { createClient } from "@/lib/supabase-server"
+import { headers } from 'next/headers';
+import { createAdminClient } from '@/lib/supabase-admin';
 
 export async function getUsuarioActual() {
-  const supabase = await createClient()
+  const hdrs = await headers();
+  const userId = hdrs.get('x-user-id');
+  const userEmail = hdrs.get('x-user-email');
 
-  const { data: authData } = await supabase.auth.getUser()
-  if (!authData?.user) return null
+  if (!userId) return null;
 
-  const { data: usuario } = await supabase
-    .from("usuarios")
-    .select("id, nombre, apellidos, rol_id, es_master")
-    .eq("id", authData.user.id)
-    .single()
+  const admin = createAdminClient();
 
-  if (!usuario) return null
+  const { data: usuario } = await admin
+    .from('usuarios')
+    .select('id, nombre, apellidos, rol_id, es_master')
+    .eq('id', userId)
+    .single();
 
-  let permisos: string[] = []
+  if (!usuario) {
+    return {
+      id: userId,
+      nombreCompleto: userEmail || 'Usuario',
+      puesto: 'Sin rol',
+      rolId: null,
+      esMaster: false,
+      permisos: [],
+    };
+  }
+
+  let permisos: string[] = [];
 
   if (usuario.es_master) {
-    const { data: todosLosPermisos } = await supabase
-      .from("permisos")
-      .select("nombre")
+    const { data: todosLosPermisos } = await admin.from('permisos').select('nombre');
 
-    permisos = (todosLosPermisos ?? []).map((p) => p.nombre).filter(Boolean)
+    permisos = (todosLosPermisos ?? []).map((p) => p.nombre).filter(Boolean);
   } else {
-    const permisoIds: string[] = []
+    const permisoIds: string[] = [];
 
     if (usuario.rol_id) {
-      const { data: rolPermisos } = await supabase
-        .from("rol_permiso")
-        .select("permiso_id")
-        .eq("rol_id", usuario.rol_id)
+      const { data: rolPermisos } = await admin
+        .from('rol_permiso')
+        .select('permiso_id')
+        .eq('rol_id', usuario.rol_id);
 
-      permisoIds.push(...(rolPermisos ?? []).map((p) => p.permiso_id))
+      permisoIds.push(...(rolPermisos ?? []).map((p) => p.permiso_id));
     }
 
-    const { data: permisosPropios } = await supabase
-      .from("usuario_permisos")
-      .select("permiso_id")
-      .eq("usuario_id", usuario.id)
+    const { data: permisosPropios } = await admin
+      .from('usuario_permisos')
+      .select('permiso_id')
+      .eq('usuario_id', usuario.id);
 
-    permisoIds.push(...(permisosPropios ?? []).map((p) => p.permiso_id))
+    permisoIds.push(...(permisosPropios ?? []).map((p) => p.permiso_id));
 
     if (permisoIds.length > 0) {
-      const { data: permisosData } = await supabase
-        .from("permisos")
-        .select("id, nombre")
-        .in("id", permisoIds)
+      const { data: permisosData } = await admin
+        .from('permisos')
+        .select('id, nombre')
+        .in('id', permisoIds);
 
-      const seen = new Set<string>()
+      const seen = new Set<string>();
       for (const p of permisosData ?? []) {
         if (!seen.has(p.nombre)) {
-          seen.add(p.nombre)
-          permisos.push(p.nombre)
+          seen.add(p.nombre);
+          permisos.push(p.nombre);
         }
       }
     }
   }
 
-  let puesto = "Sin rol"
+  let puesto = 'Sin rol';
   if (usuario.es_master) {
-    puesto = "Master"
+    puesto = 'Master';
   } else if (usuario.rol_id) {
-    const { data: rol } = await supabase
-      .from("roles")
-      .select("nombre")
-      .eq("id", usuario.rol_id)
-      .single()
-    puesto = rol?.nombre ?? "Sin rol"
+    const { data: rol } = await admin
+      .from('roles')
+      .select('nombre')
+      .eq('id', usuario.rol_id)
+      .single();
+    puesto = rol?.nombre ?? 'Sin rol';
   }
 
   return {
@@ -76,12 +87,9 @@ export async function getUsuarioActual() {
     rolId: usuario.rol_id,
     esMaster: !!usuario.es_master,
     permisos,
-  }
+  };
 }
 
-export function tienePermiso(
-  permisos: string[] | undefined,
-  permiso: string
-) {
-  return !!permisos?.includes(permiso)
+export function tienePermiso(permisos: string[] | undefined, permiso: string) {
+  return !!permisos?.includes(permiso);
 }
