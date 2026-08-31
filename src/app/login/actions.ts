@@ -1,6 +1,6 @@
 'use server';
 
-import { createAdminClient } from '@/lib/supabase-admin';
+import { createServerClient } from '@supabase/ssr';
 import { rateLimiters } from '@/lib/rate-limit';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
@@ -17,44 +17,35 @@ export async function loginAction(formData: FormData) {
     return { error: `Demasiados intentos. Intenta de nuevo en ${minutos} minuto(s).` };
   }
 
-  let res: Response;
-  let data: Record<string, unknown>;
+  const cookieStore = await cookies();
 
-  try {
-    res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {}
+        },
       },
-      body: JSON.stringify({ email, password }),
-    });
-    data = await res.json();
-  } catch (fetchError) {
-    console.error('[LOGIN] Fetch failed:', fetchError);
-    return { error: 'No se pudo conectar con el servidor de autenticación.' };
-  }
+    }
+  );
 
-  if (!res.ok || data.error) {
-    console.error('[LOGIN] Auth error:', res.status, data);
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
     return { error: 'Email o contraseña incorrectos.' };
   }
-
-  const cookieStore = await cookies();
-  cookieStore.set('sb-access-token', data.access_token as string, {
-    path: '/',
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: data.expires_in as number,
-  });
-  cookieStore.set('sb-refresh-token', data.refresh_token as string, {
-    path: '/',
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: (data.expires_in as number) * 4,
-  });
 
   redirect('/');
 }
