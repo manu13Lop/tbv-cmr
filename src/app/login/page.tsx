@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 
@@ -10,7 +8,6 @@ const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 60_000;
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -30,29 +27,32 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-    setLoading(false);
-
-    if (error) {
-      attemptsRef.current += 1;
-
-      if (attemptsRef.current >= MAX_ATTEMPTS) {
-        lockedUntilRef.current = Date.now() + LOCKOUT_MS;
-        setError('Demasiados intentos fallidos. Espera 60 segundos.');
-      } else {
-        setError(`Email o contrasena incorrectos. (${attemptsRef.current}/${MAX_ATTEMPTS})`);
+      if (!res.ok) {
+        attemptsRef.current += 1;
+        if (attemptsRef.current >= MAX_ATTEMPTS) {
+          lockedUntilRef.current = Date.now() + LOCKOUT_MS;
+          setError('Demasiados intentos fallidos. Espera 60 segundos.');
+        } else {
+          setError(`Email o contrasena incorrectos. (${attemptsRef.current}/${MAX_ATTEMPTS})`);
+        }
+        return;
       }
-      return;
-    }
 
-    const returnTo = new URLSearchParams(window.location.search).get('returnTo');
-    router.push(returnTo ? decodeURIComponent(returnTo) : '/');
-    router.refresh();
+      const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+      window.location.href = returnTo ? decodeURIComponent(returnTo) : '/';
+    } catch {
+      attemptsRef.current += 1;
+      setError(`Error de conexion. (${attemptsRef.current}/${MAX_ATTEMPTS})`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
