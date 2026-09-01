@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Setup - TBV</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 500px; margin: 60px auto; padding: 20px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 24px; }
+    .info { background: #f5f5f5; padding: 12px; border-radius: 4px; margin: 12px 0; font-size: 14px; }
+    button { background: #9b1b30; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; width: 100%; margin-top: 12px; }
+    button:disabled { opacity: 0.5; }
+    .msg { padding: 10px; border-radius: 4px; margin-top: 12px; font-size: 13px; }
+    .ok { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .err { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .info-msg { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    pre { background: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 12px; overflow-x: auto; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h2>TBV - Setup Usuario de Prueba</h2>
+  <div class="card">
+    <p>Este script crea el usuario <strong>admin@tbv.test</strong> con acceso master directamente desde el browser.</p>
+    <div class="info">
+      <strong>Email:</strong> admin@tbv.test<br>
+      <strong>Password:</strong> TbvTest2026!<br>
+      <strong>Rol:</strong> Master
+    </div>
+    <button id="btn" onclick="run()">Crear usuario</button>
+    <div id="log"></div>
+  </div>
+
+  <script type="module">
+    const SUPABASE_URL = 'https://rjityxezckvvhfqcdsjt.supabase.co';
+    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqaXR5eGV6Y2t2dmhmcWNkc2p0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NjgyNzgsImV4cCI6MjA5OTE0NDI3OH0.MUsC1Zz75DOX2J0-SulX07xrzAb56Dc-SbFSU4PjoiA';
+    const EMAIL = 'admin@tbv.test';
+    const PASSWORD = 'TbvTest2026!';
+
+    function log(msg, type = 'info-msg') {
+      const el = document.getElementById('log');
+      el.innerHTML = `<div class="msg ${type}">${msg}</div>`;
+    }
+
+    async function supa(method, path, body, auth) {
+      const headers = { 'apikey': ANON_KEY, 'Content-Type': 'application/json' };
+      if (auth) headers['Authorization'] = `Bearer ${auth}`;
+      const resp = await fetch(`${SUPABASE_URL}${path}`, {
+        method, headers,
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error_description || data.msg || JSON.stringify(data));
+      return data;
+    }
+
+    window.run = async function() {
+      const btn = document.getElementById('btn');
+      btn.disabled = true;
+      btn.textContent = 'Creando...';
+
+      try {
+        log('1. Conectando con Supabase...');
+
+        log('2. Creando usuario en Auth...');
+        let userId;
+        try {
+          const signUp = await supa('POST', '/auth/v1/signup', {
+            email: EMAIL, password: PASSWORD,
+            data: { nombre: 'Admin', apellidos: 'TBV Test' }
+          });
+          userId = signUp.user?.id;
+          if (!userId) throw new Error('No se obtuvo ID');
+          log(`Usuario Auth creado: ${userId}`);
+        } catch(e) {
+          if (e.message.includes('already') || e.message.includes('registered')) {
+            log('Usuario ya existe en Auth. Obteniendo sesión...');
+            const session = await supa('POST', '/auth/v1/token?grant_type=password', {
+              email: EMAIL, password: PASSWORD
+            });
+            userId = session.user?.id;
+            if (!userId) throw new Error('No se pudo obtener el ID del usuario existente');
+            log(`Usuario existente: ${userId}`);
+          } else {
+            throw e;
+          }
+        }
+
+        log('3. Insertando en tabla usuarios...');
+        try {
+          await supa('POST', '/rest/v1/usuarios', {
+            id: userId, nombre: 'Admin', apellidos: 'TBV Test',
+            es_master: true, rol_id: null
+          }, userId);
+          log('Registro insertado en usuarios.', 'ok');
+        } catch(e) {
+          if (e.message.includes('already') || e.message.includes('23505')) {
+            log('Registro ya existía en usuarios.', 'ok');
+          } else {
+            log(`Error en usuarios: ${e.message} — Si la tabla no existe, ejecuta la migración SQL.`, 'err');
+          }
+        }
+
+        log('<strong>¡Listo! Ya puedes ir a <a href="http://localhost:3000/login">localhost:3000/login</a></strong><br>Email: admin@tbv.test<br>Password: TbvTest2026!', 'ok');
+        btn.textContent = '¡Creado!';
+      } catch(err) {
+        log(`Error: ${err.message}`, 'err');
+        btn.disabled = false;
+        btn.textContent = 'Reintentar';
+      }
+    };
+  </script>
+</body>
+</html>
