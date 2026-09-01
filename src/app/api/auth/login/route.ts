@@ -25,25 +25,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
 
+    const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0];
+    const cookieName = `sb-${projectRef}-auth-token`;
+
+    const sessionPayload = JSON.stringify({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+      expires_at: data.session.expires_at,
+      expires_in: data.session.expires_in,
+      token_type: data.session.token_type,
+    });
+
     const response = NextResponse.json({
       user: { id: data.user.id, email: data.user.email },
     });
 
-    const cookieOptions = {
+    response.cookies.set(cookieName, encodeURIComponent(sessionPayload), {
       path: '/',
       httpOnly: true,
       secure: true,
-      sameSite: 'lax' as const,
-    };
-
-    response.cookies.set('sb-access-token', data.session.access_token, {
-      ...cookieOptions,
+      sameSite: 'lax',
       maxAge: data.session.expires_in,
-    });
-
-    response.cookies.set('sb-refresh-token', data.session.refresh_token, {
-      ...cookieOptions,
-      maxAge: data.session.expires_in * 4,
     });
 
     return response;
