@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginAction } from './actions';
+import { createClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 
@@ -30,22 +30,22 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    const formData = new FormData();
-    formData.set('email', email);
-    formData.set('password', password);
-
-    const result = await loginAction(formData);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
     setLoading(false);
 
-    if (result?.error) {
+    if (error) {
       attemptsRef.current += 1;
 
       if (attemptsRef.current >= MAX_ATTEMPTS) {
         lockedUntilRef.current = Date.now() + LOCKOUT_MS;
         setError('Demasiados intentos fallidos. Espera 60 segundos.');
       } else {
-        setError(`${result.error} (${attemptsRef.current}/${MAX_ATTEMPTS})`);
+        setError(`Email o contrasena incorrectos. (${attemptsRef.current}/${MAX_ATTEMPTS})`);
       }
       return;
     }
@@ -91,7 +91,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="password" className="text-sm font-medium">
-            Contraseña
+            Contrasena
           </label>
           <input
             id="password"
@@ -109,7 +109,7 @@ export default function LoginPage() {
         {error && <p className="text-destructive text-sm">{error}</p>}
 
         <Button type="submit" disabled={loading} className="mt-2 w-full">
-          {loading ? 'Entrando...' : 'Iniciar sesión'}
+          {loading ? 'Entrando...' : 'Iniciar sesion'}
         </Button>
       </form>
     </main>
