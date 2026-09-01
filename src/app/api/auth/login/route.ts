@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       user: { id: data.user.id, email: data.user.email },
     });
 
-    response.cookies.set(cookieName, encodeURIComponent(sessionPayload), {
+    response.cookies.set(cookieName, sessionPayload, {
       path: '/',
       httpOnly: true,
       secure: true,
