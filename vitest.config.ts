@@ -1,25 +1,24 @@
-import { defineConfig } from "vitest/config"
-import path from "path"
+import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
-    environment: "node",
     globals: true,
-    include: ["src/**/*.test.{ts,tsx}"],
+    include: ['src/**/*.test.{ts,tsx}'],
     coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html", "lcov"],
-      reportsDirectory: "./coverage",
-      include: ["src/lib/**/*.ts"],
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      include: ['src/lib/**/*.ts'],
       exclude: [
-        "node_modules/",
-        "src/**/*.test.{ts,tsx}",
-        "src/**/*.d.ts",
-        ".next/",
-        "coverage/",
-        "dist/",
-        "**/*.config.{ts,js}",
-        "src/middleware.ts",
+        'node_modules/',
+        'src/**/*.test.{ts,tsx}',
+        'src/**/*.d.ts',
+        '.next/',
+        'coverage/',
+        'dist/',
+        '**/*.config.{ts,js}',
+        'src/middleware.ts',
       ],
       thresholds: {
         lines: 80,
@@ -28,11 +27,11 @@ export default defineConfig({
         statements: 80,
       },
     },
-    setupFiles: ["./vitest.setup.ts"],
+    setupFiles: ['./vitest.setup.ts'],
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
-})
+});
