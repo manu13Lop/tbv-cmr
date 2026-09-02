@@ -1,6 +1,3 @@
-import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
-
 if (!process.env.UPSTASH_REDIS_REST_URL && process.env.NODE_ENV === 'production') {
   console.warn(
     '[rate-limit] UPSTASH_REDIS_REST_URL no configurado en producción. ' +
@@ -8,13 +5,6 @@ if (!process.env.UPSTASH_REDIS_REST_URL && process.env.NODE_ENV === 'production'
       'Configura UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN.'
   );
 }
-
-const redis = process.env.UPSTASH_REDIS_REST_URL
-  ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    })
-  : null;
 
 const ipStore = new Map<string, { count: number; resetAt: number }>();
 
@@ -39,79 +29,45 @@ export function checkInMemoryRateLimit(
   return { allowed: true, remaining: maxRequests - record.count, resetAt: record.resetAt };
 }
 
-const upstashLimiters = redis
-  ? {
-      login: new Ratelimit({
-        redis,
-        limiter: Ratelimit.slidingWindow(5, '15 m'),
-        analytics: true,
-      }),
-      crearUsuario: new Ratelimit({
-        redis,
-        limiter: Ratelimit.slidingWindow(3, '1 h'),
-        analytics: true,
-      }),
-      resetPassword: new Ratelimit({
-        redis,
-        limiter: Ratelimit.slidingWindow(2, '1 h'),
-        analytics: true,
-      }),
-      contacto: new Ratelimit({
-        redis,
-        limiter: Ratelimit.slidingWindow(10, '1 h'),
-        analytics: true,
-      }),
-      enviarConvocatoria: new Ratelimit({
-        redis,
-        limiter: Ratelimit.slidingWindow(5, '1 h'),
-        analytics: true,
-      }),
-    }
-  : null;
+async function limitWithUpstash(identifier: string, windowMs: number, maxRequests: number) {
+  const { Ratelimit } = await import('@upstash/ratelimit');
+  const { Redis } = await import('@upstash/redis');
+
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  });
+
+  const ratelimit = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(maxRequests, `${Math.ceil(windowMs / 60000)} m`),
+    analytics: true,
+  });
+
+  const result = await ratelimit.limit(identifier);
+  return {
+    allowed: result.success,
+    remaining: result.remaining,
+    resetAt: Date.now() + (result.reset - Date.now()),
+  };
+}
+
+function inMemoryFallback(maxRequests: number, windowMs: number) {
+  return (identifier: string) =>
+    Promise.resolve(checkInMemoryRateLimit(identifier, maxRequests, windowMs));
+}
+
+function createLimiter(maxRequests: number, windowMs: number) {
+  if (process.env.UPSTASH_REDIS_REST_URL) {
+    return (identifier: string) => limitWithUpstash(identifier, windowMs, maxRequests);
+  }
+  return inMemoryFallback(maxRequests, windowMs);
+}
 
 export const rateLimiters = {
-  login: (identifier: string) =>
-    upstashLimiters
-      ? upstashLimiters.login.limit(identifier).then((r) => ({
-          allowed: r.success,
-          remaining: r.remaining,
-          resetAt: Date.now() + (r.reset - Date.now()),
-        }))
-      : Promise.resolve(checkInMemoryRateLimit(identifier, 5, 15 * 60 * 1000)),
-
-  crearUsuario: (identifier: string) =>
-    upstashLimiters
-      ? upstashLimiters.crearUsuario.limit(identifier).then((r) => ({
-          allowed: r.success,
-          remaining: r.remaining,
-          resetAt: Date.now() + (r.reset - Date.now()),
-        }))
-      : Promise.resolve(checkInMemoryRateLimit(identifier, 3, 60 * 60 * 1000)),
-
-  resetPassword: (identifier: string) =>
-    upstashLimiters
-      ? upstashLimiters.resetPassword.limit(identifier).then((r) => ({
-          allowed: r.success,
-          remaining: r.remaining,
-          resetAt: Date.now() + (r.reset - Date.now()),
-        }))
-      : Promise.resolve(checkInMemoryRateLimit(identifier, 2, 60 * 60 * 1000)),
-
-  contacto: (identifier: string) =>
-    upstashLimiters
-      ? upstashLimiters.contacto.limit(identifier).then((r) => ({
-          allowed: r.success,
-          remaining: r.remaining,
-          resetAt: Date.now() + (r.reset - Date.now()),
-        }))
-      : Promise.resolve(checkInMemoryRateLimit(identifier, 10, 60 * 60 * 1000)),
-
-  enviarConvocatoria: (identifier: string) =>
-    upstashLimiters
-      ? upstashLimiters.enviarConvocatoria.limit(identifier).then((r) => ({
-          allowed: r.success,
-          remaining: r.remaining,
-          resetAt: Date.now() + (r.reset - Date.now()),
-        }))
-      : Promise.resolve(checkInMemoryRateLimit(identifier, 5, 60 * 60 * 1000)),
+  login: createLimiter(5, 15 * 60 * 1000),
+  crearUsuario: createLimiter(3, 60 * 60 * 1000),
+  resetPassword: createLimiter(2, 60 * 60 * 1000),
+  contacto: createLimiter(10, 60 * 60 * 1000),
+  enviarConvocatoria: createLimiter(5, 60 * 60 * 1000),
 };
