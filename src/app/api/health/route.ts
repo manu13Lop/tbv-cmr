@@ -1,62 +1,37 @@
-import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase-server"
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const checks: Record<string, { status: "ok" | "fail"; latencyMs?: number; error?: string }> = {}
+  const checks: Record<string, { ok: boolean; latencyMs?: number; error?: string }> = {};
 
-  // Database check
+  // Database connectivity
+  const dbStart = Date.now();
   try {
-    const supabase = await createClient()
-    const dbStart = Date.now()
-    const { error } = await supabase.from("usuarios").select("id").limit(1).single()
-    checks.database = {
-      status: error ? "fail" : "ok",
-      latencyMs: Date.now() - dbStart,
-      error: error?.message,
-    }
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const { error } = await supabase.from('usuarios').select('id', { count: 'exact', head: true });
+    checks.database = { ok: !error, latencyMs: Date.now() - dbStart, error: error?.message };
   } catch (e) {
-    checks.database = {
-      status: "fail",
-      error: e instanceof Error ? e.message : "Unknown error",
-    }
+    checks.database = { ok: false, latencyMs: Date.now() - dbStart, error: String(e) };
   }
 
-  // Redis check (optional)
-  if (process.env.UPSTASH_REDIS_REST_URL) {
-    try {
-      const redisStart = Date.now()
-      const res = await fetch(process.env.UPSTASH_REDIS_REST_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
-        },
-        body: '["PING"]',
-      })
-      const data = await res.json()
-      checks.redis = {
-        status: data.result === "PONG" ? "ok" : "fail",
-        latencyMs: Date.now() - redisStart,
-      }
-    } catch (e) {
-      checks.redis = {
-        status: "fail",
-        error: e instanceof Error ? e.message : "Connection failed",
-      }
-    }
-  }
+  // Environment variables
+  checks.env = {
+    ok: !!(
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    ),
+  };
 
-  const allOk = Object.values(checks).every((c) => c.status === "ok")
-  const status = allOk ? 200 : 503
+  const allOk = Object.values(checks).every((c) => c.ok);
 
   return NextResponse.json(
-    {
-      status: allOk ? "healthy" : "degraded",
-      version: process.env.npm_package_version ?? "unknown",
-      timestamp: new Date().toISOString(),
-      checks,
-    },
-    { status }
-  )
+    { status: allOk ? 'healthy' : 'degraded', checks, timestamp: new Date().toISOString() },
+    { status: allOk ? 200 : 503 }
+  );
 }

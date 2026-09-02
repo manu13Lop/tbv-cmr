@@ -11,10 +11,8 @@ vi.mock('./supabase-admin', () => ({
   })),
 }));
 
-vi.mock('./supabase-server', () => ({
-  createClient: vi.fn().mockResolvedValue({
-    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }) },
-  }),
+vi.mock('next/headers', () => ({
+  headers: vi.fn().mockResolvedValue(new Map([['x-user-id', 'user-1']])),
 }));
 
 vi.mock('./logger', () => ({
