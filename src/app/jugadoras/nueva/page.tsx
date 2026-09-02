@@ -25,7 +25,7 @@ async function crearJugadora(formData: FormData) {
     nombre,
     apellidos,
     fecha_nacimiento,
-    codigo_interno,
+    dni,
     email,
     talla_camiseta_entreno,
     talla_camiseta_partido,
@@ -34,12 +34,17 @@ async function crearJugadora(formData: FormData) {
     talla_chaqueton,
   } = validation.data;
 
+  const { count } = await supabase.from('jugadoras').select('id', { count: 'exact', head: true });
+
+  const codigo_interno = `JUG-${String((count ?? 0) + 1).padStart(3, '0')}`;
+
   const { error } = await supabase.from('jugadoras').insert({
     nombre,
     apellidos,
     fecha_nacimiento,
+    dni: dni || null,
     codigo_interno,
-    email,
+    email: email || null,
     talla_camiseta_entreno,
     talla_camiseta_partido,
     talla_calzona,
@@ -96,7 +101,7 @@ export default async function NuevaJugadoraPage({
 
         <InputField label="Fecha de nacimiento" type="date" name="fecha_nacimiento" required />
 
-        <InputField label="Código interno" name="codigo_interno" />
+        <InputField label="DNI" name="dni" placeholder="12345678A" />
 
         <InputField label="Email" type="email" name="email" />
 

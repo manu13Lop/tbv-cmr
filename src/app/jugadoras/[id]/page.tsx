@@ -25,6 +25,7 @@ async function actualizarJugadora(id: string, formData: FormData) {
     nombre,
     apellidos,
     fecha_nacimiento,
+    dni,
     codigo_interno,
     email,
     talla_camiseta_entreno,
@@ -43,8 +44,9 @@ async function actualizarJugadora(id: string, formData: FormData) {
       nombre,
       apellidos,
       fecha_nacimiento,
+      dni: dni || null,
       codigo_interno,
-      email,
+      email: email || null,
       talla_camiseta_entreno,
       talla_camiseta_partido,
       talla_calzona,
@@ -254,10 +256,17 @@ export default async function JugadoraDetallePage({
         />
 
         <InputField
+          label="DNI"
+          name="dni"
+          defaultValue={jugadora.dni ?? ''}
+          disabled={!puedeEditar}
+        />
+
+        <InputField
           label="Código interno"
           name="codigo_interno"
           defaultValue={jugadora.codigo_interno ?? ''}
-          disabled={!puedeEditar}
+          disabled
         />
 
         <InputField

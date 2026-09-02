@@ -12,7 +12,7 @@ interface Evento {
   fecha_hora: string;
   lugar: string | null;
   rival: string | null;
-  temporada: string | null;
+  temporada?: string | null;
   equipos: { nombre: string; categoria: string }[] | { nombre: string; categoria: string } | null;
 }
 

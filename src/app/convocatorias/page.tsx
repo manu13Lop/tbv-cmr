@@ -90,7 +90,7 @@ export default async function ConvocatoriasPage({
   let query = supabase
     .from('eventos')
     .select(
-      'id, tipo, fecha_hora, lugar, rival, temporada, equipo_id, equipos ( nombre, categoria )'
+      'id, tipo, fecha_hora, lugar, rival, equipo_id, equipos ( nombre, categoria, temporada )'
     )
     .order('fecha_hora', { ascending: false });
 
