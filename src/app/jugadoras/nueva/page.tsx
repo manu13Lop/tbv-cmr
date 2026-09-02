@@ -49,7 +49,9 @@ async function crearJugadora(formData: FormData) {
 
   if (error) {
     log.error({ err: error }, 'Error creating jugadora');
-    return;
+    return redirect(
+      `/jugadoras/nueva?error=${encodeURIComponent('Error al crear la jugadora: ' + error.message)}`
+    );
   }
 
   redirect('/jugadoras');
