@@ -59,14 +59,13 @@ describe('ejercicios-actions', () => {
     mockGetUsuarioActual.mockResolvedValue({ id: 'user-1', esMaster: true });
   });
 
-  it('crearEjercicio returns early if no user', async () => {
+  it('crearEjercicio redirects if no user', async () => {
     mockGetUsuarioActual.mockResolvedValueOnce(null);
     const { crearEjercicio } = await import('./ejercicios-actions');
     const fd = new FormData();
     fd.set('titulo', 'Test');
     fd.set('seccion_principal', 'Tiro');
-    await crearEjercicio(fd);
-    expect(mockRateLimiters.crearUsuario).not.toHaveBeenCalled();
+    await expect(crearEjercicio(fd)).rejects.toThrow('REDIRECT:/ejercicios?error=no_autorizado');
   });
 
   it('crearEjercicio redirects on rate limit', async () => {
@@ -77,10 +76,11 @@ describe('ejercicios-actions', () => {
     await expect(crearEjercicio(fd)).rejects.toThrow('REDIRECT:/ejercicios?error=rate_limit');
   });
 
-  it('valorarEjercicio returns success', async () => {
+  it('valorarEjercicio returns error if no user', async () => {
+    mockGetUsuarioActual.mockResolvedValueOnce(null);
     const { valorarEjercicio } = await import('./ejercicios-actions');
     const result = await valorarEjercicio('ej-1', 5, 'Muy bien');
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: false, error: 'No autorizado' });
   });
 
   it('eliminarEjercicio redirects to /ejercicios', async () => {
@@ -113,7 +113,7 @@ describe('ejercicios-actions', () => {
     const fd = new FormData();
     fd.set('titulo', 'Variante');
     await expect(crearVariante('ej-1', fd)).rejects.toThrow(
-      'REDIRECT:/ejercicios/ej-1?error=rate_limit'
+      'REDIRECT:/ejercicios?error=rate_limit'
     );
   });
 

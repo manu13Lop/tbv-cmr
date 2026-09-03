@@ -45,9 +45,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex">
-            <Sidebar />
+            <Suspense>
+              <Sidebar />
+            </Suspense>
             <main className="flex-1">
-              <Breadcrumb />
+              <Suspense>
+                <Breadcrumb />
+              </Suspense>
               {children}
             </main>
           </div>

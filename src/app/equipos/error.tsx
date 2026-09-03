@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('equipos-error');
 
 export default function EquiposError({
   error,
@@ -10,7 +13,7 @@ export default function EquiposError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    log.error({ err: error }, 'Equipos page error');
   }, [error]);
 
   return (

@@ -25,7 +25,7 @@ async function requireMaster() {
 
 export async function crearUsuario(formData: FormData) {
   const usuarioActual = await requireMaster();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/usuarios?error=no_autorizado');
 
   const rateLimit = await rateLimiters.crearUsuario(usuarioActual.id);
   if (!rateLimit.allowed) {
@@ -78,9 +78,9 @@ export async function crearUsuario(formData: FormData) {
 }
 
 export async function cambiarRol(usuarioId: string, formData: FormData) {
-  if (!isValidUUID(usuarioId)) return;
+  if (!isValidUUID(usuarioId)) redirect('/usuarios?error=id_invalido');
   const usuarioActual = await requireMaster();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/usuarios?error=no_autorizado');
 
   const rolId = formData.get('rol_id') as string;
   const supabase = createAdminClient();
@@ -104,9 +104,9 @@ export async function cambiarRol(usuarioId: string, formData: FormData) {
 }
 
 export async function actualizarUsuario(usuarioId: string, formData: FormData) {
-  if (!isValidUUID(usuarioId)) return;
+  if (!isValidUUID(usuarioId)) redirect('/usuarios?error=id_invalido');
   const usuarioActual = await requireMaster();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/usuarios?error=no_autorizado');
 
   const validation = validateFormData(actualizarUsuarioSchema, formData);
   if (!validation.success) {
@@ -131,7 +131,7 @@ export async function actualizarUsuario(usuarioId: string, formData: FormData) {
   if (email && email !== '') {
     const { error: errorAuth } = await admin.auth.admin.updateUserById(usuarioId, { email });
     if (errorAuth) {
-      return redirect(`/usuarios/editar?id=${encodeURIComponent(usuarioId)}&error=1`);
+      redirect(`/usuarios/editar?id=${encodeURIComponent(usuarioId)}&error=1`);
     }
   }
 
@@ -144,20 +144,20 @@ export async function actualizarUsuario(usuarioId: string, formData: FormData) {
 }
 
 export async function resetearPassword(usuarioId: string) {
-  if (!isValidUUID(usuarioId)) return;
+  if (!isValidUUID(usuarioId)) redirect('/usuarios?error=id_invalido');
   const usuarioActual = await requireMaster();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/usuarios?error=no_autorizado');
 
   const rateLimit = await rateLimiters.resetPassword(usuarioActual.id);
   if (!rateLimit.allowed) {
-    return redirect(`/usuarios/editar?id=${encodeURIComponent(usuarioId)}&error=rate_limit`);
+    redirect(`/usuarios/editar?id=${encodeURIComponent(usuarioId)}&error=rate_limit`);
   }
 
   const admin = createAdminClient();
   const password = crypto.randomUUID().slice(0, 12);
   const { error: errorAuth } = await admin.auth.admin.updateUserById(usuarioId, { password });
   if (errorAuth) {
-    return redirect(`/usuarios/editar?id=${encodeURIComponent(usuarioId)}&error=1`);
+    redirect(`/usuarios/editar?id=${encodeURIComponent(usuarioId)}&error=1`);
   }
 
   await logCambio('usuarios', usuarioId, 'actualizar', null, { reset_password: true });
@@ -175,9 +175,9 @@ export async function resetearPassword(usuarioId: string) {
 }
 
 export async function eliminarUsuario(usuarioId: string) {
-  if (!isValidUUID(usuarioId)) return;
+  if (!isValidUUID(usuarioId)) redirect('/usuarios?error=id_invalido');
   const usuarioActual = await requireMaster();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/usuarios?error=no_autorizado');
 
   const admin = createAdminClient();
   const supabase = await createClient();
@@ -199,9 +199,9 @@ export async function eliminarUsuario(usuarioId: string) {
 }
 
 export async function togglePermisoUsuario(usuarioId: string, formData: FormData) {
-  if (!isValidUUID(usuarioId)) return;
+  if (!isValidUUID(usuarioId)) redirect('/usuarios?error=id_invalido');
   const usuarioActual = await requireMaster();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/usuarios?error=no_autorizado');
 
   const permisoNombre = formData.get('permiso') as string;
   const accion = formData.get('accion') as 'agregar' | 'quitar';
@@ -237,7 +237,7 @@ export async function togglePermisoUsuario(usuarioId: string, formData: FormData
 
 export async function crearPermiso(formData: FormData) {
   const usuarioActual = await requireMaster();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/usuarios?error=no_autorizado');
 
   const nombre = formData.get('nombre') as string;
   const descripcion = formData.get('descripcion') as string;
@@ -250,7 +250,7 @@ export async function crearPermiso(formData: FormData) {
 
 export async function crearRol(formData: FormData) {
   const usuarioActual = await requireMaster();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/usuarios?error=no_autorizado');
 
   const nombre = formData.get('nombre') as string;
   const admin = createAdminClient();
@@ -262,9 +262,9 @@ export async function crearRol(formData: FormData) {
 }
 
 export async function actualizarPermisosRol(rolId: string, formData: FormData) {
-  if (!isValidUUID(rolId)) return;
+  if (!isValidUUID(rolId)) redirect('/usuarios?error=id_invalido');
   const usuarioActual = await requireMaster();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/usuarios?error=no_autorizado');
 
   const admin = createAdminClient();
   const permisosSeleccionados = formData.getAll('permisos') as string[];
@@ -298,9 +298,9 @@ export async function actualizarPermisosRol(rolId: string, formData: FormData) {
 }
 
 export async function eliminarPermiso(permisoId: string) {
-  if (!isValidUUID(permisoId)) return;
+  if (!isValidUUID(permisoId)) redirect('/usuarios?error=id_invalido');
   const usuarioActual = await requireMaster();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/usuarios?error=no_autorizado');
 
   const admin = createAdminClient();
   const { data: permiso } = await admin

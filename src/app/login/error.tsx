@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('login-error');
 
 export default function LoginError({
   error,
@@ -10,7 +13,7 @@ export default function LoginError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    log.error({ err: error }, 'Login page error');
   }, [error]);
 
   return (

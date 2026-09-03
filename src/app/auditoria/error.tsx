@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('auditoria-error');
 
 export default function AuditoriaError({
   error,
@@ -10,7 +13,7 @@ export default function AuditoriaError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error(error);
+    log.error({ err: error }, 'Auditoria page error');
   }, [error]);
 
   return (

@@ -93,8 +93,7 @@ describe('usuarios-actions auth guards', () => {
     fd.set('password', '12345678');
     fd.set('rol_id', '550e8400-e29b-41d4-a716-446655440000');
 
-    const result = await crearUsuario(fd);
-    expect(result).toBeUndefined();
+    await expect(crearUsuario(fd)).rejects.toThrow('REDIRECT:/usuarios?error=no_autorizado');
   });
 
   it('crearRol rechaza si no es master', async () => {
@@ -104,8 +103,7 @@ describe('usuarios-actions auth guards', () => {
     const fd = new FormData();
     fd.set('nombre', 'Test Role');
 
-    const result = await crearRol(fd);
-    expect(result).toBeUndefined();
+    await expect(crearRol(fd)).rejects.toThrow('REDIRECT:/usuarios?error=no_autorizado');
   });
 
   it('crearPermiso rechaza si no es master', async () => {
@@ -116,16 +114,16 @@ describe('usuarios-actions auth guards', () => {
     fd.set('nombre', 'test_permiso');
     fd.set('descripcion', 'Test');
 
-    const result = await crearPermiso(fd);
-    expect(result).toBeUndefined();
+    await expect(crearPermiso(fd)).rejects.toThrow('REDIRECT:/usuarios?error=no_autorizado');
   });
 
   it('eliminarUsuario rechaza si no es master', async () => {
     mockGetUsuarioActual.mockResolvedValue({ id: 'u1', esMaster: false });
 
     const { eliminarUsuario } = await import('./usuarios-actions');
-    const result = await eliminarUsuario('550e8400-e29b-41d4-a716-446655440000');
-    expect(result).toBeUndefined();
+    await expect(eliminarUsuario('550e8400-e29b-41d4-a716-446655440000')).rejects.toThrow(
+      'REDIRECT:/usuarios?error=no_autorizado'
+    );
   });
 
   it('cambiarRol rechaza UUID inválido', async () => {
@@ -135,16 +133,18 @@ describe('usuarios-actions auth guards', () => {
     const fd = new FormData();
     fd.set('rol_id', 'invalid-uuid');
 
-    const result = await cambiarRol('not-a-uuid', fd);
-    expect(result).toBeUndefined();
+    await expect(cambiarRol('not-a-uuid', fd)).rejects.toThrow(
+      'REDIRECT:/usuarios?error=id_invalido'
+    );
   });
 
   it('resetearPassword rechaza si no es master', async () => {
     mockGetUsuarioActual.mockResolvedValue({ id: 'u1', esMaster: false });
 
     const { resetearPassword } = await import('./usuarios-actions');
-    const result = await resetearPassword('550e8400-e29b-41d4-a716-446655440000');
-    expect(result).toBeUndefined();
+    await expect(resetearPassword('550e8400-e29b-41d4-a716-446655440000')).rejects.toThrow(
+      'REDIRECT:/usuarios?error=no_autorizado'
+    );
   });
 });
 

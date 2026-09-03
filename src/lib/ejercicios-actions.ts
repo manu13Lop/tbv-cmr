@@ -64,7 +64,7 @@ export type EjercicioRow = {
 
 export async function crearEjercicio(formData: FormData) {
   const usuarioActual = await getUsuarioActual();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/ejercicios?error=no_autorizado');
 
   const rateLimit = await rateLimiters.crearUsuario(usuarioActual.id);
   if (!rateLimit.allowed) {
@@ -148,14 +148,14 @@ export async function crearEjercicio(formData: FormData) {
 
 export async function vincularEjercicioSesion(sesionId: string, formData: FormData) {
   const usuarioActual = await getUsuarioActual();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/ejercicios?error=no_autorizado');
 
   const ejercicioId = formData.get('ejercicio_id') as string;
   const orden = parseInt((formData.get('orden') as string) || '0', 10);
   const duracion = formData.get('duracion_minutos') as string;
   const notas = formData.get('notas') as string;
 
-  if (!ejercicioId || !sesionId) return;
+  if (!ejercicioId || !sesionId) redirect('/ejercicios?error=datos_invalidos');
 
   const admin = createAdminClient();
 
@@ -168,7 +168,7 @@ export async function vincularEjercicioSesion(sesionId: string, formData: FormDa
   });
 
   if (error) {
-    return redirect(`/convocatorias/${sesionId}?error=no_se_pudo_vincular`);
+    redirect(`/convocatorias/${sesionId}?error=no_se_pudo_vincular`);
   }
 
   redirect(`/convocatorias/${sesionId}`);
@@ -180,7 +180,7 @@ export async function valorarEjercicio(
   comentario?: string
 ) {
   const usuarioActual = await getUsuarioActual();
-  if (!usuarioActual) return;
+  if (!usuarioActual) return { success: false, error: 'No autorizado' } as const;
 
   const admin = createAdminClient();
 
@@ -203,7 +203,7 @@ export async function valorarEjercicio(
 
 export async function eliminarEjercicio(ejercicioId: string) {
   const usuarioActual = await getUsuarioActual();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/ejercicios?error=no_autorizado');
 
   const admin = createAdminClient();
 
@@ -229,7 +229,7 @@ export async function eliminarEjercicio(ejercicioId: string) {
 
 export async function editarEjercicio(ejercicioId: string, formData: FormData) {
   const usuarioActual = await getUsuarioActual();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/ejercicios?error=no_autorizado');
 
   const admin = createAdminClient();
 
@@ -240,13 +240,13 @@ export async function editarEjercicio(ejercicioId: string, formData: FormData) {
       .eq('id', ejercicioId)
       .single();
     if (ejercicio?.created_by !== usuarioActual.id) {
-      return redirect(`/ejercicios/${ejercicioId}?error=Sin permisos`);
+      redirect(`/ejercicios/${ejercicioId}?error=Sin permisos`);
     }
   }
 
   const validation = validateFormData(editarEjercicioSchema, formData);
   if (!validation.success) {
-    return redirect(
+    redirect(
       `/ejercicios/${ejercicioId}/editar?error=${encodeURIComponent(getFirstError(validation.errors))}`
     );
   }
@@ -272,7 +272,7 @@ export async function editarEjercicio(ejercicioId: string, formData: FormData) {
     .eq('id', ejercicioId);
 
   if (error) {
-    return redirect(`/ejercicios/${ejercicioId}/editar?error=1`);
+    redirect(`/ejercicios/${ejercicioId}/editar?error=1`);
   }
 
   const archivos = formData
@@ -316,7 +316,7 @@ export async function editarEjercicio(ejercicioId: string, formData: FormData) {
 
 export async function eliminarArchivoEjercicio(archivoId: string, ejercicioId: string) {
   const usuarioActual = await getUsuarioActual();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/ejercicios?error=no_autorizado');
 
   const admin = createAdminClient();
 
@@ -327,7 +327,7 @@ export async function eliminarArchivoEjercicio(archivoId: string, ejercicioId: s
       .eq('id', ejercicioId)
       .single();
     if (ejercicio?.created_by !== usuarioActual.id) {
-      return redirect(`/ejercicios/${ejercicioId}?error=Sin permisos`);
+      redirect('/ejercicios?error=Sin permisos');
     }
   }
 
@@ -351,16 +351,16 @@ export async function eliminarArchivoEjercicio(archivoId: string, ejercicioId: s
 
 export async function crearVariante(ejercicioId: string, formData: FormData) {
   const usuarioActual = await getUsuarioActual();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/ejercicios?error=no_autorizado');
 
   const rateLimit = await rateLimiters.crearUsuario(usuarioActual.id);
   if (!rateLimit.allowed) {
-    return redirect(`/ejercicios/${ejercicioId}?error=rate_limit`);
+    redirect('/ejercicios?error=rate_limit');
   }
 
   const validation = validateFormData(crearVarianteSchema, formData);
   if (!validation.success) {
-    return redirect(
+    redirect(
       `/ejercicios/${ejercicioId}?error=${encodeURIComponent(getFirstError(validation.errors))}`
     );
   }
@@ -378,7 +378,7 @@ export async function crearVariante(ejercicioId: string, formData: FormData) {
   });
 
   if (error) {
-    return redirect(`/ejercicios/${ejercicioId}?error=no_se_pudo_crear`);
+    redirect('/ejercicios?error=no_se_pudo_crear');
   }
 
   await logCambio('ejercicio_variantes', ejercicioId, 'crear', null, {
@@ -391,7 +391,7 @@ export async function crearVariante(ejercicioId: string, formData: FormData) {
 
 export async function eliminarVariante(varianteId: string, ejercicioId: string) {
   const usuarioActual = await getUsuarioActual();
-  if (!usuarioActual) return;
+  if (!usuarioActual) redirect('/ejercicios?error=no_autorizado');
 
   const admin = createAdminClient();
 
@@ -402,7 +402,7 @@ export async function eliminarVariante(varianteId: string, ejercicioId: string) 
       .eq('id', varianteId)
       .single();
     if (variante?.created_by !== usuarioActual.id) {
-      return redirect(`/ejercicios/${ejercicioId}?error=Sin permisos`);
+      redirect('/ejercicios?error=Sin permisos');
     }
   }
 
