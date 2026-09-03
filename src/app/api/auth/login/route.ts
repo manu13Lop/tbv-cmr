@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { rateLimiters } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
-
-function getClientIp(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return (forwarded.split(',')[0] ?? 'unknown').trim();
-  return request.headers.get('x-real-ip') ?? 'unknown';
-}
 
 export async function POST(request: Request) {
   try {
@@ -16,16 +9,6 @@ export async function POST(request: Request) {
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email y contraseña requeridos' }, { status: 400 });
-    }
-
-    const clientIp = getClientIp(request);
-    const rateLimit = await rateLimiters.login(clientIp);
-
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { error: 'Demasiados intentos. Intenta de nuevo más tarde.' },
-        { status: 429 }
-      );
     }
 
     const supabase = createClient(
