@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
 import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/empty-state';
 import { PaginationWrapper as Pagination } from '@/components/pagination-wrapper';
 
 interface Mensaje {
@@ -84,9 +85,13 @@ export default async function MensajesPage({
       </div>
 
       {!mensajes || mensajes.length === 0 ? (
-        <div className="border-border bg-card text-muted-foreground rounded-lg border p-8 text-center">
-          No se han enviado mensajes todavía.
-        </div>
+        <EmptyState
+          icon={Mail}
+          title="Sin mensajes"
+          description="No se han enviado mensajes todavía."
+          actionLabel="Enviar mensaje"
+          actionHref="/mensajes/nuevo"
+        />
       ) : (
         <div className="space-y-3">
           {paginatedMensajes.map((m) => {

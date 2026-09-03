@@ -3,12 +3,13 @@ import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Plus, ArrowLeft, Users } from 'lucide-react';
 import { ExportCSVButton } from '@/components/export-csv-button';
 import { ExportPDFButton } from '@/components/export-pdf-button';
 import { formatDateForCSV } from '@/lib/export-csv';
 import { PaginationWrapper as Pagination } from '@/components/pagination-wrapper';
 import { InputField, SelectField } from '@/components/ui';
+import { EmptyState } from '@/components/empty-state';
 import { createChildLogger } from '@/lib/logger';
 
 const log = createChildLogger('jugadoras');
@@ -264,9 +265,13 @@ export default async function JugadorasPage({
       </form>
 
       {jugadorasData.length === 0 ? (
-        <div className="border-border bg-card text-muted-foreground rounded-lg border p-8 text-center">
-          No hay jugadoras con esos filtros.
-        </div>
+        <EmptyState
+          icon={Users}
+          title="No hay jugadoras"
+          description="No se encontraron jugadoras con los filtros seleccionados."
+          actionLabel="Añadir jugadora"
+          actionHref="/jugadoras/nueva"
+        />
       ) : (
         <div className="border-border rounded-lg border">
           <div className="overflow-x-auto">

@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Plus, Copy } from 'lucide-react';
+import { Plus, Copy, ArrowLeft } from 'lucide-react';
 import { ConvocatoriasView } from '@/components/convocatorias-view';
 import { FilterBar, FilterOption } from '@/components/filter-bar';
 import { SelectField } from '@/components/ui';
@@ -129,6 +129,13 @@ export default async function ConvocatoriasPage({
 
   return (
     <div className="p-6">
+      <Link
+        href="/"
+        className="text-muted-foreground hover:text-foreground mb-4 inline-flex items-center gap-1 text-sm"
+      >
+        <ArrowLeft className="size-4" />
+        Volver al inicio
+      </Link>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-primary text-2xl font-bold">Convocatorias</h1>

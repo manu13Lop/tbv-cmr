@@ -1,19 +1,46 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 60_000;
+const ERROR_DISMISS_MS = 8_000;
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const attemptsRef = useRef(0);
   const lockedUntilRef = useRef<number | null>(null);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!error) return;
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    errorTimerRef.current = setTimeout(() => setError(null), ERROR_DISMISS_MS);
+    return () => {
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    };
+  }, [error]);
+
+  useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    const interval = setInterval(() => {
+      if (lockedUntilRef.current && Date.now() >= lockedUntilRef.current) {
+        setLockoutSeconds(0);
+        lockedUntilRef.current = null;
+        clearInterval(interval);
+      } else {
+        setLockoutSeconds(Math.ceil(((lockedUntilRef.current ?? 0) - Date.now()) / 1000));
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutSeconds]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,9 +65,10 @@ export default function LoginPage() {
         attemptsRef.current += 1;
         if (attemptsRef.current >= MAX_ATTEMPTS) {
           lockedUntilRef.current = Date.now() + LOCKOUT_MS;
+          setLockoutSeconds(60);
           setError('Demasiados intentos fallidos. Espera 60 segundos.');
         } else {
-          setError(`Email o contrasena incorrectos. (${attemptsRef.current}/${MAX_ATTEMPTS})`);
+          setError(`Email o contraseña incorrectos. (${attemptsRef.current}/${MAX_ATTEMPTS})`);
         }
         return;
       }
@@ -49,7 +77,7 @@ export default function LoginPage() {
       window.location.href = returnTo ? decodeURIComponent(returnTo) : '/';
     } catch {
       attemptsRef.current += 1;
-      setError(`Error de conexion. (${attemptsRef.current}/${MAX_ATTEMPTS})`);
+      setError(`Error de conexión. (${attemptsRef.current}/${MAX_ATTEMPTS})`);
     } finally {
       setLoading(false);
     }
@@ -71,6 +99,7 @@ export default function LoginPage() {
 
       <form
         onSubmit={handleLogin}
+        aria-label="Iniciar sesión"
         className="border-border bg-card flex w-full max-w-sm flex-col gap-4 rounded-lg border p-6 shadow-sm"
       >
         <div className="flex flex-col gap-1.5">
@@ -91,7 +120,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="password" className="text-sm font-medium">
-            Contrasena
+            Contraseña
           </label>
           <input
             id="password"
@@ -106,10 +135,21 @@ export default function LoginPage() {
           />
         </div>
 
-        {error && <p className="text-destructive text-sm">{error}</p>}
+        {error && (
+          <p className="text-destructive text-sm" role="alert">
+            {error}
+          </p>
+        )}
 
         <Button type="submit" disabled={loading} className="mt-2 w-full">
-          {loading ? 'Entrando...' : 'Iniciar sesion'}
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Entrando...
+            </>
+          ) : (
+            'Iniciar sesión'
+          )}
         </Button>
       </form>
     </main>
