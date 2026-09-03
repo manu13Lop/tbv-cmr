@@ -2,14 +2,21 @@
 
 import { rateLimiters } from '@/lib/rate-limit';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('login');
 
 export async function loginAction(formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
-  const clientIp = 'unknown';
+  const hdrs = await headers();
+  const forwarded = hdrs.get('x-forwarded-for');
+  const clientIp = forwarded
+    ? (forwarded.split(',')[0] ?? 'unknown').trim()
+    : (hdrs.get('x-real-ip') ?? 'unknown');
   const rateLimit = await rateLimiters.login(clientIp);
 
   if (!rateLimit.allowed) {
@@ -44,7 +51,7 @@ export async function loginAction(formData: FormData) {
   });
 
   if (error) {
-    console.error('[LOGIN ERROR]', error.message, error.status);
+    log.error({ err: error.message, status: error.status }, 'Login failed');
     return { error: 'Email o contrasena incorrectos.' };
   }
 

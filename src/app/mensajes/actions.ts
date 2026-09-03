@@ -11,6 +11,15 @@ import { createChildLogger } from '@/lib/logger';
 
 const log = createChildLogger('mensajes-actions');
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export async function enviarMensajeAction(formData: FormData) {
   const usuario = await getUsuarioActual();
   if (!usuario || !tienePermiso(usuario.permisos, 'mensajes.enviar')) {
@@ -122,13 +131,13 @@ export async function enviarMensajeAction(formData: FormData) {
     const linkConfirmacion = `${appUrl}/mensajes/confirmar/${d.token_confirmacion}`;
 
     const html = requiereConfirmacion
-      ? `<p>${cuerpo.replace(/\n/g, '<br/>')}</p>
+      ? `<p>${escapeHtml(cuerpo).replace(/\n/g, '<br/>')}</p>
          <p style="margin-top:24px;">
            <a href="${linkConfirmacion}" style="background:#7a1f2b;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;">
              He leído este mensaje
            </a>
          </p>`
-      : `<p>${cuerpo.replace(/\n/g, '<br/>')}</p>`;
+      : `<p>${escapeHtml(cuerpo).replace(/\n/g, '<br/>')}</p>`;
 
     return {
       from: EMAIL_FROM,

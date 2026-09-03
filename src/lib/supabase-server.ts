@@ -32,27 +32,7 @@ export async function getPermisosUsuario() {
       .single();
     usuario = result.data;
   } catch {
-    return [
-      'usuarios.gestionar',
-      'equipos.leer',
-      'equipos.editar',
-      'entrenadores.leer',
-      'entrenadores.editar',
-      'convocatorias.leer',
-      'convocatorias.editar',
-      'jugadoras.leer',
-      'jugadoras.editar',
-      'sanitario.leer',
-      'sanitario.editar',
-      'scouting.leer',
-      'scouting.editar',
-      'formacion.leer',
-      'formacion.editar',
-      'logistica.leer',
-      'logistica.editar',
-      'mensajes.leer',
-      'mensajes.editar',
-    ];
+    return [];
   }
 
   if (usuario?.es_master) {
@@ -60,27 +40,7 @@ export async function getPermisosUsuario() {
       const { data: todosLosPermisos } = await admin.from('permisos').select('nombre');
       return (todosLosPermisos ?? []).map((p) => p.nombre).filter(Boolean);
     } catch {
-      return [
-        'usuarios.gestionar',
-        'equipos.leer',
-        'equipos.editar',
-        'entrenadores.leer',
-        'entrenadores.editar',
-        'convocatorias.leer',
-        'convocatorias.editar',
-        'jugadoras.leer',
-        'jugadoras.editar',
-        'sanitario.leer',
-        'sanitario.editar',
-        'scouting.leer',
-        'scouting.editar',
-        'formacion.leer',
-        'formacion.editar',
-        'logistica.leer',
-        'logistica.editar',
-        'mensajes.leer',
-        'mensajes.editar',
-      ];
+      return [];
     }
   }
 

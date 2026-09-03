@@ -43,6 +43,10 @@ function getUserFromCookies(request: NextRequest): { id: string; email: string }
 }
 
 export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname === '/setup' && process.env.NODE_ENV === 'production') {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
   const csrfResponse = csrfProtected(request);
   if (csrfResponse) return csrfResponse;
 

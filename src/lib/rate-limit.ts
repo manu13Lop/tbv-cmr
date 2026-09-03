@@ -1,6 +1,10 @@
+import { createChildLogger } from '@/lib/logger';
+
+const log = createChildLogger('rate-limit');
+
 if (!process.env.UPSTASH_REDIS_REST_URL && process.env.NODE_ENV === 'production') {
-  console.warn(
-    '[rate-limit] UPSTASH_REDIS_REST_URL no configurado en producción. ' +
+  log.warn(
+    'UPSTASH_REDIS_REST_URL no configurado en producción. ' +
       'El rate limiting in-memory NO funciona en serverless (Vercel/Netlify). ' +
       'Configura UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN.'
   );
