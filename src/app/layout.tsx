@@ -44,11 +44,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <a
+            href="#main-content"
+            className="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:px-4 focus:py-2"
+          >
+            Saltar al contenido principal
+          </a>
           <div className="flex">
             <Suspense>
               <Sidebar />
             </Suspense>
-            <main className="flex-1">
+            <main id="main-content" className="flex-1">
               <Suspense>
                 <Breadcrumb />
               </Suspense>

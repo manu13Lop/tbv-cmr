@@ -100,6 +100,7 @@ export function FileUpload({ disabled }: { disabled?: boolean }) {
                   <button
                     type="button"
                     onClick={() => remove(idx)}
+                    aria-label="Eliminar archivo"
                     className="text-muted-foreground hover:text-destructive shrink-0 p-1"
                   >
                     <X className="size-4" />

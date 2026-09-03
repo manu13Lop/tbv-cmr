@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { ImagePlus, X } from 'lucide-react';
 
 export function ImageUpload({
@@ -15,17 +15,29 @@ export function ImageUpload({
   const [preview, setPreview] = useState<string | null>(currentImageUrl ?? null);
   const [fileName, setFileName] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    };
+  }, []);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     setFileName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => setPreview(reader.result as string);
-    reader.readAsDataURL(file);
+    const url = URL.createObjectURL(file);
+    objectUrlRef.current = url;
+    setPreview(url);
   }
 
   function handleClear() {
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
     setPreview(null);
     setFileName('');
     if (inputRef.current) inputRef.current.value = '';
@@ -56,6 +68,7 @@ export function ImageUpload({
             <button
               type="button"
               onClick={handleClear}
+              aria-label="Eliminar imagen"
               className="bg-background/80 text-destructive hover:bg-background absolute top-2 right-2 rounded-full p-1"
             >
               <X className="size-4" />

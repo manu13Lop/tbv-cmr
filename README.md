@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TBV-CMR — Triana Balonmano Vivero
 
-## Getting Started
+Plataforma de gestión integral del club Triana Balonmano Vivero.
 
-First, run the development server:
+## Stack
+
+- **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
+- **Estilos:** Tailwind CSS v4 + shadcn/ui
+- **Base de datos:** Supabase (PostgreSQL)
+- **Autenticación:** Supabase Auth + JWT custom middleware
+- **Email:** Resend
+- **Rate limiting:** Upstash Redis
+- **Testing:** Vitest + Playwright
+- **Deploy:** Vercel
+
+## Módulos
+
+| Módulo | Descripción |
+|--------|-------------|
+| Equipos | Gestión de equipos por categoría y temporada |
+| Jugadoras | Fichas de jugadoras, tallas, historial |
+| Convocatorias | Eventos, entrenamientos, partidos |
+| Ejercicios | Biblioteca de ejercicios con variantes y valoraciones |
+| Entrenadores | Gestión de cuerpo técnico |
+| Scouting | Fichas de ojeo con criterios personalizados |
+| Sanitario | Lesiones, seguimiento médico, gráficas de evolución |
+| Formación | Cursos, lecciones, progreso |
+| Logística | Movimientos de stock, material |
+| Mensajes | Comunicaciones internas con confirmación de lectura |
+| Auditoría | Registro de cambios del sistema |
+
+## Desarrollo
 
 ```bash
+# Instalar dependencias
+npm install
+
+# Variables de entorno
+cp .env.example .env.local
+# Editar .env.local con tus credenciales
+
+# Desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Tests
+npm run test
+npm run test:coverage
+npm run test:e2e
+
+# Lint
+npm run lint
+npm run typecheck
+
+# Build
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variables de entorno
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Ver `.env.example` para la lista completa. Las más importantes:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Descripción |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key de Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (solo server) |
+| `RESEND_API_KEY` | API key de Resend para emails |
+| `UPSTASH_REDIS_REST_URL` | URL de Upstash Redis para rate limiting |
 
-## Learn More
+## Estructura
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/              # App Router (páginas y API routes)
+│   ├── api/          # API endpoints (auth, health, setup)
+│   ├── convocatorias/
+│   ├── ejercicios/
+│   ├── equipos/
+│   ├── entrenadores/
+│   ├── jugadoras/
+│   ├── logistica/
+│   ├── mensajes/
+│   ├── sanitario/
+│   ├── scouting/
+│   └── usuarios/
+├── components/       # Componentes React reutilizables
+├── lib/              # Utilidades, server actions, validaciones
+└── middleware.ts     # Auth, CSRF, headers de seguridad
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Seguridad
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- JWT middleware con decodificación local
+- Rate limiting (Upstash Redis + fallback in-memory)
+- CSRF protection (origin validation)
+- CSP headers configurados
+- Validación Zod en todos los formularios
+- HTML encoding en emails para prevenir inyección
+- Logging de auditoría en todas las mutaciones
 
-## Deploy on Vercel
+## Licencia
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Privado — Triana Balonmano Vivero

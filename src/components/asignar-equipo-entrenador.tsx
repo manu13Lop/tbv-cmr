@@ -80,6 +80,7 @@ export function AsignarEquipoEntrenador({ equipos }: { equipos: Equipo[] }) {
               <button
                 type="button"
                 onClick={() => removeAsignacion(i)}
+                aria-label="Eliminar asignación"
                 className="text-destructive hover:bg-destructive/10 rounded-md p-2"
               >
                 <Trash2 className="size-4" />
