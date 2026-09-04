@@ -171,7 +171,9 @@ export async function resetearPassword(usuarioId: string) {
     maxAge: 60,
   });
 
-  redirect(`/usuarios/editar?id=${encodeURIComponent(usuarioId)}&msg=password_reseteado`);
+  redirect(
+    `/usuarios/editar?id=${encodeURIComponent(usuarioId)}&msg=password_reseteado&nuevaPassword=${encodeURIComponent(password)}`
+  );
 }
 
 export async function eliminarUsuario(usuarioId: string) {

@@ -17,6 +17,7 @@ import {
   GraduationCap,
   History,
   Dumbbell,
+  UserCircle,
 } from 'lucide-react';
 
 type NavItem = {
@@ -64,6 +65,9 @@ const sections: { label?: string; items: NavItem[] }[] = [
       { href: '/mensajes', label: 'Mensajes', icon: MessageSquare, permiso: 'mensajes.leer' },
       { href: '/auditoria', label: 'Auditoría', icon: History, permiso: null },
     ],
+  },
+  {
+    items: [{ href: '/perfil', label: 'Mi perfil', icon: UserCircle, permiso: null }],
   },
 ];
 

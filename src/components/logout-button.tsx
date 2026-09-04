@@ -8,6 +8,8 @@ export function LogoutButton() {
   const [loading, setLoading] = useState(false);
 
   const handleLogout = async () => {
+    const confirmed = window.confirm('¿Cerrar sesión?');
+    if (!confirmed) return;
     setLoading(true);
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/login';

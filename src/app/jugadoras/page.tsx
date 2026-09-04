@@ -8,6 +8,7 @@ import { ExportCSVButton } from '@/components/export-csv-button';
 import { ExportPDFButton } from '@/components/export-pdf-button';
 import { formatDateForCSV } from '@/lib/export-csv';
 import { PaginationWrapper as Pagination } from '@/components/pagination-wrapper';
+import { SortButton } from '@/components/sort-button';
 import { InputField, SelectField } from '@/components/ui';
 import { EmptyState } from '@/components/empty-state';
 import { createChildLogger } from '@/lib/logger';
@@ -279,16 +280,16 @@ export default async function JugadorasPage({
               <thead className="bg-muted text-muted-foreground">
                 <tr>
                   <th scope="col" className="p-3 text-left font-medium">
-                    Nombre
+                    <SortButton field="nombre" label="Nombre" />
                   </th>
                   <th scope="col" className="p-3 text-left font-medium">
                     Equipo
                   </th>
                   <th scope="col" className="p-3 text-left font-medium">
-                    Dorsal
+                    <SortButton field="dorsal" label="Dorsal" />
                   </th>
                   <th scope="col" className="p-3 text-left font-medium">
-                    Posición
+                    <SortButton field="posicion" label="Posición" />
                   </th>
                   <th scope="col" className="p-3 text-left font-medium">
                     Rec. médico

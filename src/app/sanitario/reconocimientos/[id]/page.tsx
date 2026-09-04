@@ -206,13 +206,10 @@ const resultadoColor: Record<string, string> = {
 
 export default async function ReconocimientoDetallePage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ envio?: string; n?: string }>;
 }) {
   const { id } = await params;
-  const { envio, n } = await searchParams;
 
   const usuario = await getUsuarioActual();
   if (!usuario || !tienePermiso(usuario.permisos, 'sanitario.leer')) {
@@ -294,17 +291,6 @@ export default async function ReconocimientoDetallePage({
           />
         )}
       </div>
-
-      {envio === 'ok' && (
-        <div className="border-primary bg-primary/10 text-primary mb-4 rounded-md border p-3 text-sm">
-          Convocatoria médica enviada a {n} jugadora(s).
-        </div>
-      )}
-      {envio === 'vacio' && (
-        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
-          No hay jugadoras citadas para enviar la convocatoria.
-        </div>
-      )}
 
       {puedeEditar && (
         <details className="border-border bg-card mb-6 rounded-lg border">

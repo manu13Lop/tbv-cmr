@@ -11,9 +11,9 @@ import { getRoles } from '@/lib/roles';
 export default async function EditarUsuarioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string; ok?: string; error?: string; msg?: string }>;
+  searchParams: Promise<{ id?: string; error?: string; msg?: string }>;
 }) {
-  const { id, ok, error, msg } = await searchParams;
+  const { id, error, msg } = await searchParams;
 
   if (!id) {
     redirect('/usuarios');
@@ -71,11 +71,6 @@ export default async function EditarUsuarioPage({
         Editar usuario: {usuarioEditar.nombre} {usuarioEditar.apellidos}
       </h1>
 
-      {ok === '1' && (
-        <div className="border-primary bg-primary/10 text-primary mb-4 rounded-md border p-3 text-sm">
-          Usuario actualizado correctamente.
-        </div>
-      )}
       {msg === 'password_reseteado' && (
         <div className="border-primary bg-primary/10 text-primary mb-4 rounded-md border p-3 text-sm">
           <p className="mb-2">Contraseña reseteada correctamente.</p>

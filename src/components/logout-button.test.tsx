@@ -11,6 +11,7 @@ describe('LogoutButton', () => {
   });
 
   it('calls logout API and redirects on click', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const fetchMock = vi.fn().mockResolvedValue({});
     globalThis.fetch = fetchMock;
     const redirectSpy = vi.fn();

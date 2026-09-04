@@ -51,7 +51,7 @@ export default async function UsuariosPage({
     redirect('/');
   }
 
-  const { creado, error, page } = await searchParams;
+  const { error, page } = await searchParams;
 
   const supabase = await createClient();
   const clienteQWeed = usuarioActual.esMaster ? createAdminClient() : supabase;
@@ -144,11 +144,6 @@ export default async function UsuariosPage({
 
       <h1 className="text-primary mb-6 text-2xl font-bold">Usuarios</h1>
 
-      {creado === '1' && (
-        <div className="border-primary bg-primary/10 text-primary mb-4 rounded-md border p-3 text-sm">
-          Usuario creado correctamente.
-        </div>
-      )}
       {error === 'email_duplicado' && (
         <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
           El email ya está registrado. Usa otro email o elimina el usuario existente.

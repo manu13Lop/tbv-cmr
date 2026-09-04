@@ -344,7 +344,7 @@ export default async function ConvocatoriaDetallePage({
   searchParams: Promise<{ envio?: string; n?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { envio, n, error } = await searchParams;
+  const { error } = await searchParams;
   const supabase = await createClient();
 
   const { data: evento } = await supabase
@@ -449,16 +449,6 @@ export default async function ConvocatoriaDetallePage({
         />
       </div>
 
-      {envio === 'ok' && (
-        <div className="border-primary bg-primary/10 text-primary mb-4 rounded-md border p-3 text-sm">
-          Convocatoria enviada correctamente a {n} jugadora(s).
-        </div>
-      )}
-      {envio === 'vacio' && (
-        <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
-          No hay jugadoras marcadas para enviar la convocatoria.
-        </div>
-      )}
       {error && (
         <div className="border-destructive bg-destructive/10 text-destructive mb-4 rounded-md border p-3 text-sm">
           {decodeURIComponent(error)}
