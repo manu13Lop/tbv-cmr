@@ -344,6 +344,57 @@ export const crearRivalScoutingSchema = z.object({
     .optional(),
 });
 
+// --- Schemas de Socios ---
+
+const METODO_PAGO = ['Efectivo', 'Transferencia', 'Bizum', 'Tarjeta'] as const;
+
+export const crearSocioSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es obligatorio'),
+  apellidos: z.string().min(1, 'Los apellidos son obligatorios'),
+  dni: z.string().min(8, 'El DNI debe tener al menos 8 caracteres').optional().or(z.literal('')),
+  email: z.string().email('Email no válido').optional().or(z.literal('')),
+  telefono: z.string().optional().or(z.literal('')),
+  fecha_nacimiento: z.string().optional().or(z.literal('')),
+  direccion: z.string().optional().or(z.literal('')),
+  ciudad: z.string().optional().or(z.literal('')),
+  codigo_postal: z.string().optional().or(z.literal('')),
+  notas: z.string().optional().or(z.literal('')),
+});
+
+export const actualizarSocioSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es obligatorio'),
+  apellidos: z.string().min(1, 'Los apellidos son obligatorios'),
+  dni: z.string().min(8, 'El DNI debe tener al menos 8 caracteres').optional().or(z.literal('')),
+  email: z.string().email('Email no válido').optional().or(z.literal('')),
+  telefono: z.string().optional().or(z.literal('')),
+  fecha_nacimiento: z.string().optional().or(z.literal('')),
+  direccion: z.string().optional().or(z.literal('')),
+  ciudad: z.string().optional().or(z.literal('')),
+  codigo_postal: z.string().optional().or(z.literal('')),
+  notas: z.string().optional().or(z.literal('')),
+  activo: z.boolean().optional(),
+});
+
+export const crearPagoSocioSchema = z.object({
+  concepto: z.string().min(1, 'El concepto es obligatorio'),
+  importe: z.coerce.number().min(0.01, 'El importe debe ser mayor a 0'),
+  estado: z.enum(['pagado', 'pendiente']).optional(),
+  fecha_pago: z.string().optional().or(z.literal('')),
+  metodo_pago: z.enum(METODO_PAGO).optional().or(z.literal('')),
+  referencia: z.string().optional().or(z.literal('')),
+  notas: z.string().optional().or(z.literal('')),
+});
+
+export const actualizarPagoSocioSchema = z.object({
+  concepto: z.string().min(1, 'El concepto es obligatorio').optional(),
+  importe: z.coerce.number().min(0.01, 'El importe debe ser mayor a 0').optional(),
+  estado: z.enum(['pagado', 'pendiente']).optional(),
+  fecha_pago: z.string().optional().or(z.literal('')),
+  metodo_pago: z.enum(METODO_PAGO).optional().or(z.literal('')),
+  referencia: z.string().optional().or(z.literal('')),
+  notas: z.string().optional().or(z.literal('')),
+});
+
 // --- Tipos exportados ---
 
 export type CrearJugadora = z.infer<typeof crearJugadoraSchema>;
@@ -366,3 +417,7 @@ export type CrearEjercicio = z.infer<typeof crearEjercicioSchema>;
 export type ActualizarEjercicio = z.infer<typeof actualizarEjercicioSchema>;
 export type CrearSesionEntrenamiento = z.infer<typeof crearSesionEntrenamientoSchema>;
 export type AsignarEquipoEntrenador = z.infer<typeof asignarEquipoEntrenadorSchema>;
+export type CrearSocio = z.infer<typeof crearSocioSchema>;
+export type ActualizarSocio = z.infer<typeof actualizarSocioSchema>;
+export type CrearPagoSocio = z.infer<typeof crearPagoSocioSchema>;
+export type ActualizarPagoSocio = z.infer<typeof actualizarPagoSocioSchema>;

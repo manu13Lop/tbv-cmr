@@ -18,6 +18,7 @@ import {
   History,
   Dumbbell,
   UserCircle,
+  Contact,
 } from 'lucide-react';
 
 type NavItem = {
@@ -57,6 +58,10 @@ const sections: { label?: string; items: NavItem[] }[] = [
       { href: '/logistica', label: 'Logística', icon: Truck, permiso: 'logistica.leer' },
       { href: '/formacion', label: 'Formación', icon: GraduationCap, permiso: null },
     ],
+  },
+  {
+    label: 'Administración',
+    items: [{ href: '/socios', label: 'Socios', icon: Contact, permiso: 'socios.leer' }],
   },
   {
     label: 'Sistema',
