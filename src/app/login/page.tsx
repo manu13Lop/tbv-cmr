@@ -92,6 +92,7 @@ export default function LoginPage() {
           width={96}
           height={96}
           className="rounded-full"
+          unoptimized
           priority
         />
         <p className="text-muted-foreground text-sm">Triana Balonmano Vivero</p>
