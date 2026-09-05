@@ -2,7 +2,6 @@
 
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '@/components/notification-bell';
@@ -36,6 +35,9 @@ export function SidebarWrapper({
   }, [pathname]);
 
   if (pathname === '/login') return null;
+  if (pathname.startsWith('/socios/inscribirme')) return null;
+  if (pathname.startsWith('/socios/verificar-email')) return null;
+  if (pathname.startsWith('/socios/consentir')) return null;
 
   return (
     <>
@@ -49,14 +51,7 @@ export function SidebarWrapper({
           )}
           aria-label={isOpen ? 'Cerrar menú' : 'Abrir menú'}
         >
-          <Image
-            src="/logo.jpg"
-            alt="TBV"
-            width={28}
-            height={28}
-            unoptimized
-            className="rounded-full"
-          />
+          <img src="/logo.jpg" alt="TBV" className="h-7 w-7 rounded-full object-cover" />
           {isOpen ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
         <NotificationBell notificaciones={notificaciones ?? []} noLeidas={noLeidas ?? 0} />

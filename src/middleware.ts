@@ -42,6 +42,13 @@ function getUserFromCookies(request: NextRequest): { id: string; email: string }
   }
 }
 
+const PUBLIC_PATHS = [
+  '/login',
+  '/socios/consentir',
+  '/socios/inscribirme',
+  '/socios/verificar-email',
+];
+
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname === '/setup' && process.env.NODE_ENV === 'production') {
     return NextResponse.redirect(new URL('/login', request.url));
@@ -52,8 +59,11 @@ export async function middleware(request: NextRequest) {
 
   const user = getUserFromCookies(request);
   const isLoginPage = request.nextUrl.pathname === '/login';
+  const isPublicPath = PUBLIC_PATHS.some(
+    (p) => request.nextUrl.pathname === p || request.nextUrl.pathname.startsWith(p + '/')
+  );
 
-  if (!user && !isLoginPage) {
+  if (!user && !isLoginPage && !isPublicPath) {
     const returnTo = encodeURIComponent(request.nextUrl.pathname);
     return NextResponse.redirect(new URL(`/login?returnTo=${returnTo}`, request.url));
   }
@@ -73,5 +83,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/auth/|api/health).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/auth/|api/health|.*\\.[a-zA-Z]+$).*)'],
 };

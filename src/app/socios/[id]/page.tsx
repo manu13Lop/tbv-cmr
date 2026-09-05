@@ -2,11 +2,17 @@ import { createClient } from '@/lib/supabase-server';
 import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Shield, CreditCard, Mail } from 'lucide-react';
+import { ArrowLeft, Shield, CreditCard, Mail, CheckCircle, AlertTriangle } from 'lucide-react';
 import { InputField, SelectField, TextareaField } from '@/components/ui';
 import { FormSubmitButton } from '@/components/form-submit-button';
 import { ConfirmActionButton } from '@/components/confirm-action-button';
-import { reenviarConsentimiento, registrarPago, eliminarPago } from '@/lib/socios-actions';
+import {
+  reenviarConsentimiento,
+  reenviarVerificacionEmail,
+  registrarPago,
+  eliminarPago,
+  eliminarSocio,
+} from '@/lib/socios-actions';
 
 export default async function SocioDetallePage({
   params,
@@ -84,6 +90,29 @@ export default async function SocioDetallePage({
               </button>
             </form>
           )}
+          {puedeEditar && socio.email && !socio.email_verificado && (
+            <form action={reenviarVerificacionEmail.bind(null, id)}>
+              <button
+                type="submit"
+                className="border-border bg-background hover:bg-muted inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
+              >
+                <Mail className="size-3" />
+                Reenviar verificación
+              </button>
+            </form>
+          )}
+          {puedeEditar && (
+            <ConfirmActionButton
+              onConfirm={async () => {
+                'use server';
+                await eliminarSocio(id);
+              }}
+              label="Eliminar socio"
+              confirmTitle="Eliminar socio"
+              confirmDescription="¿Seguro que quieres eliminar este socio? Esta acción no se puede deshacer."
+              className="text-destructive border-destructive/30 hover:bg-destructive/10 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
+            />
+          )}
         </div>
       </div>
 
@@ -99,7 +128,26 @@ export default async function SocioDetallePage({
       )}
 
       {/* KPI Cards */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
+      <div className="mb-8 grid gap-4 sm:grid-cols-4">
+        <div className="border-border bg-card rounded-lg border p-4">
+          <p className="text-muted-foreground text-xs">Email verificado</p>
+          <div className="mt-1 flex items-center gap-2">
+            {socio.email_verificado ? (
+              <CheckCircle className="size-4 text-green-600" />
+            ) : (
+              <AlertTriangle className="size-4 text-yellow-600" />
+            )}
+            <span
+              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                socio.email_verificado
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+              }`}
+            >
+              {socio.email_verificado ? 'Verificado' : 'Pendiente'}
+            </span>
+          </div>
+        </div>
         <div className="border-border bg-card rounded-lg border p-4">
           <p className="text-muted-foreground text-xs">Total pagado</p>
           <p className="text-2xl font-bold text-green-600">{totalPagado.toFixed(2)}€</p>

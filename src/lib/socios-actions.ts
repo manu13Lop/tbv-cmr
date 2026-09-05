@@ -54,7 +54,7 @@ async function enviarEmailConsentimiento(socio: {
   email: string;
   token_consentimiento: string;
 }) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tbv-cmr.vercel.app';
   const linkConsentimiento = `${appUrl}/socios/consentir/${socio.token_consentimiento}`;
 
   const html = `
@@ -164,6 +164,7 @@ export async function crearSocio(formData: FormData) {
       ciudad: ciudad || null,
       codigo_postal: codigo_postal || null,
       notas: notas || null,
+      email_verificado: true,
     })
     .select('id, token_consentimiento, email, nombre, apellidos')
     .single();
@@ -172,6 +173,10 @@ export async function crearSocio(formData: FormData) {
     if (error.message?.includes('duplicate key')) {
       return redirect('/socios/nuevo?error=El+DNI+o+email+ya+está+registrado');
     }
+    return redirect('/socios/nuevo?error=Error+al+crear+el+socio');
+  }
+
+  if (!socio) {
     return redirect('/socios/nuevo?error=Error+al+crear+el+socio');
   }
 
@@ -184,11 +189,9 @@ export async function crearSocio(formData: FormData) {
   });
 
   if (socio.email) {
-    try {
-      await enviarEmailConsentimiento(socio);
-    } catch {
-      // Email failed but socio was created
-    }
+    enviarEmailConsentimiento(socio).catch((e) => {
+      console.error('[socios] Error sending consent email:', e);
+    });
   }
 
   redirect(`/socios/${socio.id}?creado=1`);
@@ -243,6 +246,7 @@ export async function actualizarSocio(socioId: string, formData: FormData) {
       codigo_postal: codigo_postal || null,
       notas: notas || null,
       activo: activo ?? true,
+      email_verificado: true,
     })
     .eq('id', socioId);
 
@@ -311,6 +315,75 @@ export async function reenviarConsentimiento(socioId: string) {
   } catch {
     redirect(`/socios/${socioId}?error=Error+al+enviar+el+email`);
   }
+}
+
+// ============ REENVIAR EMAIL DE VERIFICACIÓN ============
+
+export async function reenviarVerificacionEmail(socioId: string) {
+  if (!isValidUUID(socioId)) redirect('/socios?error=id_invalido');
+
+  const usuario = await getUsuarioActual();
+  if (!usuario || !tienePermiso(usuario.permisos, 'socios.editar'))
+    redirect('/socios?error=no_autorizado');
+
+  const supabase = await createClient();
+  const { data: socio } = await supabase
+    .from('socios')
+    .select('id, email, nombre, apellidos, email_verificacion_token, email_verificado')
+    .eq('id', socioId)
+    .single();
+
+  if (!socio?.email) {
+    redirect(`/socios/${socioId}?error=El+socio+no+tiene+email+asignado`);
+  }
+  if (socio.email_verificado) {
+    redirect(`/socios/${socioId}?error=El+email+ya+está+verificado`);
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tbv-cmr.vercel.app';
+  const linkVerificacion = `${appUrl}/socios/verificar-email/${socio.email_verificacion_token}`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <div style="background-color: #7a1f2b; padding: 24px; text-align: center;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 20px;">Triana Balonmano Vivero</h1>
+    </div>
+    <div style="padding: 32px 24px;">
+      <h2 style="color: #1a1a1a; margin: 0 0 16px 0; font-size: 18px;">Verifica tu email</h2>
+      <p style="color: #4a4a4a; margin: 0 0 24px 0; font-size: 14px; line-height: 1.6;">
+        Hola <strong>${escapeHtml(socio.nombre!)} ${escapeHtml(socio.apellidos!)}</strong>,
+        haz clic en el botón para verificar tu email.
+      </p>
+      <div style="text-align: center; margin: 0 0 24px 0;">
+        <a href="${linkVerificacion}"
+           style="display: inline-block; background-color: #7a1f2b; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px;">
+          Verificar mi email
+        </a>
+      </div>
+    </div>
+    <div style="background-color: #f8f9fa; padding: 16px 24px; text-align: center;">
+      <p style="color: #8a8a8a; margin: 0; font-size: 11px;">Triana Balonmano Vivero · Club de Balonmano</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  resend.emails
+    .send({
+      from: EMAIL_FROM,
+      to: socio.email,
+      subject: 'Verifica tu email — Triana Balonmano Vivero',
+      html,
+    })
+    .catch((e) => {
+      console.error('[socios] Error sending verification email:', e);
+    });
+
+  redirect(`/socios/${socioId}?success=Email+de+verificación+reenviado`);
 }
 
 // ============ CONSENTIMIENTO PÚBLICO ============
@@ -388,6 +461,11 @@ export async function registrarPago(socioId: string, formData: FormData) {
     return redirect(`/socios/${socioId}?error=Error+al+registrar+el+pago`);
   }
 
+  // Si el pago es "pagado", activar el socio automáticamente
+  if (estado === 'pagado') {
+    await supabase.from('socios').update({ activo: true }).eq('id', socioId);
+  }
+
   await logCambio('socios_pagos', socioId, 'crear', null, { concepto, importe, estado });
   redirect(`/socios/${socioId}?guardado=1`);
 }
@@ -428,6 +506,11 @@ export async function actualizarPago(pagoId: string, socioId: string, formData: 
 
   if (error) {
     return redirect(`/socios/${socioId}?error=Error+al+actualizar+el+pago`);
+  }
+
+  // Si el pago cambia a "pagado", activar el socio automáticamente
+  if (data.estado === 'pagado') {
+    await supabase.from('socios').update({ activo: true }).eq('id', socioId);
   }
 
   redirect(`/socios/${socioId}?guardado=1`);

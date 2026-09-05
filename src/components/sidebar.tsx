@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { getPermisosUsuario } from '@/lib/supabase-server';
 import { getUsuarioActual } from '@/lib/auth-helpers';
 import { SidebarNav } from '@/components/sidebar-nav';
@@ -34,14 +33,7 @@ export async function Sidebar() {
       >
         <div className="border-border flex items-center justify-between border-b p-4">
           <div className="flex items-center gap-3">
-            <Image
-              src="/logo.jpg"
-              alt="TBV"
-              width={36}
-              height={36}
-              unoptimized
-              className="rounded-full"
-            />
+            <img src="/logo.jpg" alt="TBV" className="h-9 w-9 rounded-full object-cover" />
             <div className="flex flex-col">
               <span className="text-primary text-sm font-bold">TBV</span>
               <span className="text-muted-foreground text-xs">Triana Balonmano Vivero</span>

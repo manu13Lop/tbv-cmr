@@ -10,7 +10,6 @@ import { ArrowLeft } from 'lucide-react';
 import { validateFormData, getFirstError } from '@/lib/validate';
 import { actualizarEventoSchema } from '@/lib/validations';
 import { ConfirmActionButton } from '@/components/confirm-action-button';
-import { rateLimiters } from '@/lib/rate-limit';
 
 async function actualizarEvento(eventoId: string, formData: FormData) {
   'use server';
@@ -141,6 +140,7 @@ async function enviarConvocatoria(eventoId: string) {
   const hdrs = await headers();
   const userId = hdrs.get('x-user-id');
   if (userId) {
+    const { rateLimiters } = await import('@/lib/rate-limit');
     const rateLimit = await rateLimiters.enviarConvocatoria(userId);
     if (!rateLimit.allowed) {
       redirect(`/convocatorias/${eventoId}?error=rate_limit`);

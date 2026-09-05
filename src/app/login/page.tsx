@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import Image from 'next/image';
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 60_000;
@@ -86,14 +85,10 @@ export default function LoginPage() {
   return (
     <main className="bg-background flex min-h-screen flex-col items-center justify-center gap-6 px-4">
       <div className="flex flex-col items-center gap-2">
-        <Image
+        <img
           src="/logo.jpg"
           alt="Triana Balonmano Vivero"
-          width={96}
-          height={96}
-          className="rounded-full"
-          unoptimized
-          priority
+          className="h-36 w-36 rounded-full object-cover"
         />
         <p className="text-muted-foreground text-sm">Triana Balonmano Vivero</p>
       </div>

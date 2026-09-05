@@ -3,14 +3,20 @@ import { getUsuarioActual, tienePermiso } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft, Users } from 'lucide-react';
+import { Plus, ArrowLeft, Users, ExternalLink } from 'lucide-react';
 import { PaginationWrapper as Pagination } from '@/components/pagination-wrapper';
 import { EmptyState } from '@/components/empty-state';
 
 export default async function SociosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; q?: string; consentimiento?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    q?: string;
+    consentimiento?: string;
+    verificado?: string;
+    activo?: string;
+  }>;
 }) {
   const usuario = await getUsuarioActual();
   if (!usuario || !tienePermiso(usuario.permisos, 'socios.leer')) redirect('/');
@@ -32,6 +38,16 @@ export default async function SociosPage({
   if (params.consentimiento) {
     query = query.eq('consentimiento_estado', params.consentimiento);
   }
+  if (params.verificado === 'si') {
+    query = query.eq('email_verificado', true);
+  } else if (params.verificado === 'no') {
+    query = query.eq('email_verificado', false);
+  }
+  if (params.activo === 'si') {
+    query = query.eq('activo', true);
+  } else if (params.activo === 'no') {
+    query = query.eq('activo', false);
+  }
 
   const { data: socios, count } = await query;
 
@@ -44,10 +60,25 @@ export default async function SociosPage({
     currentPage * itemsPerPage
   );
 
+  // Get payment status for paginated socios
+  const paginatedIds = paginatedSocios.map((s) => s.id);
+  const pagosMap: Record<string, string> = {};
+  if (paginatedIds.length > 0) {
+    const { data: pagos } = await supabase
+      .from('socios_pagos')
+      .select('socio_id, estado')
+      .in('socio_id', paginatedIds);
+    for (const pago of pagos ?? []) {
+      if (pago.estado === 'pagado') {
+        pagosMap[pago.socio_id] = 'pagado';
+      } else if (!pagosMap[pago.socio_id]) {
+        pagosMap[pago.socio_id] = 'pendiente';
+      }
+    }
+  }
+
   const totalActivos = allSocios.filter((s) => s.activo).length;
-  const pendientesConsentimiento = allSocios.filter(
-    (s) => s.consentimiento_estado === 'pendiente'
-  ).length;
+  const pendientesVerificacion = allSocios.filter((s) => !s.email_verificado).length;
 
   return (
     <div className="p-6">
@@ -64,21 +95,29 @@ export default async function SociosPage({
           <h1 className="text-primary text-2xl font-bold">Socios</h1>
           <p className="text-muted-foreground text-sm">
             {count ?? 0} socios registrados · {totalActivos} activos
-            {pendientesConsentimiento > 0 && (
-              <span className="text-yellow-600">
-                {' '}
-                · {pendientesConsentimiento} pendientes de consentimiento
-              </span>
+            {pendientesVerificacion > 0 && (
+              <span className="text-yellow-600"> · {pendientesVerificacion} sin verificar</span>
             )}
           </p>
         </div>
         {puedeEditar && (
-          <Link href="/socios/nuevo">
-            <Button>
-              <Plus className="size-4" />
-              Nuevo socio
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <a
+              href="/socios/inscribirme"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors"
+            >
+              <ExternalLink className="size-4" />
+              Link de inscripción
+            </a>
+            <Link href="/socios/nuevo">
+              <Button>
+                <Plus className="size-4" />
+                Nuevo socio
+              </Button>
+            </Link>
+          </div>
         )}
       </div>
 
@@ -103,13 +142,13 @@ export default async function SociosPage({
                     Nombre
                   </th>
                   <th scope="col" className="p-3 text-left font-medium">
-                    DNI
+                    Email
                   </th>
                   <th scope="col" className="p-3 text-left font-medium">
-                    Teléfono
+                    Verificación
                   </th>
                   <th scope="col" className="p-3 text-left font-medium">
-                    Consentimiento
+                    Pago
                   </th>
                   <th scope="col" className="p-3 text-left font-medium">
                     Estado
@@ -117,46 +156,53 @@ export default async function SociosPage({
                 </tr>
               </thead>
               <tbody>
-                {paginatedSocios.map((s) => (
-                  <tr key={s.id} className="border-border hover:bg-muted/50 border-t">
-                    <td className="p-3 font-medium">{s.numero_socio}</td>
-                    <td className="p-3">
-                      <Link href={`/socios/${s.id}`} className="hover:underline">
-                        {s.nombre} {s.apellidos}
-                      </Link>
-                    </td>
-                    <td className="text-muted-foreground p-3">{s.dni || '—'}</td>
-                    <td className="text-muted-foreground p-3">{s.telefono || '—'}</td>
-                    <td className="p-3">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                          s.consentimiento_estado === 'aceptado'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                            : s.consentimiento_estado === 'rechazado'
-                              ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                {paginatedSocios.map((s) => {
+                  const pagoEstado = pagosMap[s.id];
+                  return (
+                    <tr key={s.id} className="border-border hover:bg-muted/50 border-t">
+                      <td className="p-3 font-medium">{s.numero_socio}</td>
+                      <td className="p-3">
+                        <Link href={`/socios/${s.id}`} className="hover:underline">
+                          {s.nombre} {s.apellidos}
+                        </Link>
+                      </td>
+                      <td className="text-muted-foreground p-3 text-xs">{s.email || '—'}</td>
+                      <td className="p-3">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                            s.email_verificado
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                               : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                        }`}
-                      >
-                        {s.consentimiento_estado === 'aceptado'
-                          ? 'Aceptado'
-                          : s.consentimiento_estado === 'rechazado'
-                            ? 'Rechazado'
-                            : 'Pendiente'}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                          s.activo
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                        }`}
-                      >
-                        {s.activo ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                          }`}
+                        >
+                          {s.email_verificado ? 'Verificado' : 'Pendiente'}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                            pagoEstado === 'pagado'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                              : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
+                          }`}
+                        >
+                          {pagoEstado === 'pagado' ? 'Pagado' : 'Pendiente'}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                            s.activo
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                          }`}
+                        >
+                          {s.activo ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
