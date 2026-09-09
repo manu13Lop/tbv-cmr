@@ -107,7 +107,7 @@ describe('validations - crearUsuarioSchema', () => {
       nombre: 'Maria',
       apellidos: 'Lopez',
       email: 'maria@test.com',
-      password: '12345678',
+      password: 'Test1234!',
       rol_id: '550e8400-e29b-41d4-a716-446655440000',
     });
     expect(result.success).toBe(true);

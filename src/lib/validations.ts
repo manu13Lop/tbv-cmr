@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+// --- Regex patterns ---
+const DNI_REGEX = /^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$/i;
+const PHONE_REGEX = /^(\+34|0034|34)?[679][0-9]{8}$/;
+const POSTAL_CODE_REGEX = /^[0-9]{5}$/;
+const NAME_REGEX = /^[a-zA-ZÀ-ÿ\s'-]{1,100}$/;
+
 // --- Enums compartidos ---
 
 const TALLAS = ['', 'XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
@@ -26,12 +32,23 @@ const PARENTESCOS = ['', 'Madre', 'Padre', 'Tutor legal'] as const;
 // --- Schemas de Jugadoras ---
 
 export const crearJugadoraSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  apellidos: z.string().min(1, 'Los apellidos son obligatorios'),
-  fecha_nacimiento: z.string().min(1, 'La fecha de nacimiento es obligatoria'),
-  dni: z.string().optional().or(z.literal('')),
-  codigo_interno: z.string().optional(),
-  email: z.string().email('Email no válido').optional().or(z.literal('')),
+  nombre: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(100)
+    .regex(NAME_REGEX, 'Nombre inválido'),
+  apellidos: z
+    .string()
+    .min(1, 'Los apellidos son obligatorios')
+    .max(100)
+    .regex(NAME_REGEX, 'Apellidos inválidos'),
+  fecha_nacimiento: z
+    .string()
+    .min(1, 'La fecha de nacimiento es obligatoria')
+    .refine((date) => !isNaN(Date.parse(date)), 'Formato de fecha inválido'),
+  dni: z.string().regex(DNI_REGEX, 'DNI inválido (8 dígitos + letra)').optional().or(z.literal('')),
+  codigo_interno: z.string().max(20).optional(),
+  email: z.string().email('Email no válido').max(255).optional().or(z.literal('')),
   talla_camiseta_entreno: z.enum(TALLAS).optional(),
   talla_camiseta_partido: z.enum(TALLAS).optional(),
   talla_calzona: z.enum(TALLAS).optional(),
@@ -40,12 +57,23 @@ export const crearJugadoraSchema = z.object({
 });
 
 export const actualizarJugadoraSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  apellidos: z.string().min(1, 'Los apellidos son obligatorios'),
-  fecha_nacimiento: z.string().min(1, 'La fecha de nacimiento es obligatoria'),
-  dni: z.string().optional().or(z.literal('')),
-  codigo_interno: z.string().optional(),
-  email: z.string().email('Email no válido').optional().or(z.literal('')),
+  nombre: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(100)
+    .regex(NAME_REGEX, 'Nombre inválido'),
+  apellidos: z
+    .string()
+    .min(1, 'Los apellidos son obligatorios')
+    .max(100)
+    .regex(NAME_REGEX, 'Apellidos inválidos'),
+  fecha_nacimiento: z
+    .string()
+    .min(1, 'La fecha de nacimiento es obligatoria')
+    .refine((date) => !isNaN(Date.parse(date)), 'Formato de fecha inválido'),
+  dni: z.string().regex(DNI_REGEX, 'DNI inválido (8 dígitos + letra)').optional().or(z.literal('')),
+  codigo_interno: z.string().max(20).optional(),
+  email: z.string().email('Email no válido').max(255).optional().or(z.literal('')),
   talla_camiseta_entreno: z.enum(TALLAS).optional(),
   talla_camiseta_partido: z.enum(TALLAS).optional(),
   talla_calzona: z.enum(TALLAS).optional(),
@@ -63,9 +91,18 @@ export const asignarEquipoSchema = z.object({
 });
 
 export const crearTutorSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  email: z.string().email('Email no válido').nullable().optional().or(z.literal('')),
-  telefono: z.string().nullable().optional().or(z.literal('')),
+  nombre: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(100)
+    .regex(NAME_REGEX, 'Nombre inválido'),
+  email: z.string().email('Email no válido').max(255).nullable().optional().or(z.literal('')),
+  telefono: z
+    .string()
+    .regex(PHONE_REGEX, 'Teléfono inválido (+34 6XX XXXX XX)')
+    .nullable()
+    .optional()
+    .or(z.literal('')),
   parentesco: z.enum(PARENTESCOS).nullable().optional(),
 });
 
@@ -224,20 +261,40 @@ export const enviarMensajeSchema = z.object({
 // --- Schemas de Usuarios ---
 
 export const crearUsuarioSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  apellidos: z.string().min(1, 'Los apellidos son obligatorios'),
-  email: z.string().email('Email no válido'),
+  nombre: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(100)
+    .regex(NAME_REGEX, 'Nombre inválido'),
+  apellidos: z
+    .string()
+    .min(1, 'Los apellidos son obligatorios')
+    .max(100)
+    .regex(NAME_REGEX, 'Apellidos inválidos'),
+  email: z.string().email('Email no válido').max(255),
   password: z
     .string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
-    .max(128, 'La contraseña es demasiado larga'),
+    .max(128, 'La contraseña es demasiado larga')
+    .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
+    .regex(/[a-z]/, 'Debe contener al menos una minúscula')
+    .regex(/[0-9]/, 'Debe contener al menos un número')
+    .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
   rol_id: z.string().uuid('Selecciona un rol válido'),
 });
 
 export const actualizarUsuarioSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  apellidos: z.string().min(1, 'Los apellidos son obligatorios'),
-  email: z.string().email('Email no válido').optional().or(z.literal('')),
+  nombre: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(100)
+    .regex(NAME_REGEX, 'Nombre inválido'),
+  apellidos: z
+    .string()
+    .min(1, 'Los apellidos son obligatorios')
+    .max(100)
+    .regex(NAME_REGEX, 'Apellidos inválidos'),
+  email: z.string().email('Email no válido').max(255).optional().or(z.literal('')),
   rol_id: z.string().uuid('Selecciona un rol válido').optional(),
 });
 
@@ -246,21 +303,45 @@ export const actualizarUsuarioSchema = z.object({
 const CATEGORIA_EJERCICIO = ['táctico', 'técnica_individual', 'portero', 'físico'] as const;
 
 export const crearEntrenadorSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  apellidos: z.string().min(1, 'Los apellidos son obligatorios'),
-  email: z.string().email('Email no válido').optional().or(z.literal('')),
-  telefono: z.string().optional().or(z.literal('')),
-  titulacion: z.string().optional().or(z.literal('')),
-  especialidad: z.string().optional().or(z.literal('')),
+  nombre: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(100)
+    .regex(NAME_REGEX, 'Nombre inválido'),
+  apellidos: z
+    .string()
+    .min(1, 'Los apellidos son obligatorios')
+    .max(100)
+    .regex(NAME_REGEX, 'Apellidos inválidos'),
+  email: z.string().email('Email no válido').max(255).optional().or(z.literal('')),
+  telefono: z
+    .string()
+    .regex(PHONE_REGEX, 'Teléfono inválido (+34 6XX XXXX XX)')
+    .optional()
+    .or(z.literal('')),
+  titulacion: z.string().max(200).optional().or(z.literal('')),
+  especialidad: z.string().max(100).optional().or(z.literal('')),
 });
 
 export const actualizarEntrenadorSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  apellidos: z.string().min(1, 'Los apellidos son obligatorios'),
-  email: z.string().email('Email no válido').optional().or(z.literal('')),
-  telefono: z.string().optional().or(z.literal('')),
-  titulacion: z.string().optional().or(z.literal('')),
-  especialidad: z.string().optional().or(z.literal('')),
+  nombre: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(100)
+    .regex(NAME_REGEX, 'Nombre inválido'),
+  apellidos: z
+    .string()
+    .min(1, 'Los apellidos son obligatorios')
+    .max(100)
+    .regex(NAME_REGEX, 'Apellidos inválidos'),
+  email: z.string().email('Email no válido').max(255).optional().or(z.literal('')),
+  telefono: z
+    .string()
+    .regex(PHONE_REGEX, 'Teléfono inválido (+34 6XX XXXX XX)')
+    .optional()
+    .or(z.literal('')),
+  titulacion: z.string().max(200).optional().or(z.literal('')),
+  especialidad: z.string().max(100).optional().or(z.literal('')),
   activo: z.boolean().optional(),
 });
 
@@ -349,29 +430,69 @@ export const crearRivalScoutingSchema = z.object({
 const METODO_PAGO = ['Efectivo', 'Transferencia', 'Bizum', 'Tarjeta'] as const;
 
 export const crearSocioSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  apellidos: z.string().min(1, 'Los apellidos son obligatorios'),
-  dni: z.string().min(8, 'El DNI debe tener al menos 8 caracteres').optional().or(z.literal('')),
-  email: z.string().email('Email no válido').optional().or(z.literal('')),
-  telefono: z.string().optional().or(z.literal('')),
-  fecha_nacimiento: z.string().optional().or(z.literal('')),
-  direccion: z.string().optional().or(z.literal('')),
-  ciudad: z.string().optional().or(z.literal('')),
-  codigo_postal: z.string().optional().or(z.literal('')),
-  notas: z.string().optional().or(z.literal('')),
+  nombre: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(100)
+    .regex(NAME_REGEX, 'Nombre inválido'),
+  apellidos: z
+    .string()
+    .min(1, 'Los apellidos son obligatorios')
+    .max(100)
+    .regex(NAME_REGEX, 'Apellidos inválidos'),
+  dni: z.string().regex(DNI_REGEX, 'DNI inválido (8 dígitos + letra)').optional().or(z.literal('')),
+  email: z.string().email('Email no válido').max(255).optional().or(z.literal('')),
+  telefono: z
+    .string()
+    .regex(PHONE_REGEX, 'Teléfono inválido (+34 6XX XXXX XX)')
+    .optional()
+    .or(z.literal('')),
+  fecha_nacimiento: z
+    .string()
+    .refine((date) => !date || !isNaN(Date.parse(date)), 'Formato de fecha inválido')
+    .optional()
+    .or(z.literal('')),
+  direccion: z.string().max(200).optional().or(z.literal('')),
+  ciudad: z.string().max(100).optional().or(z.literal('')),
+  codigo_postal: z
+    .string()
+    .regex(POSTAL_CODE_REGEX, 'Código postal inválido (5 dígitos)')
+    .optional()
+    .or(z.literal('')),
+  notas: z.string().max(500).optional().or(z.literal('')),
 });
 
 export const actualizarSocioSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  apellidos: z.string().min(1, 'Los apellidos son obligatorios'),
-  dni: z.string().min(8, 'El DNI debe tener al menos 8 caracteres').optional().or(z.literal('')),
-  email: z.string().email('Email no válido').optional().or(z.literal('')),
-  telefono: z.string().optional().or(z.literal('')),
-  fecha_nacimiento: z.string().optional().or(z.literal('')),
-  direccion: z.string().optional().or(z.literal('')),
-  ciudad: z.string().optional().or(z.literal('')),
-  codigo_postal: z.string().optional().or(z.literal('')),
-  notas: z.string().optional().or(z.literal('')),
+  nombre: z
+    .string()
+    .min(1, 'El nombre es obligatorio')
+    .max(100)
+    .regex(NAME_REGEX, 'Nombre inválido'),
+  apellidos: z
+    .string()
+    .min(1, 'Los apellidos son obligatorios')
+    .max(100)
+    .regex(NAME_REGEX, 'Apellidos inválidos'),
+  dni: z.string().regex(DNI_REGEX, 'DNI inválido (8 dígitos + letra)').optional().or(z.literal('')),
+  email: z.string().email('Email no válido').max(255).optional().or(z.literal('')),
+  telefono: z
+    .string()
+    .regex(PHONE_REGEX, 'Teléfono inválido (+34 6XX XXXX XX)')
+    .optional()
+    .or(z.literal('')),
+  fecha_nacimiento: z
+    .string()
+    .refine((date) => !date || !isNaN(Date.parse(date)), 'Formato de fecha inválido')
+    .optional()
+    .or(z.literal('')),
+  direccion: z.string().max(200).optional().or(z.literal('')),
+  ciudad: z.string().max(100).optional().or(z.literal('')),
+  codigo_postal: z
+    .string()
+    .regex(POSTAL_CODE_REGEX, 'Código postal inválido (5 dígitos)')
+    .optional()
+    .or(z.literal('')),
+  notas: z.string().max(500).optional().or(z.literal('')),
   activo: z.boolean().optional(),
 });
 
