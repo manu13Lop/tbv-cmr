@@ -116,7 +116,7 @@ export default async function EjerciciosPage({
                   <div className="mb-2 flex items-center justify-between">
                     <h3 className="font-medium">{ej.titulo}</h3>
                     <span className="bg-secondary/10 text-secondary rounded-full px-2 py-0.5 text-xs capitalize">
-                      {ej.categoria.replace('_', ' ')}
+                      {(ej.categoria ?? 'sin_categoria').replace('_', ' ')}
                     </span>
                   </div>
                   {ej.objetivo_principal && (

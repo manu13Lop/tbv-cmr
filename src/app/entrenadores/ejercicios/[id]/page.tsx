@@ -99,7 +99,9 @@ export default async function EjercicioDetallePage({
         <div>
           <h1 className="text-primary text-2xl font-bold">{ejercicio.titulo}</h1>
           <p className="text-muted-foreground text-sm">
-            <span className="capitalize">{ejercicio.categoria.replace('_', ' ')}</span>
+            <span className="capitalize">
+              {(ejercicio.categoria ?? 'sin_categoria').replace('_', ' ')}
+            </span>
             {autor && ` — Creado por ${autor.nombre as string} ${autor.apellidos as string}`}
           </p>
         </div>

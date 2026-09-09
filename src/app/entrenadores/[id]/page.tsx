@@ -351,7 +351,7 @@ export default async function EntrenadorDetallePage({
                 <div>
                   <p className="text-sm font-medium">{ej.titulo}</p>
                   <p className="text-muted-foreground text-xs capitalize">
-                    {ej.categoria.replace('_', ' ')}
+                    {(ej.categoria ?? 'sin_categoria').replace('_', ' ')}
                   </p>
                 </div>
               </Link>
