@@ -102,6 +102,7 @@ export function SidebarNav({ permisos }: { permisos: string[] }) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    aria-current={isActive ? 'page' : undefined}
                     className={cn(
                       'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                       isActive
@@ -109,7 +110,7 @@ export function SidebarNav({ permisos }: { permisos: string[] }) {
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     )}
                   >
-                    <Icon className="size-4" />
+                    <Icon className="size-4" aria-hidden="true" />
                     {item.label}
                   </Link>
                 );

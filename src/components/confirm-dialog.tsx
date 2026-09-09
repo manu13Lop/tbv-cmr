@@ -1,5 +1,8 @@
-"use client"
+'use client';
 
+'use client';
+
+import { useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,30 +10,38 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 type ConfirmDialogProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title: string
-  description: string
-  confirmLabel?: string
-  cancelLabel?: string
-  variant?: "destructive" | "default"
-  onConfirm: () => void
-}
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'destructive' | 'default';
+  onConfirm: () => void;
+};
 
 export function ConfirmDialog({
   open,
   onOpenChange,
   title,
   description,
-  confirmLabel = "Confirmar",
-  cancelLabel = "Cancelar",
-  variant = "destructive",
+  confirmLabel = 'Confirmar',
+  cancelLabel = 'Cancelar',
+  variant = 'destructive',
   onConfirm,
 }: ConfirmDialogProps) {
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (open && cancelButtonRef.current) {
+      cancelButtonRef.current.focus();
+    }
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -39,14 +50,14 @@ export function ConfirmDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button ref={cancelButtonRef} variant="outline" onClick={() => onOpenChange(false)}>
             {cancelLabel}
           </Button>
           <Button
             variant={variant}
             onClick={() => {
-              onConfirm()
-              onOpenChange(false)
+              onConfirm();
+              onOpenChange(false);
             }}
           >
             {confirmLabel}
@@ -54,5 +65,5 @@ export function ConfirmDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
