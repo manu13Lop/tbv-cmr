@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/sidebar';
 import { Breadcrumb } from '@/components/breadcrumb';
 import { Toaster } from 'sonner';
 import { ToastHandler } from '@/components/toast-handler';
+import { SidebarSkeleton } from '@/components/skeletons';
 
 export const metadata: Metadata = {
   title: 'TBV - Triana Balonmano Vivero',
@@ -51,18 +52,18 @@ export default function RootLayout({
             Saltar al contenido principal
           </a>
           <div className="flex">
-            <Suspense>
+            <Suspense fallback={<SidebarSkeleton />}>
               <Sidebar />
             </Suspense>
             <main id="main-content" className="flex-1">
-              <Suspense>
+              <Suspense fallback={<div className="h-8" />}>
                 <Breadcrumb />
               </Suspense>
               {children}
             </main>
           </div>
           <Toaster richColors position="top-right" />
-          <Suspense>
+          <Suspense fallback={<div className="h-10" />}>
             <ToastHandler />
           </Suspense>
         </ThemeProvider>
